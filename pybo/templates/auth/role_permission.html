@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <!-- 메뉴 접근 권한 부분 -->
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h5 class="m-0 font-weight-bold text-primary">메뉴 접근 권한</h5>
+            </div>
+            <div class="card-body">
+                <!-- 전체 권한 리스트 테이블 -->
+                <table class="table table-bordered table-hover text-center">
+                    <thead>
+                    <tr>
+                        <th style="background-color: #5a5c69; color: white;">권한 이름</th>
+                        <th style="background-color: #5a5c69; color: white;">설명</th>
+                        <th style="background-color: #5a5c69; color: white;">할당인원</th>
+                        <th style="background-color: #5a5c69; color: white;">권한 조회</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr>
+                        <td>role_80</td>
+                        <td>최고관리자(admin)</td>
+                        <td style="font-weight: bold; color: blue;">{{ admin_count }}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" id="admin">보기</button>
+                        </td>
+                    </tr>
+                    <tr>
+
+                        <td>role_50</td>
+                        <td>중간관리자</td>
+                        <td style="font-weight: bold; color: blue;">{{ mid_manager_count }}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" id="mid">보기</button>
+                        </td>
+                    </tr>
+                    <tr>
+
+                        <td>role_20</td>
+                        <td>일반유저</td>
+                        <td style="font-weight: bold; color: blue;">{{ user_count }}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" id="user">보기</button>
+                        </td>
+                    </tr>
+                    <!-- 여기에 추가 행이 반복해서 들어갑니다 -->
+                    </tbody>
+
+                </table>
+                <!-- 모달 구조 -->
+
+                <div class="modal fade" id="modalAdmin" tabindex="-1" role="dialog" aria-labelledby="modalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalLabel1">권한 상세 정보</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body" id="modalBodyAdmin">
+                                <table class="table">
+                                    <thead>
+                                    <th>메뉴 ID</th>
+                                    <th>모듈 이름</th>
+                                    <th>메뉴 이름</th>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td>11</td>
+                                        <td>기준정보</td>
+                                        <td>품목정보</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12</td>
+                                        <td>기준정보</td>
+                                        <td>거래처정보</td>
+                                    </tr>
+                                    <tr>
+                                        <td>31</td>
+                                        <td>생산계획</td>
+                                        <td>제조오더현황(ERP)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>41</td>
+                                        <td>출하운영</td>
+                                        <td>출하현황(ERP)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>51</td>
+                                        <td>사용자관리</td>
+                                        <td>사용자계정관리</td>
+                                    </tr>
+                                    <tr>
+                                        <td>52</td>
+                                        <td>사용자관리</td>
+                                        <td>사용자계정생성</td>
+                                    </tr>
+                                    <tr>
+                                        <td>53</td>
+                                        <td>사용자관리</td>
+                                        <td>사용자권한관리</td>
+                                    </tr>
+                                    <tr>
+                                        <td>54</td>
+                                        <td>사용자관리</td>
+                                        <td>메뉴접근권한</td>
+                                    </tr>
+                                    </tbody>
+
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modalMid" tabindex="-1" role="dialog" aria-labelledby="modalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalLabel2">권한 상세 정보</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body" id="modalBodyMid">
+                                <table class="table">
+                                    <thead>
+                                    <th>메뉴 ID</th>
+                                    <th>모듈 이름</th>
+                                    <th>메뉴 이름</th>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td>11</td>
+                                        <td>기준정보</td>
+                                        <td>품목정보</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12</td>
+                                        <td>기준정보</td>
+                                        <td>거래처정보</td>
+                                    </tr>
+                                    <tr>
+                                        <td>31</td>
+                                        <td>생산계획</td>
+                                        <td>제조오더현황(ERP)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>41</td>
+                                        <td>출하운영</td>
+                                        <td>출하현황(ERP)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>51</td>
+                                        <td>사용자관리</td>
+                                        <td>사용자계정관리</td>
+                                    </tr>
+                                    <tr>
+                                        <td>53</td>
+                                        <td>사용자관리</td>
+                                        <td>사용자권한관리</td>
+                                    </tr>
+                                    <tr>
+                                        <td>54</td>
+                                        <td>사용자관리</td>
+                                        <td>메뉴접근권한</td>
+                                    </tr>
+                                    </tbody>
+
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modalUser" tabindex="-1" role="dialog" aria-labelledby="modalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalLabel3">권한 상세 정보</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body" id="modalBodyUser">
+                                <table class="table">
+                                    <thead>
+                                    <th>메뉴 ID</th>
+                                    <th>모듈 이름</th>
+                                    <th>메뉴 이름</th>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td>11</td>
+                                        <td>기준정보</td>
+                                        <td>품목정보</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12</td>
+                                        <td>기준정보</td>
+                                        <td>거래처정보</td>
+                                    </tr>
+                                    <tr>
+                                        <td>31</td>
+                                        <td>생산계획</td>
+                                        <td>제조오더현황(ERP)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>41</td>
+                                        <td>출하운영</td>
+                                        <td>출하현황(ERP)</td>
+                                    </tr>
+                                    </tbody>
+
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('admin').addEventListener('click', function() {
+        document.getElementById('modalBodyAdmin').innerHTML
+        var modalAdmin = new bootstrap.Modal(document.getElementById('modalAdmin'));
+        modalAdmin.show();
+    });
+
+    document.getElementById('mid').addEventListener('click', function() {
+        document.getElementById('modalBodyMid').innerHTML
+        var modalMid = new bootstrap.Modal(document.getElementById('modalMid'));
+        modalMid.show();
+    });
+
+    document.getElementById('user').addEventListener('click', function() {
+        document.getElementById('modalBodyUser').innerHTML
+        var modalUser = new bootstrap.Modal(document.getElementById('modalUser'));
+        modalUser.show();
+    });
+});
+
+</script>
+
+
+{% endblock %}

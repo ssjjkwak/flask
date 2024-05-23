@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- pybo CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <title>Synopex UDI Manager</title>
+
+
+    <link
+            href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+            rel="stylesheet">
+
+    <link rel="preload" href="{{ url_for('static', filename='img/logo_white.png') }}" as="image">
+
+    <style>
+        .navbar-custom {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
+
+
+    </style>
+</head>
+
+<body id="page-top">
+
+<div id="wrapper">
+    <div id="content-wrapper" class="d-flex flex-column">
+
+        <nav class="navbar navbar-expand-lg bg-body-tertiary navbar-custom">
+            <div class="container-fluid">
+                <a href="{{ url_for('main.index') }}" class="custom-nav-link">
+                    <img src="{{ url_for('static', filename='img/logo_one.png') }} "></a>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <div class="nav-link active font-weight-bold" aria-current="page"
+                                 style="font-weight: bold; color: #4e73df;">
+                                DIALYZE MES
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </div>
+                <div class="d-flex">
+                    {% if session['roles_id'] == 3 %}
+                    <a href="{{ url_for('auth.user_manage') }}" class="mx-2"
+                       style="text-decoration-line: none; color: black; font-weight: bold;">
+                        사용자관리
+                    </a>
+                    {% endif %}
+                    {% if g.user %}
+                    <!-- 사용자 이름과 드롭다운 트리거 설정 -->
+                    <div class="dropdown">
+                        <a style="font-weight: bold; color: #4e73df;" id="navbarDropdown71"
+                           role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {{ g.user.name }}
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown71">
+                            <a class="dropdown-item" href="{{ url_for('auth.modify') }}">비밀번호변경</a>
+                            <a class="dropdown-item" href="{{ url_for('auth.logout') }}">로그아웃</a>
+                            <!--roles_id = 3 최고관리자만 보이는 메뉴-->
+                        </div>
+                    </div>
+
+                    님 환영합니다.
+
+                    {% endif %}
+                    {% if not g.user %}
+                    <a href="{{ url_for('auth.login') }}"
+                       class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">
+                        로그인
+                    </a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div id="content">
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-dark bg-dark topbar mb-4 static-top shadow navbar-custom">
+                <!-- Topbar Navbar -->
+                {% if g.user %}
+                <ul class="navbar-nav mr-auto font-weight-bold">
+                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
+                        <a class="nav-link font-weight-bold" href="{{ url_for('auth.user_manage') }}"
+                           role="button" style="color: white; font-weight: bold;">
+                            영업관리
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
+
+                        <a class="nav-link" href="{{ url_for('product.product_order') }}"
+                           role="button" style="color: white; font-weight: bold;">
+                            생산관리
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
+                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}"
+                           role="button" style="color: white; font-weight: bold;">
+                            출하관리
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
+                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}"
+                           role="button" style="color: white; font-weight: bold;">
+                            재고관리
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
+                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}"
+                           role="button" style="color: white; font-weight: bold;">
+                            기준정보관리
+                        </a>
+                    </li>
+                </ul>
+                {% endif %}
+
+                <ul class="navbar-nav ml-auto">
+                    {% if g.user %}
+
+                    <!-- Nav Item - Alerts -->
+                    <li class="nav-item dropdown no-arrow mx-1">
+                        {% if session['roles_id'] == 3 %}
+                        <!--                        <a class="nav-link dropdown-toggle" href="{{ url_for('auth.user_manage') }}"-->
+                        <!--                           id="navbarDropdown7" data-toggle="dropdown">-->
+                        <!--                            <i class="fas fa-fw fa-wrench"></i>&nbsp;사용자관리-->
+                        <!--                        </a>-->
+
+                        <!--                        <div class="dropdown-menu" aria-labelledby="navbarDropdown7">-->
+                        <!--                            <a class="dropdown-item" href="{{ url_for('auth.user_manage') }}">사용자 계정 관리</a>-->
+                        <!--                            <a class="dropdown-item" href="{{ url_for('auth.signup') }}">사용자 계정 생성</a>-->
+                        <!--                            <a class="dropdown-item" href="{{ url_for('auth.user_role') }}">사용자 권한 관리</a>-->
+                        <!--                            <a class="dropdown-item" href="{{ url_for('auth.role_permission') }}">메뉴 접근 권한</a>-->
+                        <!--                            &lt;!&ndash;roles_id = 3 최고관리자만 보이는 메뉴&ndash;&gt;-->
+
+                        <!--                        </div>-->
+                        {% endif %}
+
+                    </li>
+
+
+                    <!-- 비번 변경 로그아웃은 따로 뺴두기-->
+                    <!--                    <div class="d-sm-flex align-items-center justify-content-between mx-1">-->
+                    <!--                        <a href="{{ url_for('auth.modify') }}"-->
+                    <!--                           class="d-none d-sm-inline-block btn btn-sm btn-outline-light shadow-sm">-->
+                    <!--                            비밀번호 변경</a>-->
+                    <!--                    </div>-->
+                    <!--                    -->
+                    <!--                    <div class="d-sm-flex align-items-center justify-content-between mx-2">-->
+
+                    <!--                        <a href="{{ url_for('auth.logout') }}"-->
+                    <!--                           class="d-none d-sm-inline-block btn btn-sm btn-outline-light shadow-sm">-->
+                    <!--                            <i class="fas fa-download fa-sm fa-user"></i> 로그아웃</a>-->
+                    <!--                    </div>-->
+
+
+                    {% else %}
+                    {% if not g.user %}
+                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
+                        <div class="nav-link" style="color: #212529;">
+                            로그인을 해주세요.
+                        </div>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+
+                    <!-- Nav Item - User Information -->
+                    <li class="nav-item dropdown no-arrow">
+
+                    </li>
+
+
+                </ul>
+
+            </nav>
+            <!-- End of Topbar -->
+
+            <!-- Begin Page Content -->
+            <div class="container-fluid">
+
+                {% block content %}
+
+                {% endblock %}
+            </div>
+            <!-- /.container-fluid -->
+
+
+        </div>
+        <!-- End of Main Content -->
+
+
+    </div>
+</div>
+</body>
+
+
+{% block script %}
+<script type='text/javascript'>
+    const delete_elements = document.getElementsByClassName("delete");
+    Array.from(delete_elements).forEach(function(element) {
+        element.addEventListener('click', function() {
+            if(confirm("정말로 삭제하시겠습니까?")) {
+                location.href = this.dataset.uri;
+            };
+        });
+    });
+</script>
+
+
+<!-- 기본 템플릿 안에 삽입될 내용 End -->
+{% endblock %}
+<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/chart.js/Chart.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>
+
+<!--메뉴 자체를 눌러도 해당 최상위 메뉴로 이동시키기 위한 script-->
+<script>
+    document.getElementById('navbarDropdown7').addEventListener('click', function() {
+        window.location.href = "{{ url_for('auth.user_manage') }}"; // 원하는 URL로 변경
+    });
+    document.getElementById('navbarDropdown3').addEventListener('click', function() {
+        window.location.href = "{{ url_for('basic.basic_product') }}"; // 원하는 URL로 변경
+    });
+    document.getElementById('navbarDropdown4').addEventListener('click', function() {
+        window.location.href = "{{ url_for('product.product_order') }}"; // 원하는 URL로 변경
+    });
+    document.getElementById('navbarDropdown5').addEventListener('click', function() {
+        window.location.href = "{{ url_for('delivery.delivery_select') }}"; // 원하는 URL로 변경
+    });
+</script>
+
+</html>

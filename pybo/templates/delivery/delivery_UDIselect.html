@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="card shadow col-md-12 justify-content-end">
+        <div class="card-header py-3">
+            <h5 class="m-0 font-weight-bold text-primary">UDI 공급내역 등록 현황 조회</h5>
+        </div>
+                <div class="d-sm-flex align-items-center justify-content-end gap-2 me-4 mb-4 my-3">
+
+                    <form class="d-none d-sm-inline-block shadow-sm">
+                        <div class="input-group">
+                                <input type="text" class="form-control bg-light border-0 small form-control" placeholder="검색"
+                                       aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button" id="btn_search">
+                                        <i class="fas fa-search fa-sm"></i>
+                                    </button>
+                                </div>
+                        </div>
+                    </form>
+
+                    <a href="#" class="d-none d-sm-inline-block btn btn-success shadow-sm">Excel 저장</a>
+                    <a href="#" class="d-none d-sm-inline-block btn btn-dark shadow-sm">Alpha 데이터 매핑</a>
+                </div>
+
+        <div class="card-body">
+            <table class="table table-sm table-bordered table-hover" style="text-align: center;
+            border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+
+                <thead>
+                <!--#192B5B #0d6efd #4e73df-->
+                    <tr>
+                        <th style="background-color: #EB8001; color: white;">공급구분</th>
+                        <th style="background-color: #EB8001; color: white;">공급형태</th>
+                        <th style="background-color: #EB8001; color: white;">품목코드</th>
+                        <th style="background-color: #EB8001; color: white;">표준코드(UDI)</th>
+                        <th style="background-color: #EB8001; color: white;">LOT번호</th>
+                        <th style="background-color: #EB8001; color: white;">일련번호</th>
+                        <th style="background-color: #EB8001; color: white;">제조연월</th>
+                        <th style="background-color: #EB8001; color: white;">사용기한</th>
+                        <th style="background-color: #EB8001; color: white;">공급처코드</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>DN20240304000017</td>
+                        <td>국내판매(정상판매)</td>
+                        <td>EHF100-120LR</td>
+                        <td>088-001</td>
+                        <td>5544714486</td>
+                        <td>3242111456</td>
+                        <td>2024-05-03</td>
+                        <td>2024-08-08</td>
+                        <td>A001231</td>
+                    </tr>
+                    <tr>
+                        <td>DN20240304000017</td>
+                        <td>국내판매(정상판매)</td>
+                        <td>EHF100-120LR</td>
+                        <td>088-001</td>
+                        <td>5544714486</td>
+                        <td>3242111456</td>
+                        <td>2024-05-03</td>
+                        <td>2024-08-08</td>
+                        <td>A001231</td>
+                    </tr>
+                    <tr>
+                        <td>DN20240304000017</td>
+                        <td>국내판매(정상판매)</td>
+                        <td>EHF100-120LR</td>
+                        <td>088-001</td>
+                        <td>5544714486</td>
+                        <td>3242111456</td>
+                        <td>2024-05-03</td>
+                        <td>2024-08-08</td>
+                        <td>A001231</td>
+                    </tr>
+                    <tr>
+                        <td>DN20240304000017</td>
+                        <td>국내판매(정상판매)</td>
+                        <td>EHF100-120LR</td>
+                        <td>088-001</td>
+                        <td>5544714486</td>
+                        <td>3242111456</td>
+                        <td>2024-05-03</td>
+                        <td>2024-08-08</td>
+                        <td>A001231</td>
+                    </tr>
+                </tbody>
+
+            </table>
+        </div>
+
+
+
+    </div>
+</div>
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="container">
+
+            <div class="card o-hidden border-0 shadow-lg my-5">
+                <div class="card-body p-3">
+                    <!-- Nested Row within Card Body -->
+                    <div class="row">
+                        <div class="col-lg">
+                            <div class="p-5">
+                                <div class="text-center">
+                                    <h1 class="h4 text-gray-900 mb-4">사용자 계정 수정</h1>
+                                </div>
+                                <form class="user" method="post" action="{{ url_for('auth.user_update', user_id=user.users_id) }}">
+                                    {{ form.csrf_token }}
+
+                                    <div class="form-group row">
+                                        <div class="col-sm-6 mb-3 mb-sm-0">
+                                            {{ form.username(class="form-control form-control-user", placeholder="아이디") }}
+                                        </div>
+                                        <div class="col-sm-6">
+                                            {{ form.name(class="form-control form-control-user", placeholder="성명") }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        {{ form.email(class="form-control form-control-user", placeholder="이메일") }}
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-sm-6 mb-3 mb-sm-0">
+                                            {{ form.password1(class="form-control form-control-user", placeholder="비밀번호") }}
+                                        </div>
+                                        <div class="col-sm-6">
+                                            {{ form.password2(class="form-control form-control-user", placeholder="비밀번호 확인") }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-sm-6 mb-3 mb-sm-0">
+                                            {{ form.department(class="form-control form-control-user", placeholder="부서") }}
+                                        </div>
+                                        <div class="col-sm-6">
+                                            {{ form.jobtitle(class="form-control form-control-user", placeholder="직책/직위") }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        {{ form.phonenumber(class="form-control form-control-user", placeholder="전화번호") }}
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <div class="col-sm-6 mb-3 mb-sm-0">
+                                            <button type="button" class="btn btn-secondary btn-user btn-block" onclick="window.location.href='/auth/user_manage';">
+                                                취소하기
+                                            </button>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <button type="submit" class="btn btn-primary btn-user btn-block">
+                                                수정하기
+                                            </button>
+                                        </div>
+                                    </div>
+
+
+
+                                </form>
+                                <hr>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

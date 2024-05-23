@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="card shadow col-md-12 justify-content-end">
+        <div class="card-header py-3">
+            <h5 class="m-0 font-weight-bold text-primary">사용자 권한 관리</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-sm table-hover" style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th style="background-color: #5a5c69; color: white;">Index</th>
+                        <th style="background-color: #5a5c69; color: white;">사용자ID</th>
+                        <th style="background-color: #5a5c69; color: white;">성명</th>
+                        <th style="background-color: #5a5c69; color: white;">부서</th>
+                        <th style="background-color: #5a5c69; color: white;">직책/직위</th>
+                        <th style="background-color: #5a5c69; color: white;">권한</th>
+                        <th style="background-color: #5a5c69; color: white;">선택</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user, current_role_id in users_with_roles %}
+                    <tr>
+                        <form action="{{ url_for('auth.user_role') }}" method="POST" onsubmit="alert('권한이 변경되었습니다.');">
+
+                            <td>{{ user.users_id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.department }}</td>
+                            <td>{{ user.jobtitle }}</td>
+                            <td>
+                                <input type="hidden" name="user_id" value="{{ user.users_id }}">
+                                <select class="form-select form-select-sm" name="role_id">
+                                    {% for role in roles %}
+                                    <option value="{{ role.roles_id }}" {% if role.roles_id == current_role_id %}selected{% endif %}>
+                                        {{ role.rolename }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><button type="submit" class="btn btn-sm btn-primary">수정</button></td>
+                        </form>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+

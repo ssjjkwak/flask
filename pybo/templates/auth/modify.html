@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    body, html {
+    height: 100%;
+    margin: 0;
+    background-color: #f8f9fc;
+}
+    .custom-rounded {
+        border-radius: 25px;
+    }
+
+
+</style>
+<div class="container">
+    <h5 class="my-3 border-bottom pb-2">비밀번호 변경</h5>
+    <form method="post">
+        {{ form.csrf_token }}
+        {% include "form_errors.html" %}
+
+        <div class="mb-3">
+            <label for="old_password">현재 비밀번호</label>
+            <input type="password" class="form-control" name="old_password" id="old_password"
+                   value="{{ form.old_password.data or '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="new_password1">새 비밀번호</label>
+            <input type="password" class="form-control" name="new_password1" id="new_password1"
+                   value="{{ form.new_password1.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="new_password2">새 비밀번호 확인</label>
+            <input type="password" class="form-control" name="new_password2" id="new_password2"
+                   value="{{ form.new_password2.data or '' }}">
+        </div>
+
+        <button type="submit" class="btn btn-primary" onclick="showAlertAndRedirect()">비밀번호 변경</button>
+
+    </form>
+</div>
+<script>
+function showAlertAndRedirect() {
+    alert('비밀번호 변경 처리 중입니다. 정상 변경 완료 시 기존 페이지로 이동합니다.');
+
+}
+</script>
+{% endblock %}

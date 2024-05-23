@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="card shadow col-md-12 justify-content-end">
+        <div class="card-header py-3">
+            <h5 class="m-0 font-weight-bold text-primary">제조오더 현황 조회</h5>
+        </div>
+                <div class="d-sm-flex align-items-center justify-content-end gap-2 me-4 mb-4 my-3">
+
+                    <form class="d-none d-sm-inline-block shadow-sm">
+                        <div class="input-group">
+                                <input type="text" class="form-control bg-light border-0 small form-control" placeholder="검색"
+                                       aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button" id="btn_search">
+                                        <i class="fas fa-search fa-sm"></i>
+                                    </button>
+                                </div>
+                        </div>
+                    </form>
+
+                    <a href="{{ url_for('download.download_product_order') }}" class="d-none d-sm-inline-block btn btn-success shadow-sm">Excel 저장</a>
+                    <a href="#" class="d-none d-sm-inline-block btn btn-dark shadow-sm">Alpha 데이터 매핑</a>
+                </div>
+
+        <div class="card-body">
+            <table class="table table-sm table-bordered table-hover" style="text-align: center;
+            border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+
+                <thead>
+                <!--#192B5B #0d6efd #4e73df-->
+                    <tr>
+                        <th style="background-color: #78AA45; color: white;">제조 오더 번호</th>
+                        <th style="background-color: #78AA45; color: white;">공장 코드</th>
+                        <th style="background-color: #78AA45; color: white;">품목 코드</th>
+                        <th style="background-color: #78AA45; color: white;">계획 시작 날짜</th>
+                        <th style="background-color: #78AA45; color: white;">계획 완료 날짜</th>
+                        <th style="background-color: #78AA45; color: white;">주문 수량(기본 단위)</th>
+                        <th style="background-color: #78AA45; color: white;">생산 수량(주문 단위)</th>
+                        <th style="background-color: #78AA45; color: white;">단위</th>
+                        <th style="background-color: #78AA45; color: white;">주문 상태</th>
+                        <th style="background-color: #78AA45; color: white;">수령 수량(실적)</th>
+                        <th style="background-color: #78AA45; color: white;">수령 수량(양품)</th>
+                        <th style="background-color: #78AA45; color: white;">수령 수량(불량)</th>
+                        <th style="background-color: #78AA45; color: white;">수령 플래그</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>PD20240122000001</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000002</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000003</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000004</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000005</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000006</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000007</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000008</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000009</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000010</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000011</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                    <tr>
+                        <td>PD20240122000012</td>
+                        <td>p710</td>
+                        <td>BES0A02-020</td>
+                        <td>2024-01-19</td>
+                        <td>2024-01-19</td>
+                        <td>340.000</td>
+                        <td>340.000</td>
+                        <td>MT</td>
+                        <td>close</td>
+                        <td>340.000</td>
+                        <td>300.000</td>
+                        <td>40.000</td>
+                        <td>N</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+
+{% endblock %}

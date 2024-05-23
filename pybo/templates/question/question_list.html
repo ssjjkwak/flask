@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<div class="card shadow mb-4 justify-content-end">
+    <div class="card-header py-3">
+        <h5 class="m-0 font-weight-bold test-primary">제품 정보 DataTable</h5>
+    </div>
+
+            <div class="d-sm-flex align-items-center justify-content-end gap-2 me-4 mb-4 my-3">
+
+                <form class="d-none d-sm-inline-block shadow-sm">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light border-0 small form-control" placeholder="검색"
+                                   aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button" id="btn_search">
+                                    <i class="fas fa-search fa-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                <a href="#" class="d-none d-sm-inline-block btn btn-success shadow-sm">Excel 데이터 동기화 ↺</a>
+                <a href="#" class="d-none d-sm-inline-block btn btn-success shadow-sm">Excel 저장</a>
+                <a href="{{ url_for('question.create') }}" class="d-none d-sm-inline-block btn btn-dark shadow-sm">제품 직접 등록</a>
+
+
+            </div>
+
+    <div class="card-body">
+        <table class="table table-sm table-hover" style="text-align: center;
+        border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+            <thead>
+            <!--#192B5B #0d6efd #4e73df-->
+            <tr>
+                <th style="background-color: #4e73df; color: white;">Index</th>
+                <th style="background-color: #4e73df; color: white;">제조오더번호</th>
+                <th style="background-color: #4e73df; color: white;">제품코드</th>
+                <th style="background-color: #4e73df; color: white;">품목명</th>
+                <th style="background-color: #4e73df; color: white;">비고</th>
+                <th style="background-color: #78AA45; color: white;">바코드#1</th>
+                <th style="background-color: #78AA45; color: white;">바코드#2</th>
+                <th style="background-color: #78AA45; color: white;">바코드#3</th>
+                <th style="background-color: #78AA45; color: white;">바코드#4</th>
+                <th style="background-color: #78AA45; color: white;">바코드#5</th>
+                <th style="background-color: #EB8063; color: white;">UDI코드(Unit)</th>
+                <th style="background-color: #EB8063; color: white;">UDI코드(Box)</th>
+                <th style="background-color: #EB8063; color: white;">QR코드</th>
+                <th style="background-color: #EB8063; color: white;">등록일자</th>
+                <th style="background-color: #EB8063; color: white;">작성자</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% if question_list %}
+            {% for question in question_list.items %}
+            <tr>
+                <td>{{ question_list.total - ((question_list.page-1) * question_list.per_page) - loop.index0 }}</td>
+                <td>{{ question.makeorder_no }}</td>
+                <td>
+                    <a href="{{ url_for('question.detail', question_id=question.id) }}" class="custom-link fw-bold">{{
+                        question.code }}</a>
+                    {% if question.answer_set|length > 0 %}
+                    <span class="text-danger small mx-2">{{ question.answer_set|length }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {{ question.name }}
+                </td>
+                <td>
+                    {{ question.content }}
+                </td>
+                <td>{{ question.barcode1 }}</td>
+                <td>{{ question.barcode2 }}</td>
+                <td>{{ question.barcode3 }}</td>
+                <td>{{ question.barcode4 }}</td>
+                <td>{{ question.barcode5 }}</td>
+                <td>{{ question.udi_one }}</td>
+                <td>{{ question.udi_box }}</td>
+                <td>{{ question.qr_code }}</td>
+                <td>{{ question.create_date|datetime }}</td>
+                <td>{{ question.users.name }}</td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="3">등록 정보가 없습니다.</td>
+            </tr>
+            {% endif %}
+            </tbody>
+        </table>
+        <!-- 페이징처리 시작 -->
+        <ul class="pagination justify-content-center">
+            <!-- 이전페이지 -->
+            {% if question_list.has_prev %}
+            <li class="page-item">
+                <a class="page-link" data-page="{{ question_list.prev_num }}" href="javascript:void(0)">이전</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" tabindex="-1" aria-disabled="true" href="javascript:void(0)">이전</a>
+            </li>
+            {% endif %}
+            <!-- 페이지번호 -->
+            {% for page_num in question_list.iter_pages() %}
+            {% if page_num %}
+            {% if page_num != question_list.page %}
+            <li class="page-item">
+                <a class="page-link" data-page="{{ page_num }}" href="javascript:void(0)">{{ page_num }}</a>
+            </li>
+            {% else %}
+            <li class="page-item active" aria-current="page">
+                <a class="page-link" href="javascript:void(0)">{{ page_num }}</a>
+            </li>
+            {% endif %}
+            {% else %}
+            <li class="disabled">
+                <a class="page-link" href="javascript:void(0)">...</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            <!-- 다음페이지 -->
+            {% if question_list.has_next %}
+            <li class="page-item">
+                <a class="page-link" data-page="{{ question_list.next_num }}" href="javascript:void(0)">다음</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" tabindex="-1" aria-disabled="true" href="javascript:void(0)">다음</a>
+            </li>
+            {% endif %}
+        </ul>
+        <!-- 페이징처리 끝 -->
+        <form id="searchForm" method="get" action="{{ url_for('question._list') }}">
+            <input type="hidden" id="kw" name="kw" value="{{ kw or '' }}">
+            <input type="hidden" id="page" name="page" value="{{ page }}">
+        </form>
+    </div>
+    {% endblock %}
+    {% block script %}
+    <script type='text/javascript'>
+        const page_elements = document.getElementsByClassName("page-link");
+        Array.from(page_elements).forEach(function(element) {
+            element.addEventListener('click', function() {
+                document.getElementById('page').value = this.dataset.page;
+                document.getElementById('searchForm').submit();
+            });
+        });
+        const btn_search = document.getElementById("btn_search");
+        btn_search.addEventListener('click', function() {
+            document.getElementById('kw').value = document.getElementById('search_kw').value;
+            document.getElementById('page').value = 1;  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
+            document.getElementById('searchForm').submit();
+        });
+    </script>
+</div>
+{% endblock %}
+
+
+

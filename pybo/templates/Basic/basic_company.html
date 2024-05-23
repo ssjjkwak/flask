@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="card shadow col-md-12 justify-content-end">
+        <div class="card-header py-3">
+            <h5 class="m-0 font-weight-bold text-primary">거래처정보</h5>
+        </div>
+                <div class="d-sm-flex align-items-center justify-content-end gap-2 me-4 mb-4 my-3">
+                    <form class="d-none d-sm-inline-block shadow-sm">
+                        <div class="input-group">
+                                <input type="text" class="form-control bg-light border-0 small form-control" placeholder="검색"
+                                       aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button" id="btn_search">
+                                        <i class="fas fa-search fa-sm"></i>
+                                    </button>
+                                </div>
+                        </div>
+                    </form>
+
+                    <a href="#" class="d-none d-sm-inline-block btn btn-success shadow-sm">Excel 저장</a>
+                    <a href="#" class="d-none d-sm-inline-block btn btn-dark shadow-sm">거래처 등록</a>
+                </div>
+
+        <div class="card-body">
+            <table class="table table-sm table-bordered table-hover" style="text-align: center;
+            border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+
+                <thead>
+                <!--#192B5B #0d6efd #4e73df-->
+                    <tr>
+                        <th style="background-color: #4e73df; color: white;">거래처코드</th>
+                        <th style="background-color: #4e73df; color: white;">거래처명</th>
+                        <th style="background-color: #4e73df; color: white;">거래처구분</th>
+                        <th style="background-color: #4e73df; color: white;">등록번호(사업자,의료기관)</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>A001231</td>
+                        <td>한림대병원</td>
+                        <td>CS</td>
+                        <td>137-81-04156</td>
+                    </tr>
+                    <tr>
+                        <td>A001232</td>
+                        <td>YES의료기기</td>
+                        <td>CS</td>
+                        <td>137-81-04157</td>
+                    </tr>
+                    <tr>
+                        <td>A001233</td>
+                        <td>김병욱소아과</td>
+                        <td>CS</td>
+                        <td>137-81-04150</td>
+                    </tr>
+                    <tr>
+                        <td>A001234</td>
+                        <td>아주대병원</td>
+                        <td>CS</td>
+                        <td>137-55-04156</td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+        </div>
+
+
+
+    </div>
+</div>
+
+
+
+
+
+
+{% endblock %}

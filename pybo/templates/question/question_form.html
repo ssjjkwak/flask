@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- 질문 등록 -->
+<div class="container">
+    <h5 class="my-3 border-bottom pb-2">제품등록</h5>
+    <form method="post" class="my-3">
+        {{ form.csrf_token }}
+        <!-- 오류표시 Start -->
+        {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+            {% for field, errors in form.errors.items() %}
+            <strong>{{ form[field].label }}</strong>
+            <ul>
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <!-- 오류표시 End -->
+        <div class="mb-3">
+            <label for="makeorder_no">제조오더번호</label>
+            <input type="text" class="form-control" name="makeorder_no" id="makeorder_no" value="{{ form.makeorder_no.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="code">제품코드</label>
+            <input type="text" class="form-control" name="code" id="code" value="{{ form.code.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="name">품목명</label>
+            <input type="text" class="form-control" name="name" id="name" value="{{ form.name.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="content">비고</label>
+            <input type="text" class="form-control" name="content" id="content" value="{{ form.content.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="barcode1">바코드#1</label>
+            <input type="text" class="form-control" name="barcode1" id="barcode1" value="{{ form.barcode1.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="barcode2">바코드#2</label>
+            <input type="text" class="form-control" name="barcode2" id="barcode2" value="{{ form.barcode2.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="barcode3">바코드#3</label>
+            <input type="text" class="form-control" name="barcode3" id="barcode3" value="{{ form.barcode3.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="barcode4">바코드#4</label>
+            <input type="text" class="form-control" name="barcode4" id="barcode4" value="{{ form.barcode4.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="barcode5">바코드#5</label>
+            <input type="text" class="form-control" name="barcode5" id="barcode5" value="{{ form.barcode5.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="udi_one">UDI코드(Unit)</label>
+            <input type="text" class="form-control" name="udi_one" id="udi_one" value="{{ form.udi_one.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="udi_box">UDI코드(Box)</label>
+            <input type="text" class="form-control" name="udi_box" id="udi_box" value="{{ form.udi_box.data or '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="qr_code">QR코드</label>
+            <input type="text" class="form-control" name="qr_code" id="qr_code" value="{{ form.qr_code.data or '' }}">
+        </div>
+
+
+        <button type="submit" class="btn btn-primary">저장하기</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+/*
+    .custom-link {
+        color: black;
+        text-decoration: none;
+    }
+
+    .custom-link:hover {
+        color: blue;
+    }
+
+    .custom-container {
+        margin-left: auto;
+    }
+
+    .bg-navy {
+        --bs-bg-opacity: 1;
+        background-color: rgba(var(--bs-navy-rgb), var(--bs-bg-opacity)) !important;
+    }
+
+    .btn-navy {
+        color: #fff;
+        background-color: #203864;
+        border-color: #203864;
+    }
+    .btn-navy:hover {
+        color: #fff;
+        background-color: #264378;
+        border-color: #264378;
+    }
+    .btn-check:focus + .btn-navy, .btn-navy:focus {
+        color: #fff;
+        background-color: #2B4B85;
+        border-color: #243f70;
+        box-shadow: 0 0 0 0.25rem rgba(113, 146, 209, 0.5);
+    }
+
+    * { padding: 0; margin: 0; }
+
+    html, body {
+      height: 100%;
+      background: #ffffff;
+    }
+
+    #container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
+    #loginBox {
+      width: 600px;
+      text-align: center;
+      background-color: #ffffff;
+    }
+    .input-form-box {
+      border: 0px solid #ff0000;
+      display: flex;
+      margin-bottom: 5px;
+    }
+    .input-form-box > span {
+      display: block;
+      text-align: left;
+      padding-top: 5px;
+      min-width: 65px;
+    }
+    .button-login-box {
+      margin: 10px 0;
+    }
+    #loginBoxTitle {
+      color:#000000;
+      font-weight: bold;
+      font-size: 32px;
+      text-transform: uppercase;
+      padding: 5px;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #270a09, #8ca6ce);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    #inputBox {
+      margin: 10px;
+    }
+
+    #inputBox button {
+      padding: 3px 5px;
+    }
+
+    .navbar-nav .nav-item:hover .dropdown-menu {
+            display: block;
+        }
+
+    @media (max-width: 768px) {
+            .btn {
+                font-size: x-small;
+            }
+
+            .table {
+                font-size: small;
+            }
+        }
+
+    .nav-link {
+        color: #fff !important;
+        font-weight: bold;
+    }
+
+    .nav-link:hover {
+        color: #d6d8db !important;
+        font-weight: bold;
+    }
+
+    #accordionSidebar {
+        width: 13rem !important;
+    }
+*/
+
+.navbar-custom {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
+
+
+
+
+
+
