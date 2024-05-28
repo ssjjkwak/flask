@@ -1,29 +1,272 @@
+
+
+<!--<div class="row">-->
+<!--    <div class="card shadow col-md-12 justify-content-end">-->
+<!--        <div class="card-header py-3">-->
+<!--            <h5 class="m-0 font-weight-bold text-primary">제조오더 현황 조회</h5>-->
+<!--        </div>-->
+<!--                <div class="d-sm-flex align-items-center justify-content-end gap-2 me-4 mb-4 my-3">-->
+
+<!--                    <form class="d-none d-sm-inline-block shadow-sm">-->
+<!--                        <div class="input-group">-->
+<!--                                <input type="text" class="form-control bg-light border-0 small form-control" placeholder="검색"-->
+<!--                                       aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">-->
+<!--                                <div class="input-group-append">-->
+<!--                                    <button class="btn btn-primary" type="button" id="btn_search">-->
+<!--                                        <i class="fas fa-search fa-sm"></i>-->
+<!--                                    </button>-->
+<!--                                </div>-->
+<!--                        </div>-->
+<!--                    </form>-->
+
+<!--                    <a href="{{ url_for('download.download_product_order') }}" class="d-none d-sm-inline-block btn btn-success shadow-sm">Excel 저장</a>-->
+<!--                    <a href="#" class="d-none d-sm-inline-block btn btn-dark shadow-sm">Alpha 데이터 매핑</a>-->
+<!--                </div>-->
+
+<!--        <div class="card-body">-->
+<!--            <table class="table table-sm table-bordered table-hover" style="text-align: center;-->
+<!--            border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">-->
+
+<!--                <thead>-->
+<!--                &lt;!&ndash;#192B5B #0d6efd #4e73df&ndash;&gt;-->
+<!--                    <tr>-->
+<!--                        <th style="background-color: #78AA45; color: white;">제조 오더 번호</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">공장 코드</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">품목 코드</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">계획 시작 날짜</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">계획 완료 날짜</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">주문 수량(기본 단위)</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">생산 수량(주문 단위)</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">단위</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">주문 상태</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">수령 수량(실적)</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">수령 수량(양품)</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">수령 수량(불량)</th>-->
+<!--                        <th style="background-color: #78AA45; color: white;">수령 플래그</th>-->
+<!--                    </tr>-->
+<!--                </thead>-->
+
+<!--                <tbody>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000001</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000002</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000003</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000004</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000005</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000006</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000007</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000008</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000009</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000010</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000011</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                    <tr>-->
+<!--                        <td>PD20240122000012</td>-->
+<!--                        <td>p710</td>-->
+<!--                        <td>BES0A02-020</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>2024-01-19</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>MT</td>-->
+<!--                        <td>close</td>-->
+<!--                        <td>340.000</td>-->
+<!--                        <td>300.000</td>-->
+<!--                        <td>40.000</td>-->
+<!--                        <td>N</td>-->
+<!--                    </tr>-->
+<!--                </tbody>-->
+<!--            </table>-->
+<!--        </div>-->
+
+<!--    </div>-->
+<!--</div>-->
+
+
+
 {% extends "base.html" %}
 {% block content %}
 
-<div class="row">
-    <div class="card shadow col-md-12 justify-content-end">
-        <div class="card-header py-3">
-            <h5 class="m-0 font-weight-bold text-primary">제조오더 현황 조회</h5>
+<style>
+    .btn-custom {
+        background-color: #d3d3d3; /* 옅은 밝은색 배경 */
+        color: #343a40; /* 찐한 글자 색 */
+        font-weight: bold; /* 글자를 찐하게 */
+    }
+</style>
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h7 class="m-0 font-weight-bold text-primary">제조오더 관리 > 제조 오더 조회</h7>
+        <div style="display: flex; gap: 10px; align-items: center;">
+
+            <!--            <a href="{{ url_for('download.download_user_manage') }}" class="btn btn-success shadow-sm">Excel 저장</a>-->
+            <a href="{{ url_for('auth.signup') }}" class="btn btn-custom shadow-sm">하위반제품 정보조회</a>
+
         </div>
-                <div class="d-sm-flex align-items-center justify-content-end gap-2 me-4 mb-4 my-3">
+  
+    </div>
+</div>
 
-                    <form class="d-none d-sm-inline-block shadow-sm">
-                        <div class="input-group">
-                                <input type="text" class="form-control bg-light border-0 small form-control" placeholder="검색"
-                                       aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
-                                <div class="input-group-append">
-                                    <button class="btn btn-primary" type="button" id="btn_search">
-                                        <i class="fas fa-search fa-sm"></i>
-                                    </button>
-                                </div>
-                        </div>
-                    </form>
 
-                    <a href="{{ url_for('download.download_product_order') }}" class="d-none d-sm-inline-block btn btn-success shadow-sm">Excel 저장</a>
-                    <a href="#" class="d-none d-sm-inline-block btn btn-dark shadow-sm">Alpha 데이터 매핑</a>
-                </div>
 
+
+
+
+<!--라인-->
+<div>
+    <div>
         <div class="card-body">
             <table class="table table-sm table-bordered table-hover" style="text-align: center;
             border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
@@ -31,210 +274,89 @@
                 <thead>
                 <!--#192B5B #0d6efd #4e73df-->
                     <tr>
-                        <th style="background-color: #78AA45; color: white;">제조 오더 번호</th>
-                        <th style="background-color: #78AA45; color: white;">공장 코드</th>
-                        <th style="background-color: #78AA45; color: white;">품목 코드</th>
-                        <th style="background-color: #78AA45; color: white;">계획 시작 날짜</th>
-                        <th style="background-color: #78AA45; color: white;">계획 완료 날짜</th>
-                        <th style="background-color: #78AA45; color: white;">주문 수량(기본 단위)</th>
-                        <th style="background-color: #78AA45; color: white;">생산 수량(주문 단위)</th>
+                        <th style="background-color: #78AA45; color: white;">제조오더번호</th>
+                        <th style="background-color: #78AA45; color: white;">Seq</th>
+                        <th style="background-color: #78AA45; color: white;">작업공정</th>
+                        <th style="background-color: #78AA45; color: white;">공정명</th>
+                        <th style="background-color: #78AA45; color: white;">품목</th>
+                        <th style="background-color: #78AA45; color: white;">품목명</th>
+                        <th style="background-color: #78AA45; color: white;">품목규격</th>
                         <th style="background-color: #78AA45; color: white;">단위</th>
-                        <th style="background-color: #78AA45; color: white;">주문 상태</th>
-                        <th style="background-color: #78AA45; color: white;">수령 수량(실적)</th>
-                        <th style="background-color: #78AA45; color: white;">수령 수량(양품)</th>
-                        <th style="background-color: #78AA45; color: white;">수령 수량(불량)</th>
-                        <th style="background-color: #78AA45; color: white;">수령 플래그</th>
+                        <th style="background-color: #78AA45; color: white;">제조계획일</th>
+                        <th style="background-color: #78AA45; color: white;">계획수량</th>
+                        <th style="background-color: #78AA45; color: white;">실적수량</th>
+                        <th style="background-color: #78AA45; color: white;">불량수량</th>
+                        <th style="background-color: #78AA45; color: white;">제조완료일</th>
+                        <th style="background-color: #78AA45; color: white;">오더상태</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <tr>
-                        <td>PD20240122000001</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
+                {% for user, rolename in users_with_roles %}
+                    <tr data-user-id="{{ user.users_id }}">
+                        <td>{{ user.users_id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.name }}</td>
+                        <td></td>
+                        <td>{{ user.department }}</td>
+                        <td>{{ user.jobtitle }}</td>
+                        <td>KO388</td>
+                        <td>{{ rolename }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.createdate.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ user.updatedate.strftime('%Y-%m-%d') }}</td>
+                        <td></td>
                     </tr>
-                    <tr>
-                        <td>PD20240122000002</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000003</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000004</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000005</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000006</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000007</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000008</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000009</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000010</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000011</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
-                    <tr>
-                        <td>PD20240122000012</td>
-                        <td>p710</td>
-                        <td>BES0A02-020</td>
-                        <td>2024-01-19</td>
-                        <td>2024-01-19</td>
-                        <td>340.000</td>
-                        <td>340.000</td>
-                        <td>MT</td>
-                        <td>close</td>
-                        <td>340.000</td>
-                        <td>300.000</td>
-                        <td>40.000</td>
-                        <td>N</td>
-                    </tr>
+                {% endfor %}
                 </tbody>
+
             </table>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">확인 요청</h5>
+              </div>
+              <div class="modal-body">
+                데이터 수정 및 비밀번호 초기화를 진행 하시겠습니까?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="window.location.href='/auth/user_manage'">취소</button>
+                <button type="button" class="btn btn-primary" id="confirmUpdate">확인</button>
+              </div>
+            </div>
+          </div>
         </div>
 
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        row.addEventListener('click', function(event) {
+            event.preventDefault(); // 기본 이벤트 방지
+            const userId = this.dataset.userId; // 데이터 속성에서 사용자 ID 추출
+            if (userId) {
+                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                document.getElementById('confirmUpdate').addEventListener('click', function() {
+                    window.location.href = `/auth/user_update/${userId}`; // 사용자 수정 페이지로 이동
+                });
+
+                modal.show(); // 모달 표시
+            } else {
+                console.error('User ID not found.');
+            }
+        });
+    });
+});
+</script>
+
+
 
 
 {% endblock %}
+
