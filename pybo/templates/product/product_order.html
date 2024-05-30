@@ -1,241 +1,3 @@
-
-
-<!--<div class="row">-->
-<!--    <div class="card shadow col-md-12 justify-content-end">-->
-<!--        <div class="card-header py-3">-->
-<!--            <h5 class="m-0 font-weight-bold text-primary">제조오더 현황 조회</h5>-->
-<!--        </div>-->
-<!--                <div class="d-sm-flex align-items-center justify-content-end gap-2 me-4 mb-4 my-3">-->
-
-<!--                    <form class="d-none d-sm-inline-block shadow-sm">-->
-<!--                        <div class="input-group">-->
-<!--                                <input type="text" class="form-control bg-light border-0 small form-control" placeholder="검색"-->
-<!--                                       aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">-->
-<!--                                <div class="input-group-append">-->
-<!--                                    <button class="btn btn-primary" type="button" id="btn_search">-->
-<!--                                        <i class="fas fa-search fa-sm"></i>-->
-<!--                                    </button>-->
-<!--                                </div>-->
-<!--                        </div>-->
-<!--                    </form>-->
-
-<!--                    <a href="{{ url_for('download.download_product_order') }}" class="d-none d-sm-inline-block btn btn-success shadow-sm">Excel 저장</a>-->
-<!--                    <a href="#" class="d-none d-sm-inline-block btn btn-dark shadow-sm">Alpha 데이터 매핑</a>-->
-<!--                </div>-->
-
-<!--        <div class="card-body">-->
-<!--            <table class="table table-sm table-bordered table-hover" style="text-align: center;-->
-<!--            border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">-->
-
-<!--                <thead>-->
-<!--                &lt;!&ndash;#192B5B #0d6efd #4e73df&ndash;&gt;-->
-<!--                    <tr>-->
-<!--                        <th style="background-color: #78AA45; color: white;">제조 오더 번호</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">공장 코드</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">품목 코드</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">계획 시작 날짜</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">계획 완료 날짜</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">주문 수량(기본 단위)</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">생산 수량(주문 단위)</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">단위</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">주문 상태</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">수령 수량(실적)</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">수령 수량(양품)</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">수령 수량(불량)</th>-->
-<!--                        <th style="background-color: #78AA45; color: white;">수령 플래그</th>-->
-<!--                    </tr>-->
-<!--                </thead>-->
-
-<!--                <tbody>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000001</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000002</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000003</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000004</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000005</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000006</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000007</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000008</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000009</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000010</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000011</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                    <tr>-->
-<!--                        <td>PD20240122000012</td>-->
-<!--                        <td>p710</td>-->
-<!--                        <td>BES0A02-020</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>2024-01-19</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>MT</td>-->
-<!--                        <td>close</td>-->
-<!--                        <td>340.000</td>-->
-<!--                        <td>300.000</td>-->
-<!--                        <td>40.000</td>-->
-<!--                        <td>N</td>-->
-<!--                    </tr>-->
-<!--                </tbody>-->
-<!--            </table>-->
-<!--        </div>-->
-
-<!--    </div>-->
-<!--</div>-->
-
-
-
 {% extends "base.html" %}
 {% block content %}
 
@@ -248,115 +10,215 @@
 </style>
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h7 class="m-0 font-weight-bold text-primary">제조오더 관리 > 제조 오더 조회</h7>
+        <h7 class="m-0 font-weight-bold text-primary mb-3">제조오더관리 > 제조오더조회</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
-
-            <!--            <a href="{{ url_for('download.download_user_manage') }}" class="btn btn-success shadow-sm">Excel 저장</a>-->
-            <a href="{{ url_for('auth.signup') }}" class="btn btn-custom shadow-sm">하위반제품 정보조회</a>
-
+            <button type="button" class="btn btn-custom shadow-sm ms-3" data-toggle="modal"
+                    data-target=".bd-example-modal-lg">하위반제품
+                정보조회
+            </button>
         </div>
-  
+        <!--모달-->
+        <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">하위반제품 정보조회</h5>
+
+                    </div>
+                    <div class="modal-body">
+                        <form id="productForm" method="POST" action="{{ url_for('product.product_order') }}" class="px-5">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-1 col-8">
+                                        <label for="plant_code2" class="form-label">공장:</label>
+                                        <select class="form-control" id="plant_code2" name="plant_code">
+                                            <option value="">-</option>
+                                            {% for plant in plants %}
+                                            <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD
+                                                    %}selected{% endif %}>
+                                                {{ plant.PLANT_CD }} {{ plant.PLANT_NM }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-1 col-14">
+                                        <label for="aaa" class="form-label">제조오더번호:</label>
+                                        <input type="text" class="form-control" id="aaa"
+                                               name="parent_item_cd" value="{{ PARENT_ITEM_CD }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+
+                                    <div class="mb-1 col-14">
+                                        <label for="parent_item_cd" class="form-label">상위품목:</label>
+                                        <input type="text" class="form-control" id="parent_item_cd"
+                                               name="parent_item_cd" value="{{ PARENT_ITEM_CD }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <table class="table table-sm table-bordered table-hover"
+                               style="text-align: center; border-collapse: collapse;" id="dataTable_modal" width="100%"
+                               cellspacing="0">
+                            <thead>
+                            <tr>
+
+                                <th style="background-color: #78AA45; color: white;">품목</th>
+                                <th style="background-color: #78AA45; color: white;">품목명</th>
+                                <th style="background-color: #78AA45; color: white;">품목규격</th>
+                                <th style="background-color: #78AA45; color: white;">단위</th>
+                                <th style="background-color: #78AA45; color: white;">소요량</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" form="productForm" class="btn btn-custom shadow-sm ms-3">Search</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+    <!--데이터 테이블-->
+    <form method="POST" action="{{ url_for('product.product_order') }}" class="px-5">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-1 col-8">
+                    <label for="plant_code" class="form-label">공장:</label>
+                    <select class="form-control" id="plant_code" name="plant_code">
+                        <option value="">-</option>
+                        {% for plant in plants %}
+                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>{{
+                            plant.PLANT_CD }} {{plant.PLANT_NM}}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-1 col-8">
+                    <label for="wc_cd" class="form-label">작업공정:</label>
+                    <select class="form-control" id="wc_cd" name="wc_cd">
+                        <option value="">-</option>
+                        {% for work_center in work_centers %}
+                        <option value="{{ work_center.WC_CD }}" {% if work_center.WC_CD== WC_CD %}selected{% endif %}>{{
+                            work_center.WC_CD }} {{ work_center.WC_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-1 col-8">
+                    <label for="item_cd" class="form-label">품목:</label>
+                    <select class="form-control" id="item_cd" name="item_cd">
+                        <option value="">-</option>
+                        {% for item in items %}
+                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>{{
+                            item.ITEM_CD }} {{ item.ITEM_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-1 col-8">
+                    <label for="start_date" class="form-label">계획일자:</label>
+                    <div class="d-flex">
+                        <input type="date" class="form-control me-2" id="start_date" name="start_date"
+                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') if PLANT_START_DT else '' }}">
+                        <span class="mx-2">~</span>
+                        <input type="date" class="form-control ms-2" id="end_date" name="end_date"
+                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') if PLANT_COMPT_DT else '' }}">
+                    </div>
+                </div>
+                <div class="mb-1 col-8">
+                    <label for="prodt_order_no" class="form-label">제조오더번호:</label>
+                    <input type="text" class="form-control" id="prodt_order_no" name="prodt_order_no"
+                           value="{{ PRODT_ORDER_NO }}">
+                </div>
+                <div class="mb-1 d-flex align-items-end col-8">
+                    <div class="flex-grow-1 me-2">
+                        <label for="order_status" class="form-label">오더상태:</label>
+                        <input type="text" class="form-control" id="order_status" name="order_status"
+                               value="{{ order_status }}">
+                    </div>
+                    <button type="submit" class="btn btn-custom shadow-sm ms-3">Search</button>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
 
-
-
-
-
-
-<!--라인-->
 <div>
     <div>
+        {% if orders_with_items and orders_with_wcs %}
         <div class="card-body">
-            <table class="table table-sm table-bordered table-hover" style="text-align: center;
-            border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
-
-                <thead>
-                <!--#192B5B #0d6efd #4e73df-->
-                    <tr>
-                        <th style="background-color: #78AA45; color: white;">제조오더번호</th>
-                        <th style="background-color: #78AA45; color: white;">Seq</th>
-                        <th style="background-color: #78AA45; color: white;">작업공정</th>
-                        <th style="background-color: #78AA45; color: white;">공정명</th>
-                        <th style="background-color: #78AA45; color: white;">품목</th>
-                        <th style="background-color: #78AA45; color: white;">품목명</th>
-                        <th style="background-color: #78AA45; color: white;">품목규격</th>
-                        <th style="background-color: #78AA45; color: white;">단위</th>
-                        <th style="background-color: #78AA45; color: white;">제조계획일</th>
-                        <th style="background-color: #78AA45; color: white;">계획수량</th>
-                        <th style="background-color: #78AA45; color: white;">실적수량</th>
-                        <th style="background-color: #78AA45; color: white;">불량수량</th>
-                        <th style="background-color: #78AA45; color: white;">제조완료일</th>
-                        <th style="background-color: #78AA45; color: white;">오더상태</th>
-                    </tr>
+            <table class="table table-sm table-bordered table-hover"
+                   style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+                <thead class="table-success">
+                <tr>
+                    <th>제조오더번호</th>
+                    <th>Seq</th>
+                    <th>공장</th>
+                    <th>작업공정</th>
+                    <th>공정명</th>
+                    <th>품목</th>
+                    <th>품목명</th>
+                    <th>품목규격</th>
+                    <th>단위</th>
+                    <th>계획지시일</th>
+                    <th>계획수량</th>
+                    <th>실적수량</th>
+                    <th>불량수량</th>
+                    <th>계획시작일자</th>
+                    <th>계획완료일자</th>
+                    <th>오더상태</th>
+                </tr>
                 </thead>
 
                 <tbody>
-                {% for user, rolename in users_with_roles %}
-                    <tr data-user-id="{{ user.users_id }}">
-                        <td>{{ user.users_id }}</td>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.name }}</td>
-                        <td></td>
-                        <td>{{ user.department }}</td>
-                        <td>{{ user.jobtitle }}</td>
-                        <td>KO388</td>
-                        <td>{{ rolename }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.createdate.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ user.updatedate.strftime('%Y-%m-%d') }}</td>
-                        <td></td>
-                    </tr>
+                {% for (order_item, item), (order_wc, wc) in zip(orders_with_items, orders_with_wcs) %}
+                <tr>
+                    <td>{{ order_item.PRODT_ORDER_NO }}</td>
+                    <td>{{ order_item.OPR_NO }}</td>
+                    <td>{{ order_item.PLANT_CD }}</td>
+                    <td>{{ order_item.WC_CD }}</td>
+                    <td>{{ wc.WC_NM }}</td>
+                    <td>{{ order_item.ITEM_CD }}</td>
+                    <td>{{ item.ITEM_NM }}</td>
+                    <td>{{ item.SPEC }}</td>
+                    <td>{{ order_item.PRODT_ORDER_UNIT }}</td>
+                    <td>{{ order_item.RELEASE_DT }}</td>
+                    <td>{{ order_item.PRODT_ORDER_QTY }}</td>
+                    <td>{{ order_item.PROD_QTY_IN_ORDER_UNIT }}</td>
+                    <td>{{ order_item.BAD_QTY_IN_ORDER_UNIT }}</td>
+                    <td>{{ order_item.PLANT_START_DT }}</td>
+                    <td>{{ order_item.PLANT_COMPT_DT }}</td>
+                    <td>{{ order_item.ORDER_STATUS }}</td>
+                </tr>
                 {% endfor %}
                 </tbody>
-
             </table>
+            {% else %}
+            <p>데이터 없음</p>
+            {% endif %}
         </div>
-        <!-- Modal -->
-        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="confirmModalLabel">확인 요청</h5>
-              </div>
-              <div class="modal-body">
-                데이터 수정 및 비밀번호 초기화를 진행 하시겠습니까?
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="window.location.href='/auth/user_manage'">취소</button>
-                <button type="button" class="btn btn-primary" id="confirmUpdate">확인</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
     </div>
 </div>
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const rows = document.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-        row.addEventListener('click', function(event) {
-            event.preventDefault(); // 기본 이벤트 방지
-            const userId = this.dataset.userId; // 데이터 속성에서 사용자 ID 추출
-            if (userId) {
-                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
-                document.getElementById('confirmUpdate').addEventListener('click', function() {
-                    window.location.href = `/auth/user_update/${userId}`; // 사용자 수정 페이지로 이동
-                });
-
-                modal.show(); // 모달 표시
-            } else {
-                console.error('User ID not found.');
-            }
-        });
-    });
-});
+    var exampleModal = new bootstrap.Modal(document.getElementById('exampleModal'), {});
+    exampleModal.show();
 </script>
-
-
-
-
 {% endblock %}
-

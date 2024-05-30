@@ -5,7 +5,7 @@ from werkzeug.utils import redirect, send_file
 
 from pybo import db
 from pybo.forms import UserCreateForm, UserLoginForm, UserModifyForm, UserUpdateForm
-from pybo.models import Users, Roles, Users_Roles
+from pybo.models import User
 import functools
 
 from pybo.views.download_views import convert_to_excel
@@ -17,59 +17,93 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 def signup():
     form = UserCreateForm()
     if request.method == 'POST' and form.validate_on_submit():
-        user = Users.query.filter_by(username=form.username.data).first()
+        user = User.query.filter_by(USR_ID=form.USR_ID.data).first()
         if not user:
-            user = Users(username=form.username.data,
-                        password=generate_password_hash(form.password1.data),
-                        email=form.email.data, name=form.name.data, jobtitle=form.jobtitle.data,
-                        department=form.department.data, phonenumber=form.phonenumber.data)
+            user = User(USR_ID=form.USR_ID.data,
+                        USR_PW=generate_password_hash(form.USR_PW1.data),
+                        USR_EMAIL=form.USR_EMAIL.data, USR_NM=form.USR_NM.data, USR_JOB=form.USR_JOB.data,
+                        USR_DEPT=form.USR_DEPT.data, USR_PHONE=form.USR_PHONE.data)
             db.session.add(user)
             db.session.commit()
 
-            role_id = form.role_name.data  # 폼에서 선택된 권한 ID
-            user_role = Users_Roles(users_id=user.users_id, roles_id=role_id)
-            db.session.add(user_role)
-            db.session.commit()
+            # role_id = form.role_name.data  # 폼에서 선택된 권한 ID
+            # user_role = Users_Roles(users_id=user.users_id, roles_id=role_id)
+            # db.session.add(user_role)
+            # db.session.commit()
 
             return redirect(url_for('main.index'))
         else:
             flash('이미 존재하는 사용자입니다.')
     return render_template('auth/signup.html', form=form, show_navigation_bar=True)
 
+# @bp.route('/login/', methods=('GET', 'POST'))
+# def login():
+#     form = UserLoginForm()
+#     if request.method == 'POST' and form.validate_on_submit():
+#         error = None
+#         user = User.query.filter_by(USR_ID=form.USR_ID.data).first()
+#         if not user:
+#             error = "존재하지 않는 사용자입니다."
+#         elif not check_password_hash(user.USR_PW, form.USR_PW.data):
+#             error = "비밀번호가 올바르지 않습니다."
+#         if error is None:
+#             session.clear()
+#             session['USR_ID'] = user.USR_ID
+#
+#             # 사용자의 roles_id를 세션에 저장
+#             # user_role = Users_Roles.query.filter_by(users_id=user.users_id).first()
+#             # if user_role:
+#             #     session['roles_id'] = user_role.roles_id
+#             #
+#             # _next = request.args.get('next', '')
+#             # if _next:
+#             #     return redirect(_next)
+#             # else:
+#             #     return redirect(url_for('main.index'))
+#         flash(error)
+#     return render_template('auth/login.html', form=form, show_navigation_bar=False)
+
+
 @bp.route('/login/', methods=('GET', 'POST'))
 def login():
     form = UserLoginForm()
     if request.method == 'POST' and form.validate_on_submit():
         error = None
-        user = Users.query.filter_by(username=form.username.data).first()
+        user = User.query.filter_by(USR_ID=form.USR_ID.data).first()
         if not user:
             error = "존재하지 않는 사용자입니다."
-        elif not check_password_hash(user.password, form.password.data):
+        elif not check_password_hash(user.USR_PW, form.USR_PW.data):
             error = "비밀번호가 올바르지 않습니다."
+
         if error is None:
             session.clear()
-            session['users_id'] = user.users_id
+            session['USR_ID'] = user.USR_ID  # 수정된 부분: user.USR_ID를 세션에 저장
 
-            # 사용자의 roles_id를 세션에 저장
-            user_role = Users_Roles.query.filter_by(users_id=user.users_id).first()
-            if user_role:
-                session['roles_id'] = user_role.roles_id
+        #     # 사용자의 roles_id를 세션에 저장
+        #     user_role = Users_Roles.query.filter_by(users_id=user.USR_ID).first()
+        #     if user_role:
+        #         session['roles_id'] = user_role.roles_id
+        #
+        #     _next = request.args.get('next', '')
+        #     if _next:
+        #         return redirect(_next)
+        #     else:
+        #         return redirect(url_for('main.index'))
+        # else:
+        #     flash(error)
 
-            _next = request.args.get('next', '')
-            if _next:
-                return redirect(_next)
-            else:
-                return redirect(url_for('main.index'))
-        flash(error)
+        return redirect(url_for('main.index'))
+
     return render_template('auth/login.html', form=form, show_navigation_bar=False)
+
 
 @bp.before_app_request
 def load_logged_in_user():
-    users_id = session.get('users_id')
+    users_id = session.get('USR_ID')
     if users_id is None:
         g.user = None
     else:
-        g.user = Users.query.get(users_id)
+        g.user = User.query.get(users_id)
 
 @bp.route('/logout/')
 def logout():
@@ -106,27 +140,34 @@ def modify():
 
 @bp.route('/user_manage')
 def user_manage():
-    users_with_roles = db.session.query(Users, Roles.rolename)\
-        .select_from(Users)\
-        .join(Users_Roles, Users.users_id == Users_Roles.users_id)\
-        .join(Roles, Users_Roles.roles_id == Roles.roles_id)\
-        .all()
-    total_users = len(users_with_roles)
+    # users_with_roles = db.session.query(User, Roles.rolename)\
+    #     .select_from(User)\
+    #     .join(Users_Roles, Users.users_id == Users_Roles.users_id)\
+    #     .join(Roles, Users_Roles.roles_id == Roles.roles_id)\
+    #     .all()
+    # total_users = len(users_with_roles)
+    users_with_roles = []
+    total_users = 0
+
     return render_template('auth/user_manage.html', users_with_roles=users_with_roles, total_users=total_users)
 
 
-@bp.route('/user_update/<int:user_id>', methods=['GET', 'POST'])
-def user_update(user_id):
-    user = Users.query.get(user_id)
+@bp.route('/user_update/<string:USR_ID>', methods=['GET', 'POST'])
+def user_update(USR_ID):
+    user = User.query.get(USR_ID)
+    if user is None:
+        # 사용자 ID가 잘못된 경우에 대한 처리
+        return redirect(url_for('main.index'))
+
     form = UserUpdateForm(obj=user)  # Prepopulate the form with user data
     if request.method == 'POST' and form.validate_on_submit():
-        user.username = form.username.data
-        user.name = form.name.data
-        user.email = form.email.data
-        user.password = generate_password_hash(form.password1.data)  # 비밀번호 해싱
-        user.department = form.department.data
-        user.jobtitle = form.jobtitle.data
-        user.phonenumber = form.phonenumber.data
+        user.USR_ID = form.USR_ID.data
+        user.USR_NM = form.USR_NM.data
+        user.USR_EMAIL = form.USR_EMAIL.data
+        user.USR_PW = generate_password_hash(form.password1.data)  # 비밀번호 해싱
+        user.USR_DEPT = form.USR_DEPT.data
+        user.USR_JOB = form.USR_JOB.data
+        user.USR_PHONE = form.USR_PHONE.data
         db.session.commit()
         return redirect(url_for('main.index'))
 
@@ -134,32 +175,27 @@ def user_update(user_id):
 
 @bp.route('/user_role', methods=['GET', 'POST'])
 def user_role():
-    roles = db.session.query(Roles).all()  # 모든 권한을 조회
+    # 임시 데이터로 빈 리스트와 기본 값 설정
+    roles = []
+    users_with_roles = []
+
     if request.method == 'POST':
-        user_id = request.form['user_id']
-        new_role_id = request.form['role_id']
-        user_role = Users_Roles.query.filter_by(users_id=user_id).first()
-        if user_role:
-            user_role.roles_id = new_role_id
-        else:
-            new_user_role = Users_Roles(users_id=user_id, roles_id=new_role_id)
-            db.session.add(new_user_role)
-        db.session.commit()
+        # 임시로 POST 요청 처리 부분도 정의
+        user_id = request.form.get('user_id')
+        new_role_id = request.form.get('role_id')
+        # 실제 DB 작업 없이 임시로 처리
+        print(f"User ID: {user_id}, New Role ID: {new_role_id}")
         return redirect(url_for('auth.user_role'))
 
-    users_with_roles = db.session.query(Users, Users_Roles.roles_id). \
-        outerjoin(Users_Roles, Users.users_id == Users_Roles.users_id). \
-        outerjoin(Roles, Users_Roles.roles_id == Roles.roles_id). \
-        all()
     return render_template('auth/user_role.html', users_with_roles=users_with_roles, roles=roles)
 
 
 @bp.route('/role_permission/', methods=['GET', 'POST'])
 def role_permission():
-    # Fetch the user count for each specific role
-    admin_count = db.session.query(db.func.count(Users_Roles.users_id)).join(Roles).filter(Roles.rolename == 'role_80').scalar()
-    mid_manager_count = db.session.query(db.func.count(Users_Roles.users_id)).join(Roles).filter(Roles.rolename == 'role_50').scalar()
-    user_count = db.session.query(db.func.count(Users_Roles.users_id)).join(Roles).filter(Roles.rolename == 'role_20').scalar()
+    # 임시 데이터로 기본 값 설정
+    admin_count = 0
+    mid_manager_count = 0
+    user_count = 0
 
     return render_template('auth/role_permission.html', admin_count=admin_count, mid_manager_count=mid_manager_count, user_count=user_count)
 

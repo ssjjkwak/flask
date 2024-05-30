@@ -1,19 +1,19 @@
 import os
+from urllib.parse import quote_plus
 
 BASE_DIR = os.path.dirname(__file__)
 
-SQLALCHEMY_DATABASE_URI = 'sqlite:///{}'.format(os.path.join(BASE_DIR, 'pybo.db'))
-
 username = 'ssjjkwak'
-password = 'rhkr0728@@'
-hostname = '219.255.132.72'
-port = '80'
-database = 'SYNOPEX_FILTER_TEST'
+password = 'synopex%4024!!'
+hostname = '219.255.132.65'
+port = '1433'
+database = 'ERP_WEB'
 driver = 'ODBC Driver 17 for SQL Server'
 
-SQLALCHEMY_BINDS = {
-    'mssql': 'mssql+pyodbc://ssjjkwak:rhkr0728%40%40@219.255.132.72:80/SYNOPEX_FILTER_TEST?driver=ODBC+Driver+17+for+SQL+Server'
-}
+encoded_password = quote_plus(password)
+
+SQLALCHEMY_DATABASE_URI = f'mssql+pyodbc://ssjjkwak:synopex%4024!!@219.255.132.65:1433/ERP_WEB?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes'
+
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SECRET_KEY = "dev"

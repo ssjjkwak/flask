@@ -1,134 +1,318 @@
 from pybo import db
 from datetime import datetime
+from sqlalchemy import Column, Integer, Numeric
+from sqlalchemy.dialects.mssql import NVARCHAR
+from flask_sqlalchemy import SQLAlchemy
 import pytz
 
 
 def kst_now():
     return datetime.now(pytz.timezone('Asia/Seoul'))
 
-class Question(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text(), nullable=False)
-    name = db.Column(db.Text(), nullable=True)
-    create_date = db.Column(db.DateTime(), nullable=False)
-    users_id = db.Column(db.Integer, db.ForeignKey('users.users_id', ondelete='CASCADE'), nullable=False)
-    users = db.relationship('Users', backref=db.backref('question_set'))
-    makeorder_no = db.Column(db.String(200), nullable=True)
-    barcode1 = db.Column(db.String(200), nullable=True)
-    barcode2 = db.Column(db.String(200), nullable=True)
-    barcode3 = db.Column(db.String(200), nullable=True)
-    barcode4 = db.Column(db.String(200), nullable=True)
-    barcode5 = db.Column(db.String(200), nullable=True)
-    udi_one = db.Column(db.String(200), nullable=True)
-    udi_box = db.Column(db.String(200), nullable=True)
-    qr_code = db.Column(db.String(200), nullable=True)
-    modify_date = db.Column(db.DateTime(), nullable=True)
+# 사용자
+class User(db.Model):
+    __tablename__ = 'Z_USER'
+    __table_args__ = {'schema': 'dbo'}
 
-class Answer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE'))
-    question = db.relationship('Question', backref=db.backref('answer_set'))
-    content = db.Column(db.Text(), nullable=False)
-    create_date = db.Column(db.DateTime(), nullable=False)
-    users_id = db.Column(db.Integer, db.ForeignKey('users.users_id', ondelete='CASCADE'), nullable=False)
-    users = db.relationship('Users', backref=db.backref('answer_set'))
-    modify_date = db.Column(db.DateTime(), nullable=True)
+    USR_ID = db.Column(db.VARCHAR(20), primary_key=True)
+    USR_PW = db.Column(db.VARCHAR(255), nullable=True)
+    USR_NM = db.Column(db.VARCHAR(255), nullable=True)
+    USR_EMAIL = db.Column(db.VARCHAR(40), nullable=True)
+    USR_DEPT = db.Column(db.VARCHAR(20), nullable=True)
+    USR_JOB = db.Column(db.VARCHAR(10), nullable=True)
+    USR_PHONE = db.Column(db.VARCHAR(15), nullable=False)
+    ROLE_ID = db.Column(db.VARCHAR(10), nullable=False)
+    INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
 
-class Users(db.Model):
-    users_id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    department = db.Column(db.String(120), nullable=False)
-    jobtitle = db.Column(db.String(120), nullable=False)
-    phonenumber = db.Column(db.String(120), unique=True, nullable=False)
-    name = db.Column(db.String(120), unique=True, nullable=False)
-    createdate = db.Column(db.DateTime, default=kst_now)
-    updatedate = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+class Role(db.Model):
+    __tablename__ = 'Z_ROLE'
+    __table_args__ = {'schema': 'dbo'}
+
+    ROLE_ID = db.Column(db.VARCHAR(10), primary_key=True)
+    ROLE_NM = db.Column(db.VARCHAR(20), nullable=True)
+    INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
 
 
-class Users_Roles(db.Model):
-    users_roles_id = db.Column(db.Integer, primary_key=True)
-    users_id = db.Column(db.Integer, db.ForeignKey('users.users_id', ondelete='cascade', name='fk_users_roles_users_id'), nullable=False)
-    roles_id = db.Column(db.Integer, db.ForeignKey('roles.roles_id', ondelete='cascade', name='fk_users_roles_roles_id'), nullable=False)
+# 기준정보
+class Item(db.Model):
+    __tablename__ = 'B_ITEM'
+    __table_args__ = {'schema': 'dbo'}
 
-class Roles(db.Model):
-    roles_id = db.Column(db.Integer, primary_key=True)
-    rolename = db.Column(db.String(120), unique=True, nullable=False)
-    createdate = db.Column(db.DateTime, default=kst_now)
-    updatedate = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    ITEM_CD = db.Column(db.NVARCHAR(50), primary_key=True)
+    ITEM_NM = db.Column(db.NVARCHAR(100), nullable=True)
+    SPEC = db.Column(db.NVARCHAR(20), nullable=True)
+    ITEM_ACCT = db.Column(db.NCHAR(2), nullable=True)
+    BASIC_UNIT = db.Column(db.NVARCHAR(3), nullable=True)
+    ITEM_GROUP_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    ALPHA_CODE = db.Column(db.NVARCHAR(50), nullable=True)
+    UDI_CODE = db.Column(db.NVARCHAR(50), nullable=True)
+    PRODUCT_NM = db.Column(db.NVARCHAR(100), nullable=True)
+    MODEL_NM = db.Column(db.NVARCHAR(100), nullable=True)
+    GTIN_CODE1 = db.Column(db.NVARCHAR(50), nullable=True)
+    PAC_QTY1 = db.Column(db.NUMERIC(18,0), nullable=True)
+    GTIN_CODE2 = db.Column(db.NVARCHAR(50), nullable=True)
+    PAC_QTY2 = db.Column(db.NUMERIC(18,0), nullable=True)
+    BARCODE_TYPE = db.Column(db.NVARCHAR(20), nullable=True)
+    IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+    UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
 
-class permissions(db.Model):
-    permissions_id = db.Column(db.Integer, primary_key=True)
-    permissions_name = db.Column(db.String(120), unique=True, nullable=False)
-    createdate = db.Column(db.DateTime, default=kst_now)
-    updatedate = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+class Item_Group(db.Model):
+    __tablename__ = 'B_ITEM_GROUP'
+    __table_args__ = {'schema': 'dbo'}
+
+    ITEM_GROUP_CD = db.Column(db.NVARCHAR(8), primary_key=True)
+    ITEM_GROUP_NM = db.Column(db.NVARCHAR(100), nullable=True)
+    UPPER_ITEM_GROUP_CD = db.Column(db.NVARCHAR(8), nullable=True)
+    ITEM_GROUP_LEVEL = db.Column(db.NUMERIC(18,0), nullable=True)
+
+class Plant(db.Model):
+    __tablename__ = 'B_PLANT'
+    __table_args__ = {'schema': 'dbo'}
+
+    PLANT_CD = db.Column(db.NVARCHAR(4), primary_key=True)
+    PLANT_NM = db.Column(db.NVARCHAR(14), nullable=True)
+    CUR_CD = db.Column(db.NVARCHAR(4), nullable=True)
+
+class Storage_Location(db.Model):
+    __tablename__ = 'B_STORAGE_LOCATION'
+    __table_args__ = {'schema': 'dbo'}
+
+    SL_CD = db.Column(db.NVARCHAR(4), primary_key=True)
+    SL_NM = db.Column(db.NVARCHAR(12), nullable=True)
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+
+# 수불유형
+class Movetype_Configuration(db.Model):
+    __tablename__ = 'I_MOVETYPE_CONFIGURATION'
+    __table_args__ = {'schema': 'dbo'}
+
+    MOV_TYPE = db.Column(db.NVARCHAR(3), primary_key=True)
+    MOV_TYPE_NM = db.Column(db.NVARCHAR(30), nullable=True)
+
+# 수주정보
+class Purchase_Order(db.Model):
+    __tablename__ = 'M_PUR_ORD'
+    __table_args__ = {'schema': 'dbo'}
+
+    PO_NO = db.Column(db.NVARCHAR(18), primary_key=True)
+    PO_SEQ_NO = db.Column(db.SMALLINT, primary_key=True)
+    BP_CD = db.Column(db.NVARCHAR(10), nullable=True)
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    SL_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    PO_QTY = db.Column(db.NUMERIC(18,6), nullable=True)
+    PO_UNIT = db.Column(db.NCHAR(3), nullable=True)
+    PO_PRC = db.Column(db.NUMERIC(18,6), nullable=True)
+    PO_DOC_AMT = db.Column(db.NUMERIC(18,2), nullable=True)
+    PO_CUR = db.Column(db.NCHAR(3), nullable=True)
+    DLVY_DT = db.Column(db.DATETIME, nullable=True)
+    PO_TYPE_CD = db.Column(db.NVARCHAR(5), nullable=True)
+    PUR_ORG = db.Column(db.NVARCHAR(4), nullable=True)
+    PUR_GRP = db.Column(db.NVARCHAR(4), nullable=True)
+    PUR_BIZ_AREA = db.Column(db.NVARCHAR(10), nullable=True)
+    RCPT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
+    IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    IF_UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+
+# 발주정보
+class Sales_Order(db.Model):
+    __tablename__ = 'S_SO'
+    __table_args__ = {'schema': 'dbo'}
+
+    SO_NO = db.Column(db.NVARCHAR(18), primary_key=True)
+    SO_SEQ = db.Column(db.SMALLINT, primary_key=True)
+    BP_CD = db.Column(db.NVARCHAR(10), nullable=True)
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    SL_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    SO_PRICE = db.Column(db.NUMERIC(18,6), nullable=True)
+    NET_AMT = db.Column(db.NUMERIC(18,2), nullable=True)
+    ITEM_ACCT = db.Column(db.NCHAR(2), nullable=True)
+    SO_QTY = db.Column(db.NUMERIC(18,6), nullable=True)
+    BASE_UNIT = db.Column(db.NCHAR(3), nullable=True)
+    IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    IF_UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+
+# 제조오더정보
+class Production_Order(db.Model):
+    __tablename__ = 'P_PRODUCTION_ORDER'
+    __table_args__ = {'schema': 'dbo'}
+
+    PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), primary_key=True)
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    OPR_NO = db.Column(db.NVARCHAR(3), nullable=True)
+    WC_CD = db.Column(db.NVARCHAR(7), nullable=True)
+    SL_CD = db.Column(db.NVARCHAR(10), nullable=True)
+    PLANT_START_DT = db.Column(db.DATETIME, nullable=True)
+    PRODT_ORDER_QTY = db.Column(db.NUMERIC(18,6), nullable=True)
+    PRODT_ORDER_UNIT = db.Column(db.NVARCHAR(3), nullable=True)
+    IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    IF_UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+    PLANT_COMPT_DT = db.Column(db.DATETIME, nullable=True)
+    RELEASE_DT = db.Column(db.DATETIME, nullable=True)
+    PROD_QTY_IN_ORDER_UNIT = db.Column(db.NUMERIC(18,6), nullable=True)
+    BAD_QTY_IN_ORDER_UNIT = db.Column(db.NUMERIC(18,6), nullable=True)
+    ORDER_STATUS = db.Column(db.NVARCHAR(4), nullable=True)
+
+# 알파플랜 엑셀 파일
+class Production_Alpha(db.Model):
+    __tablename__ = 'P_PRODUCTION_ALPHA'
+    __table_args__ = {'schema': 'dbo'}
+
+    LOT = db.Column(db.NVARCHAR(4), nullable=True)
+    product = db.Column(db.NVARCHAR(4), nullable=True)
+    barcode = db.Column(db.NVARCHAR(18), primary_key=True)
+    modified = db.Column(db.NVARCHAR(18), primary_key=True)
+    err_code = db.Column(db.NVARCHAR(4), nullable=True)
+    err_info = db.Column(db.NVARCHAR(50), nullable=True)
+    print_time = db.Column(db.NVARCHAR(3), nullable=True)
+    inweight_time = db.Column(db.NVARCHAR(10), nullable=True)
+    inweight_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    inweight_station = db.Column(db.NVARCHAR(10), nullable=True)
+    inweight_result = db.Column(db.NVARCHAR(10), nullable=True)
+    inweight_value = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_entry = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_exit = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_station = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_value = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_ptest = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_duration = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_result = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_time = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_station = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_result = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_value = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_time = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_station = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_result = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_value = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_ptest = db.Column(db.NVARCHAR(10), nullable=True)
+    prodlabel_time = db.Column(db.NVARCHAR(10), nullable=True)
+    prodlabel_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    INSRT_USR = db.Column(db.NVARCHAR(13),nullable=True)
+    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+    UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
 
 
-class Roles_Permissions(db.Model):
-    roles_permissions_id = db.Column(db.Integer, primary_key=True)
-    roles_id = db.Column(db.Integer, db.ForeignKey('roles.roles_id', ondelete='cascade', name='fk_roles_permissions_roles_id'), nullable=False)
-    permissions_id = db.Column(db.Integer, db.ForeignKey('permissions.permissions_id', ondelete='cascade', name='fk_roles_permissions_permissions_id'), nullable=False)
+# 알파플랜 엑셀 파일에서 MODIFED만 제거
+class Production_Barcode(db.Model):
+    __tablename__ = 'P_PRODUCTION_BARCODE'
+    __table_args__ = {'schema': 'dbo'}
 
-class ImportDataPO(db.Model):
-    PRODT_ORDER_NO = db.Column(db.String, primary_key=True)
-    PLANT_CD = db.Column(db.String)
-    ITEM_CD = db.Column(db.String)
-    PLAN_START_DT = db.Column(db.Date)
-    PLAN_COMPT_DT = db.Column(db.Date)
-    ORDER_QTY_IN_BASE_UNIT = db.Column(db.Integer)
-    PROD_QTY_IN_ORDER_UNIT = db.Column(db.Integer)
-    ORDER_STATUS = db.Column(db.String)
-    RCPT_QTY_IN_ORDER_UNIT = db.Column(db.Integer)
-    RCPT_QTY_IN_BASE_UNIT = db.Column(db.Integer)
-    RCPT_FLG = db.Column(db.String)
+    LOT = db.Column(db.NVARCHAR(4), nullable=True)
+    product = db.Column(db.NVARCHAR(4), nullable=True)
+    barcode = db.Column(db.NVARCHAR(18), primary_key=True)
+    err_code = db.Column(db.NVARCHAR(4), nullable=True)
+    err_info = db.Column(db.NVARCHAR(50), nullable=True)
+    print_time = db.Column(db.NVARCHAR(3), nullable=True)
+    inweight_time = db.Column(db.NVARCHAR(10), nullable=True)
+    inweight_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    inweight_station = db.Column(db.NVARCHAR(10), nullable=True)
+    inweight_result = db.Column(db.NVARCHAR(10), nullable=True)
+    inweight_value = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_entry = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_exit = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_station = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_value = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_ptest = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_duration = db.Column(db.NVARCHAR(10), nullable=True)
+    leaktest_result = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_time = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_station = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_result = db.Column(db.NVARCHAR(10), nullable=True)
+    outweight_value = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_time = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_station = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_result = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_value = db.Column(db.NVARCHAR(10), nullable=True)
+    itest2_ptest = db.Column(db.NVARCHAR(10), nullable=True)
+    prodlabel_time = db.Column(db.NVARCHAR(10), nullable=True)
+    prodlabel_cycles = db.Column(db.NVARCHAR(10), nullable=True)
+    INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+    UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+
+class Production_Barcode_Assign(db.Model):
+    __tablename__ = 'P_PRODUCTION_BARCODE_ASSN'
+    __table_args__ = {'schema': 'dbo'}
+
+    barcode = db.Column(db.NVARCHAR(20), primary_key=True)
+    PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), nullable=True)
+    OPR_NO = db.Column(db.NVARCHAR(3), nullable=True)
+    REPORT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
+    BOX_NUM = db.Column(db.NVARCHAR(20), nullable=True)
+    INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+    UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+    MOV_TYPE = db.Column(db.NVARCHAR(4), nullable=True)
+    PO_NO = db.Column(db.NVARCHAR(18), nullable=True)
+    POS_SEQ_NO = db.Column(db.SMALLINT, nullable=True)
+    SO_NO = db.Column(db.NVARCHAR(18), nullable=True)
+    SO_SEQ = db.Column(db.SMALLINT, nullable=True)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#  -- 하단은 ERP DB --
-
-class ProductionOrderHeader(db.Model):
-    __bind_key__ = 'mssql'
-    __tablename__ = 'P_PRODUCTION_ORDER_HEADER'
-
-    prodt_order_no = db.Column(db.String, primary_key=True)
-    plant_cd = db.Column(db.String)
-    item_cd = db.Column(db.String)
-    plan_start_dt = db.Column(db.Date)
-    plan_compt_dt = db.Column(db.Date)
-    order_qty_in_base_unit = db.Column(db.Integer)
-    prod_qty_in_order_unit = db.Column(db.Integer)
-    order_status = db.Column(db.String)
-    results = db.relationship('ProductionResults', back_populates='order', uselist=False)
-
-class ProductionResults(db.Model):
-    __bind_key__ = 'mssql'
+class Production_Results(db.Model):
     __tablename__ = 'P_PRODUCTION_RESULTS'
+    __table_args__ = {'schema': 'dbo'}
 
-    prodt_order_no = db.Column(db.String, db.ForeignKey('P_PRODUCTION_ORDER_HEADER.prodt_order_no'), primary_key=True)
-    rcpt_qty_in_order_unit = db.Column(db.Integer)
-    rcpt_qty_in_base_unit = db.Column(db.Integer)
-    rcpt_flg = db.Column(db.String)
-    order = db.relationship('ProductionOrderHeader', back_populates='results')
+    PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), primary_key=True)
+    OPR_NO = db.Column(db.NVARCHAR(3), primary_key=True)
+    SEQ = db.Column(db.SMALLINT, primary_key=True)
+    REPORT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    PROD_QTY_IN_ORDER_UNIT = db.Column(db.NUMERIC(18,6),nullable=True)
+    REPORT_DT = db.Column(db.DateTime, default=kst_now)
+    INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+
+# BOM
+class Bom(db.Model):
+    __tablename__ = 'P_BOM'
+    __table_args__ = {'schema': 'dbo'}
+
+    PRNT_ITEM_CD = db.Column(db.NVARCHAR(50), primary_key=True)
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    CHILD_ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    CHILD_ITEM_UNIT = db.Column(db.NVARCHAR(3), nullable=True)
+    PRNT_ITEM_QTY = db.Column(db.NUMERIC(18,6),nullable=True)
+    CHILD_ITEM_QTY = db.Column(db.NUMERIC(18,6),nullable=True)
+    VALID_DT_FR = db.Column(db.DateTime, nullable=True)
+    VALID_DT_TO = db.Column(db.DateTime, nullable=True)
+    IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    IF_UPDT_DT = db.Column(db.DateTime, default=kst_now)
+
+# 작업장
+class Work_Center(db.Model):
+    __tablename__ = 'P_WORK_CENTER'
+    __table_args__ = {'schema': 'dbo'}
+
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    WC_CD = db.Column(db.NVARCHAR(7), primary_key=True)
+    WC_NM = db.Column(db.NVARCHAR(50), nullable=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

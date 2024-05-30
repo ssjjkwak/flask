@@ -19,20 +19,20 @@
         {% include "form_errors.html" %}
 
         <div class="mb-3">
-            <label for="old_password">현재 비밀번호</label>
-            <input type="password" class="form-control" name="old_password" id="old_password"
-                   value="{{ form.old_password.data or '' }}">
+            <label for="old_USR_PW">현재 비밀번호</label>
+            <input type="password" class="form-control" name="old_USR_PW" id="old_USR_PW"
+                   value="{{ form.old_USR_PW.data or '' }}">
         </div>
 
         <div class="mb-3">
-            <label for="new_password1">새 비밀번호</label>
-            <input type="password" class="form-control" name="new_password1" id="new_password1"
-                   value="{{ form.new_password1.data or '' }}">
+            <label for="new_USR_PW1">새 비밀번호</label>
+            <input type="password" class="form-control" name="new_USR_PW1" id="new_USR_PW1"
+                   value="{{ form.new_USR_PW1.data or '' }}">
         </div>
         <div class="mb-3">
-            <label for="new_password2">새 비밀번호 확인</label>
-            <input type="password" class="form-control" name="new_password2" id="new_password2"
-                   value="{{ form.new_password2.data or '' }}">
+            <label for="new_USR_PW2">새 비밀번호 확인</label>
+            <input type="password" class="form-control" name="new_USR_PW2" id="new_USR_PW2"
+                   value="{{ form.new_USR_PW2.data or '' }}">
         </div>
 
         <button type="submit" class="btn btn-primary" onclick="showAlertAndRedirect()">비밀번호 변경</button>

@@ -23,39 +23,39 @@ class AnswerForm(FlaskForm):
     content = TextAreaField('내용', validators=[DataRequired('내용은 필수입력 항목입니다.')])
 
 class UserCreateForm(FlaskForm):
-    username = StringField('사용자이름', validators=[DataRequired('아이디는 필수입력 항목입니다.'), Length(min=3, max=25)])
-    password1 = PasswordField('비밀번호', validators=[
-        DataRequired('비밀번호는 필수입력 항목입니다.'), EqualTo('password2', '비밀번호가 일치하지 않습니다')])
-    password2 = PasswordField('비밀번호확인', validators=[DataRequired('비밀번호 확인은 필수입력 항목입니다.')])
-    email = EmailField('이메일', validators=[DataRequired('이메일은 필수입력 항목입니다.'), Email()])
-    name = StringField('이름', validators=[DataRequired()])
-    jobtitle = StringField('직책/직위', validators=[DataRequired()])
-    department = StringField('부서', validators=[DataRequired()])
-    phonenumber = StringField('전화번호', validators=[DataRequired()])
-    role_name = SelectField('권한', choices=[('1', '기본권한'), ('2', '중간관리자'), ('3', '최고관리자')], coerce=int)
+    USR_ID = StringField('사용자이름', validators=[DataRequired('아이디는 필수입력 항목입니다.'), Length(min=3, max=25)])
+    USR_PW1 = PasswordField('비밀번호', validators=[
+        DataRequired('비밀번호는 필수입력 항목입니다.'), EqualTo('USR_PW2', '비밀번호가 일치하지 않습니다')])
+    USR_PW2 = PasswordField('비밀번호확인', validators=[DataRequired('비밀번호 확인은 필수입력 항목입니다.')])
+    USR_EMAIL = EmailField('이메일', validators=[DataRequired('이메일은 필수입력 항목입니다.'), Email()])
+    USR_NM = StringField('이름', validators=[DataRequired()])
+    USR_JOB = StringField('직책/직위', validators=[DataRequired()])
+    USR_DEPT = StringField('부서', validators=[DataRequired()])
+    USR_PHONE = StringField('전화번호', validators=[DataRequired()])
+
 
 class UserLoginForm(FlaskForm):
-    username = StringField('사용자이름', validators=[DataRequired(), Length(min=3, max=25)])
-    password = PasswordField('비밀번호', validators=[DataRequired()])
+    USR_ID = StringField('사용자이름', validators=[DataRequired(), Length(min=3, max=25)])
+    USR_PW = PasswordField('비밀번호', validators=[DataRequired()])
 
 class UserModifyForm(FlaskForm):
 
-    old_password = PasswordField('기존비밀번호', validators=[
+    old_USR_PW = PasswordField('기존비밀번호', validators=[
         DataRequired('기존 비밀번호는 필수입력 항목입니다.')])
-    new_password1 = PasswordField('새 비밀번호', validators=[
+    new_USR_PW1 = PasswordField('새 비밀번호', validators=[
         DataRequired('비밀번호는 필수입력 항목입니다.'), EqualTo('new_password2', '비밀번호가 일치하지 않습니다')])
-    new_password2 = PasswordField('새 비밀번호확인', validators=[
+    new_USR_PW2 = PasswordField('새 비밀번호확인', validators=[
         DataRequired('비밀번호 확인은 필수입력 항목입니다.')])
 
 class UserUpdateForm(FlaskForm):
-    username = StringField('사용자ID', validators=[DataRequired(), Length(min=2, max=20)])
-    name = StringField('성명', validators=[DataRequired(), Length(min=2, max=50)])
-    email = StringField('이메일', validators=[DataRequired(), Email()])
-    password1 = PasswordField('비밀번호', validators=[DataRequired('비밀번호를 입력하세요'), EqualTo('password2', '비밀번호가 일치하지 않습니다')])
-    password2 = PasswordField('비밀번호확인', validators=[DataRequired('비밀번호 확인을 입력하세요')])
-    department = StringField('부서', validators=[DataRequired()])
-    jobtitle = StringField('직위/직책', validators=[DataRequired()])
-    phonenumber = StringField('전화번호', validators=[DataRequired()])
+    USR_ID = StringField('사용자ID', validators=[DataRequired(), Length(min=2, max=20)])
+    USR_NM = StringField('성명', validators=[DataRequired(), Length(min=2, max=50)])
+    USR_EMAIL = StringField('이메일', validators=[DataRequired(), Email()])
+    USR_PW1 = PasswordField('비밀번호', validators=[DataRequired('비밀번호를 입력하세요'), EqualTo('password2', '비밀번호가 일치하지 않습니다')])
+    USR_PW2 = PasswordField('비밀번호확인', validators=[DataRequired('비밀번호 확인을 입력하세요')])
+    USR_DEPT = StringField('부서', validators=[DataRequired()])
+    USR_JOB = StringField('직위/직책', validators=[DataRequired()])
+    USR_PHONE = StringField('전화번호', validators=[DataRequired()])
 
 
 

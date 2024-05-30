@@ -46,7 +46,7 @@
                 <thead>
                 <!--#192B5B #0d6efd #4e73df-->
                     <tr>
-                        <th style="background-color: #5a5c69; color: white;">Index</th>
+
                         <th style="background-color: #5a5c69; color: white;">사용자ID</th>
                         <th style="background-color: #5a5c69; color: white;">성명</th>
                         <th style="background-color: #5a5c69; color: white;">성명(영문)</th>
@@ -66,17 +66,17 @@
                 <tbody>
                 {% for user, rolename in users_with_roles %}
                     <tr data-user-id="{{ user.users_id }}">
-                        <td>{{ user.users_id }}</td>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.name }}</td>
+
+                        <td>{{ User.USR_ID }}</td>
+                        <td>{{ User.USR_NM }}</td>
                         <td></td>
-                        <td>{{ user.department }}</td>
-                        <td>{{ user.jobtitle }}</td>
+                        <td>{{ User.USR_DEPT }}</td>
+                        <td>{{ User.USR_JOB }}</td>
                         <td>KO388</td>
-                        <td>{{ rolename }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.createdate.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ user.updatedate.strftime('%Y-%m-%d') }}</td>
+                        <td></td>
+                        <td>{{ User.USR_EMAIL }}</td>
+                        <td>{{ User.INSRT_DT.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ User.UPDT_DT.strftime('%Y-%m-%d') }}</td>
                         <td></td>
                     </tr>
                 {% endfor %}

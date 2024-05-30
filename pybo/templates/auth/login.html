@@ -37,14 +37,14 @@
                     <div class="text-center">
                         <img src="{{ url_for('static', filename='img/logo_login.png') }}" class="img-fluid mb-4" alt="Logo">
                     </div>
-                    <form class="user" method="post">
+                    <form class="User" method="post">
                         {{ form.csrf_token }}
                         {% include "form_errors.html" %}
                         <div class="form-group">
-                            <input type="text" class="form-control form-control-user" id="username" name="username" placeholder="아이디" value="{{ form.username.data or '' }}">
+                            <input type="text" class="form-control form-control-user" id="USR_ID" name="USR_ID" placeholder="아이디" value="{{ form.USR_ID.data or '' }}">
                         </div>
                         <div class="form-group">
-                            <input type="password" class="form-control form-control-user" id="password" name="password" placeholder="비밀번호" value="{{ form.password.data or '' }}">
+                            <input type="password" class="form-control form-control-user" id="USR_PW" name="USR_PW" placeholder="비밀번호" value="{{ form.USR_PW.data or '' }}">
                         </div>
                         <button type="submit" class="btn btn-primary btn-user btn-block">
                             로그인

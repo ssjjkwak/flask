@@ -6,7 +6,7 @@ from werkzeug.utils import redirect
 
 from pybo import db
 from pybo.forms import UserCreateForm, UserLoginForm, UserModifyForm, UserUpdateForm
-from pybo.models import Users, Roles, Users_Roles, ProductionOrderHeader, ProductionResults
+from pybo.models import User
 import functools
 
 bp = Blueprint('delivery', __name__, url_prefix='/delivery')
