@@ -75,8 +75,6 @@
                               onsubmit="showLoadingModal()">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="uploadModalLabel">엑셀 파일 업로드</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                                        onclick="location.reload();"></button>
                             </div>
                             <div class="modal-body">
                                 <div class="mb-3">
@@ -95,11 +93,23 @@
                     </div>
                 </div>
             </div>
-            <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
+            <button type="submit" form="registerForm" class="btn btn-light btn-sm shadow-sm ms-3">
                 <i class="bi bi-box-arrow-in-down"></i> 저장
             </button>
         </div>
     </div>
+
+    <!-- 플래시 메시지 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
     <!-- 로딩 중 모달 -->
     <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
@@ -116,7 +126,7 @@
     </div>
 
     <!-- 데이터 테이블 -->
-    <form method="POST" action="{{ url_for('product.product_order') }}" class="px-4" id="searchForm">
+    <form method="POST" action="{{ url_for('product.register') }}" class="px-4" id="registerForm">
         <div class="row">
             <div class="col-md-3">
                 <div class="mb-1 col-8 d-flex align-items-center">

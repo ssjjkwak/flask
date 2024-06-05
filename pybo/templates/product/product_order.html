@@ -2,19 +2,22 @@
 {% block content %}
 
 <style>
-
     .selected-row {
         background-color: #D6EAF8 !important;
     }
+
+    .completed-order {
+        background-color: #e0ffff !important;
+    }
 </style>
+
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 제조오더조회</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
             <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-toggle="modal"
                     data-target=".bd-example-modal-lg" id="openModalButton"><i class="bi bi-receipt"></i>
-                하위반제품
-                조회
+                하위반제품 조회
             </button>
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
                 <i class="bi bi-search"></i> 조회
@@ -68,7 +71,6 @@
                                cellspacing="0">
                             <thead class="table-light">
                             <tr>
-
                                 <th>품목</th>
                                 <th>품목명</th>
                                 <th>품목규격</th>
@@ -168,8 +170,6 @@
             </div>
         </div>
     </form>
-
-
 </div>
 
 <div>
@@ -202,7 +202,8 @@
 
                 <tbody>
                 {% for (order_item, item), (order_wc, wc) in zip(orders_with_items, orders_with_wcs) %}
-                <tr data-order-no="{{ order_item.PRODT_ORDER_NO }}" data-item-cd="{{ order_item.ITEM_CD }}">
+                <tr data-order-no="{{ order_item.PRODT_ORDER_NO }}" data-item-cd="{{ order_item.ITEM_CD }}"
+                    class="{% if order_item.ORDER_STATUS == 'CL' %}completed-order{% endif %}">
                     <td>{{ loop.index }}</td>
                     <td>{{ order_item.PRODT_ORDER_NO }}</td>
                     <td>{{ order_item.OPR_NO }}</td>
@@ -224,14 +225,13 @@
                 {% endfor %}
                 </tbody>
             </table>
-
-
-            {% else %}
-            <p>데이터 없음</p>
-            {% endif %}
         </div>
+        {% else %}
+        <p>데이터 없음</p>
+        {% endif %}
     </div>
 </div>
+
 <script>
     var selectedOrderNo = '';
     var selectedItemCd = '';

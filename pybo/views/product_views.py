@@ -1,19 +1,19 @@
 import logging
 import os
 from datetime import datetime
-from flask import Blueprint, url_for, render_template, flash, request, session, g, app, jsonify, current_app
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import redirect
+from flask import Blueprint, url_for, render_template, request, current_app, jsonify
+from werkzeug.utils import redirect, secure_filename
 import pandas as pd
-from werkzeug.utils import secure_filename
 from pybo import db
-from pybo.forms import UserCreateForm, UserLoginForm, UserModifyForm, UserUpdateForm
-from pybo.models import User, Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha
-import functools
+from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, ProductionWHF10, ProductionWHF30, ProductionWHF60
 
 bp = Blueprint('product', __name__, url_prefix='/product')
 
 ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
+
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG)
+
 
 @bp.route('/product_order/', methods=('GET', 'POST'))
 def product_order():
@@ -38,7 +38,6 @@ def product_order():
     work_centers = db.session.query(Work_Center).all()
     items = db.session.query(Item).all()
 
-    # Production_Order와 Item 조인 쿼리
     query_item = db.session.query(Production_Order, Item).join(
         Item, Production_Order.ITEM_CD == Item.ITEM_CD
     )
@@ -58,7 +57,6 @@ def product_order():
 
     orders_with_items = query_item.all()
 
-    # Production_Order와 Work_Center 조인 쿼리
     query_wc = db.session.query(Production_Order, Work_Center).join(
         Work_Center, Production_Order.WC_CD == Work_Center.WC_CD
     )
@@ -87,13 +85,14 @@ def product_order():
                            PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, PLANT_START_DT=PLANT_START_DT,
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT)
 
+
 @bp.route('/get_bom_data')
 def get_bom_data():
     order_no = request.args.get('order_no')
     item_cd = request.args.get('item_cd')
 
-    # 필요한 데이터 조회 로직
-    bom_data = db.session.query(Bom, Item).join(Item, Bom.CHILD_ITEM_CD == Item.ITEM_CD).filter(Bom.PRNT_ITEM_CD == item_cd).all()
+    bom_data = db.session.query(Bom, Item).join(Item, Bom.CHILD_ITEM_CD == Item.ITEM_CD).filter(
+        Bom.PRNT_ITEM_CD == item_cd).all()
 
     results = []
     for bom, item in bom_data:
@@ -107,29 +106,27 @@ def get_bom_data():
 
     return jsonify(results)
 
-# 엑셀 업로드 / 엑셀 db 저장 / db 내용 보여주기
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @bp.route('/upload_excel', methods=['POST'])
 def upload_excel():
     if 'excelFile' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
+        return '<script>alert("No file part"); window.location.href="/product/register/";</script>'
     file = request.files['excelFile']
     if file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
+        return '<script>alert("No selected file"); window.location.href="/product/register/";</script>'
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         process_excel(filepath)
-        flash('File successfully uploaded and processed')
-        return redirect(url_for('product.product_register'))
+        return '<script>alert("Excel 파일 업로드 완료."); window.location.href="/product/register/";</script>'
     else:
-        flash('Allowed file types are xls, xlsx')
-        return redirect(request.url)
+        return '<script>alert("Allowed file types are xls, xlsx"); window.location.href="/product/register/";</script>'
+
 
 def process_excel(filepath):
     df = pd.read_excel(filepath)
@@ -137,9 +134,8 @@ def process_excel(filepath):
         barcode = row.get('barcode')
         modified = row.get('modified')
         if pd.isna(barcode) or pd.isna(modified):
-            continue  # Skip rows without barcode or modified
+            continue
 
-        # Convert NaT to None and Timestamps to datetime
         def convert_value(value):
             if pd.isna(value):
                 return None
@@ -156,8 +152,6 @@ def process_excel(filepath):
                 existing_record.err_info = convert_value(row.get('err_info'))
                 existing_record.print_time = convert_value(row.get('print_time'))
                 existing_record.LOT = convert_value(row.get('LOT'))
-
-                # Update other fields as needed
                 existing_record.inweight_time = convert_value(row.get('inweight_time'))
                 existing_record.inweight_cycles = convert_value(row.get('inweight_cycles'))
                 existing_record.inweight_station = convert_value(row.get('inweight_station'))
@@ -225,12 +219,108 @@ def process_excel(filepath):
             db.session.add(p_production_alpha)
     db.session.commit()
 
+
 @bp.route('/register/', methods=['GET', 'POST'])
 def product_register():
-    data = Production_Alpha.query.all()
-    return render_template('product/product_register.html', data=data)
+    alpha_data = Production_Alpha.query.all()
+    return render_template('product/product_register.html', data=alpha_data)
+
 
 @bp.route('/register_result/', methods=['GET', 'POST'])
 def product_register_result():
-    data = Production_Alpha.query.all()
-    return render_template('product/product_register_result.html', data=data)
+    whf10_data = ProductionWHF10.query.all()
+    whf30_data = ProductionWHF30.query.all()
+    whf60_data = ProductionWHF60.query.all()
+    return render_template('product/product_register_result.html', whf10_data=whf10_data, whf30_data=whf30_data,
+                           whf60_data=whf60_data)
+
+
+@bp.route('/register', methods=['POST'])
+def register():
+    _10g, _30g, _60g = 0, 0, 0
+
+    production_alpha_records = Production_Alpha.query.all()
+
+    for record in production_alpha_records:
+        if record.print_time:
+            _10g += 1
+            order = Production_Order.query.filter_by(ITEM_CD='CHF10-120LR', ORDER_STATUS='RL').order_by(Production_Order.PRODT_ORDER_NO.asc()).first()
+            if order:
+                whf10 = ProductionWHF10(
+                    LOT=record.LOT,
+                    barcode=record.barcode,
+                    product=record.product,
+                    ITEM_CD=order.ITEM_CD,
+                    PRODT_ORDER_NO=order.PRODT_ORDER_NO,
+                    err_code=record.err_code,
+                    err_info=record.err_info,
+                    print_time=record.print_time
+                )
+                db.session.add(whf10)
+                if _10g >= order.PRODT_ORDER_QTY:
+                    order.ORDER_STATUS = 'CL'
+
+        if record.outweight_value:
+            _30g += 1
+            order = Production_Order.query.filter_by(ITEM_CD='CHF30-120LR', ORDER_STATUS='RL').order_by(Production_Order.PRODT_ORDER_NO.asc()).first()
+            if order:
+                whf30 = ProductionWHF30(
+                    LOT=record.LOT,
+                    barcode=record.barcode,
+                    product=record.product,
+                    ITEM_CD=order.ITEM_CD,
+                    PRODT_ORDER_NO=order.PRODT_ORDER_NO,
+                    inweight_time=record.inweight_time,
+                    inweight_cycles=record.inweight_cycles,
+                    inweight_station=record.inweight_station,
+                    inweight_result=record.inweight_result,
+                    inweight_value=record.inweight_value,
+                    leaktest_cycles=record.leaktest_cycles,
+                    leaktest_entry=record.leaktest_entry,
+                    leaktest_exit=record.leaktest_exit,
+                    leaktest_station=record.leaktest_station,
+                    leaktest_value=record.leaktest_value,
+                    leaktest_ptest=record.leaktest_ptest,
+                    leaktest_duration=record.leaktest_duration,
+                    leaktest_result=record.leaktest_result,
+                    outweight_time=record.outweight_time,
+                    outweight_station=record.outweight_station,
+                    outweight_cycles=record.outweight_cycles,
+                    outweight_result=record.outweight_result,
+                    outweight_value=record.outweight_value
+                )
+                db.session.add(whf30)
+                if _30g >= order.PRODT_ORDER_QTY:
+                    order.ORDER_STATUS = 'CL'
+
+        if record.prodlabel_cycles == 1:
+            _60g += 1
+            order = Production_Order.query.filter_by(ITEM_CD='CHF60-120LR', ORDER_STATUS='RL').order_by(Production_Order.PRODT_ORDER_NO.asc()).first()
+            if order:
+                whf60 = ProductionWHF60(
+                    LOT=record.LOT,
+                    barcode=record.barcode,
+                    product=record.product,
+                    ITEM_CD=order.ITEM_CD,
+                    PRODT_ORDER_NO=order.PRODT_ORDER_NO,
+                    itest2_time=record.itest2_time,
+                    itest2_station=record.itest2_station,
+                    itest2_cycles=record.itest2_cycles,
+                    itest2_result=record.itest2_result,
+                    itest2_value=record.itest2_value,
+                    itest2_ptest=record.itest2_ptest,
+                    prodlabel_time=record.prodlabel_time,
+                    prodlabel_cycles=record.prodlabel_cycles
+                )
+                db.session.add(whf60)
+                if _60g >= order.PRODT_ORDER_QTY:
+                    order.ORDER_STATUS = 'CL'
+
+    logging.debug(f"Counts - _10g: {_10g}, _30g: {_30g}, _60g: {_60g}")
+
+    db.session.commit()
+
+    return '<script>alert("저장이 완료되었습니다."); window.location.href="/product/register/";</script>'
+
+
+
