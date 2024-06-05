@@ -119,7 +119,12 @@
 .navbar-custom {
         padding-top: 0.25rem;
         padding-bottom: 0.25rem;
+        color :  #192B5B !important;
     }
+
+.bg-custom {
+       color :  #192B5B !important;
+}
 
 
 

@@ -9,23 +9,23 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
+    <!-- Other head elements -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
 
-    <title>Synopex UDI Manager</title>
+    <title>Synopex Dialyze MES</title>
 
-
-    <link
-            href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-            rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link rel="preload" href="{{ url_for('static', filename='img/logo_white.png') }}" as="image">
 
     <style>
         .navbar-custom {
-        padding-top: 0.25rem;
-        padding-bottom: 0.25rem;
-    }
-
-
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+        .dropdown:hover .dropdown-menu {
+            display: block;
+            margin-top: 0; /* optional: just in case you want a little more space */
+        }
     </style>
 </head>
 
@@ -41,90 +41,75 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <div class="nav-link active font-weight-bold" aria-current="page"
-                                 style="font-weight: bold; color: #4e73df;">
+                            <div class="nav-link active font-weight-bold" aria-current="page" style="font-weight: bold; color: #4e73df;">
                                 DIALYZE MES
                             </div>
                         </li>
-
                     </ul>
-
                 </div>
                 <div class="d-flex">
-                    {% if session['roles_id'] == 3 %}
-                    <a href="{{ url_for('auth.user_manage') }}" class="mx-2"
-                       style="text-decoration-line: none; color: black; font-weight: bold;">
+                    <a href="{{ url_for('auth.user_manage') }}" class="mx-2" style="text-decoration-line: none; color: black; font-weight: bold;">
                         사용자관리
                     </a>
-                    {% endif %}
+
                     {% if g.user %}
                     <!-- 사용자 이름과 드롭다운 트리거 설정 -->
                     <div class="dropdown">
-                        <a style="font-weight: bold; color: #4e73df;" id="navbarDropdown71"
-                           role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a style="font-weight: bold; color: #4e73df;" id="navbarDropdown71" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {{ g.user.USR_NM }}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown71">
                             <a class="dropdown-item" href="{{ url_for('auth.modify') }}">비밀번호변경</a>
                             <a class="dropdown-item" href="{{ url_for('auth.logout') }}">로그아웃</a>
-                            <!--roles_id = 3 최고관리자만 보이는 메뉴-->
                         </div>
                     </div>
-
                     님 환영합니다.
-
                     {% endif %}
                     {% if not g.user %}
-                    <a href="{{ url_for('auth.login') }}"
-                       class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">
+                    <a href="{{ url_for('auth.login') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">
                         로그인
                     </a>
-                    <!--임시 버튼-->
-                    <a href="{{ url_for('auth.signup') }}"
-                       class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">
+                    <a href="{{ url_for('auth.signup') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">
                         회원가입
                     </a>
                     {% endif %}
                 </div>
-
             </div>
         </nav>
 
         <!-- Main Content -->
         <div id="content">
             <!-- Topbar -->
-            <nav class="navbar navbar-expand navbar-dark bg-dark topbar mb-4 static-top shadow navbar-custom">
+            <nav class="navbar navbar-expand topbar mb-2 static-top shadow navbar-custom" style="background-color: #192B5B;">
                 <!-- Topbar Navbar -->
                 {% if g.user %}
                 <ul class="navbar-nav mr-auto font-weight-bold">
-
-                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
-                        <a class="nav-link" href="{{ url_for('product.product_order') }}"
-                           role="button" style="color: white; font-weight: bold;">
-                            제조오더관리
+                    <li class="nav-item dropdown no-arrow mx-2">
+                        <a class="nav-link" href="#" id="navbarDropdownProduction" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: white; font-weight: bold; font-size: 1.16rem;">
+                            생산관리
                         </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownProduction">
+                            <a class="dropdown-item" href="{{ url_for('product.product_order') }}">제조오더관리</a>
+                            <a class="dropdown-item" href="{{ url_for('product.product_register') }}">제조실적등록</a>
+                        </div>
                     </li>
-                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
-                        <a class="nav-link font-weight-bold" href="{{ url_for('auth.user_manage') }}"
-                           role="button" style="color: white; font-weight: bold;">
+                    <li class="nav-item dropdown no-arrow mx-2">
+                        <a class="nav-link font-weight-bold" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
                             영업관리
                         </a>
                     </li>
-                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
-                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}"
-                           role="button" style="color: white; font-weight: bold;">
+                    <li class="nav-item dropdown no-arrow mx-2">
+                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
                             출하관리
                         </a>
                     </li>
-                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
-                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}"
-                           role="button" style="color: white; font-weight: bold;">
+                    <li class="nav-item dropdown no-arrow mx-2">
+                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
                             재고관리
                         </a>
                     </li>
-                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
-                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}"
-                           role="button" style="color: white; font-weight: bold;">
+                    <li class="nav-item dropdown no-arrow mx-2">
+                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
                             기준정보관리
                         </a>
                     </li>
@@ -133,82 +118,32 @@
 
                 <ul class="navbar-nav ml-auto">
                     {% if g.user %}
-
-                    <!-- Nav Item - Alerts -->
                     <li class="nav-item dropdown no-arrow mx-1">
                         {% if session['roles_id'] == 3 %}
-                        <!--                        <a class="nav-link dropdown-toggle" href="{{ url_for('auth.user_manage') }}"-->
-                        <!--                           id="navbarDropdown7" data-toggle="dropdown">-->
-                        <!--                            <i class="fas fa-fw fa-wrench"></i>&nbsp;사용자관리-->
-                        <!--                        </a>-->
-
-                        <!--                        <div class="dropdown-menu" aria-labelledby="navbarDropdown7">-->
-                        <!--                            <a class="dropdown-item" href="{{ url_for('auth.user_manage') }}">사용자 계정 관리</a>-->
-                        <!--                            <a class="dropdown-item" href="{{ url_for('auth.signup') }}">사용자 계정 생성</a>-->
-                        <!--                            <a class="dropdown-item" href="{{ url_for('auth.user_role') }}">사용자 권한 관리</a>-->
-                        <!--                            <a class="dropdown-item" href="{{ url_for('auth.role_permission') }}">메뉴 접근 권한</a>-->
-                        <!--                            &lt;!&ndash;roles_id = 3 최고관리자만 보이는 메뉴&ndash;&gt;-->
-
-                        <!--                        </div>-->
                         {% endif %}
-
                     </li>
-
-
-                    <!-- 비번 변경 로그아웃은 따로 뺴두기-->
-                    <!--                    <div class="d-sm-flex align-items-center justify-content-between mx-1">-->
-                    <!--                        <a href="{{ url_for('auth.modify') }}"-->
-                    <!--                           class="d-none d-sm-inline-block btn btn-sm btn-outline-light shadow-sm">-->
-                    <!--                            비밀번호 변경</a>-->
-                    <!--                    </div>-->
-                    <!--                    -->
-                    <!--                    <div class="d-sm-flex align-items-center justify-content-between mx-2">-->
-
-                    <!--                        <a href="{{ url_for('auth.logout') }}"-->
-                    <!--                           class="d-none d-sm-inline-block btn btn-sm btn-outline-light shadow-sm">-->
-                    <!--                            <i class="fas fa-download fa-sm fa-user"></i> 로그아웃</a>-->
-                    <!--                    </div>-->
-
-
                     {% else %}
-                    {% if not g.user %}
-                    <li class="nav-item dropdown no-arrow mx-2 {{ 'invisible-dropdown' if not g.user }}">
+                    <li class="nav-item dropdown no-arrow mx-2">
                         <div class="nav-link" style="color: #212529;">
                             로그인을 해주세요.
                         </div>
                     </li>
                     {% endif %}
-                    {% endif %}
-
-                    <!-- Nav Item - User Information -->
-                    <li class="nav-item dropdown no-arrow">
-
-                    </li>
-
-
+                    <li class="nav-item dropdown no-arrow"></li>
                 </ul>
-
             </nav>
             <!-- End of Topbar -->
 
             <!-- Begin Page Content -->
             <div class="container-fluid">
-
                 {% block content %}
-
                 {% endblock %}
             </div>
             <!-- /.container-fluid -->
-
-
         </div>
         <!-- End of Main Content -->
-
-
     </div>
 </div>
-</body>
-
 
 {% block script %}
 <script type='text/javascript'>
@@ -221,10 +156,8 @@
         });
     });
 </script>
-
-
-<!-- 기본 템플릿 안에 삽입될 내용 End -->
 {% endblock %}
+
 <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
@@ -234,7 +167,7 @@
 <script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
 <script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>
 
-<!--메뉴 자체를 눌러도 해당 최상위 메뉴로 이동시키기 위한 script-->
+<!-- 메뉴 자체를 눌러도 해당 최상위 메뉴로 이동시키기 위한 script -->
 <script>
     document.getElementById('navbarDropdown7').addEventListener('click', function() {
         window.location.href = "{{ url_for('auth.user_manage') }}"; // 원하는 URL로 변경

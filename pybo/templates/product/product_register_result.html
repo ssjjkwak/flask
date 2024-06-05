@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .selected-row {
+        background-color: #D6EAF8 !important;
+    }
+
+    th, td {
+        padding: 15px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    th {
+        background-color: #f8f9fa;
+
+        box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4); /* 헤더 테두리를 진하게 보이게 하는 효과 */
+    }
+
+    th.sticky {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background-color: #fff;
+
+        box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4); /* 고정된 헤더에 동일한 효과 적용 */
+    }
+    #process10 {
+        border : 2px solid;
+    }
+
+    #process30 {
+        border : 2px solid;
+    }
+
+    #process60 {
+        border : 1px solid;
+    }
+
+
+</style>
+
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
+        <h7 class="m-0 font-weight-bold text-primary mb-3">제조실적등록 > 제조실적등록 > 제조실적결과조회</h7>
+    </div>
+
+    <!-- 데이터 테이블 -->
+    <form method="POST" action="{{ url_for('product.product_order') }}" class="px-4" id="searchForm">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="plant_code" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;&emsp;공장
+                    </label>
+                    <select class="form-select form-select-sm" id="plant_code" name="plant_code">
+                        <option value="">All</option>
+                        {% for plant in plants %}
+                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
+                            {{ plant.PLANT_CD }} {{ plant.PLANT_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;Lot No.
+                    </label>
+                    <select class="form-select form-select-sm" id="item_cd" name="item_cd">
+                        <option value="">All</option>
+                        {% for item in items %}
+                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
+                            {{ item.ITEM_CD }} {{ item.ITEM_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="wc_cd" class="form-label me-3" style="min-width: 110px;">등록일자</label>
+                    <select class="form-select form-select-sm" id="wc_cd" name="wc_cd">
+                        <option value="">All</option>
+                        {% for work_center in work_centers %}
+                        <option value="{{ work_center.WC_CD }}" {% if work_center.WC_CD== WC_CD %}selected{% endif %}>
+                            {{ work_center.WC_CD }} {{ work_center.WC_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="prodt_order_no" class="form-label me-3" style="min-width: 110px;">Serial No.</label>
+                    <input type="text" class="form-control form-control-sm flex-grow-1" id="prodt_order_no"
+                           name="prodt_order_no"
+                           value="{{ PRODT_ORDER_NO }}">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div>
+    <div>
+        <div class="card-body table-responsive">
+            <!-- 10 공정 -->
+            <h4>Pre-Assembly (WHF10)</h4>
+            <div class="mb-4" style="overflow-y: auto; height: 300px; width: 100%;" id="process10">
+                <table class="table table-sm table-hover" style="border-collapse: collapse;" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="sticky" style="width: 10px; font-weight: normal"></th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">LOT</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">barcode</th>
+                        <th class="sticky" style="width: 100px; background-color: #e0ffff;">품목코드</th>
+                        <th class="sticky" style="width: 100px; background-color: #e0ffff;">제조오더번호</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">err_code</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">err_info</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">print_time</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ row.LOT }}</td>
+                        <td>{{ row.barcode }}</td>
+                        <td style="background-color: #e0ffff;"></td>
+                        <td style="background-color: #e0ffff;"></td>
+                        <td>{{ row.err_code }}</td>
+                        <td>{{ row.err_info }}</td>
+                        <td>{{ row.print_time }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 30 공정 -->
+            <h4>Out weight (WHF30)</h4>
+            <div class="mb-4" style="overflow-y: auto; height: 300px; width: 100%;" id="process30">
+                <table class="table table-sm table-hover" style="border-collapse: collapse;" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="sticky" style="width: 10px; font-weight: normal"></th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">LOT</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">barcode</th>
+                        <th class="sticky" style="width: 100px; background-color: #e0ffff;">품목코드</th>
+                        <th class="sticky" style="width: 100px; background-color: #e0ffff;">제조오더번호</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">inweight_time</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">inweight_cycles</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">inweight_station</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">inweight_result</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">inweight_value</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">leaktest_cycles</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">leaktest_entry</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">leaktest_exit</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">leaktest_station</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">leaktest_value</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">leaktest_ptest</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">leaktest_duration</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">leaktest_result</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">outweight_time</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">outweight_station</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">outweight_cycles</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">outweight_result</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">outweight_value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ row.LOT }}</td>
+                        <td>{{ row.barcode }}</td>
+                        <td style="background-color: #e0ffff;"></td>
+                        <td style="background-color: #e0ffff;"></td>
+                        <td>{{ row.inweight_time }}</td>
+                        <td>{{ row.inweight_cycles }}</td>
+                        <td>{{ row.inweight_station }}</td>
+                        <td>{{ row.inweight_result }}</td>
+                        <td>{{ row.inweight_value }}</td>
+                        <td>{{ row.leaktest_cycles }}</td>
+                        <td>{{ row.leaktest_entry }}</td>
+                        <td>{{ row.leaktest_exit }}</td>
+                        <td>{{ row.leaktest_station }}</td>
+                        <td>{{ row.leaktest_value }}</td>
+                        <td>{{ row.leaktest_ptest }}</td>
+                        <td>{{ row.leaktest_duration }}</td>
+                        <td>{{ row.leaktest_result }}</td>
+                        <td>{{ row.outweight_time }}</td>
+                        <td>{{ row.outweight_station }}</td>
+                        <td>{{ row.outweight_cycles }}</td>
+                        <td>{{ row.outweight_result }}</td>
+                        <td>{{ row.outweight_value }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 60 공정 -->
+            <h4>TEST (WHF60)</h4>
+            <div class="mb-4" style="overflow-y: auto; height: 300px; width: 100%;" id="process60">
+                <table class="table table-sm table-hover" style="border-collapse: collapse;" width="100%" cellspacing="0">
+                    <thead class="table-light" >
+                    <tr>
+                        <th class="sticky" style="width: 10px; font-weight: normal"></th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">LOT</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">barcode</th>
+                        <th class="sticky" style="width: 100px; background-color: #e0ffff;">품목코드</th>
+                        <th class="sticky" style="width: 100px; background-color: #e0ffff;">제조오더번호</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">itest2_time</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">itest2_station</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">itest2_cycles</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">itest2_result</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">itest2_value</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">itest2_ptest</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">prodlabel_time</th>
+                        <th class="sticky" style="width: 100px; font-weight: normal">prodlabel_cycles</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ row.LOT }}</td>
+                        <td>{{ row.barcode }}</td>
+                        <td style="background-color: #e0ffff;"></td>
+                        <td style="background-color: #e0ffff;"></td>
+                        <td>{{ row.itest2_time }}</td>
+                        <td>{{ row.itest2_station }}</td>
+                        <td>{{ row.itest2_cycles }}</td>
+                        <td>{{ row.itest2_result }}</td>
+                        <td>{{ row.itest2_value }}</td>
+                        <td>{{ row.itest2_ptest }}</td>
+                        <td>{{ row.prodlabel_time }}</td>
+                        <td>{{ row.prodlabel_cycles }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('openModalButton').addEventListener('click', function() {
+        var uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
+        uploadModal.show();
+    });
+
+    function showLoadingModal() {
+        var loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        loadingModal.show();
+    }
+</script>
+{% endblock %}
