@@ -203,6 +203,7 @@ class Production_Alpha(db.Model):
     INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
     UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
     UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+    REPORT_FLAG = db.Column(db.NVARCHAR(2), nullable=True, default='N')
 
 
 # 알파플랜 엑셀 파일에서 MODIFED만 제거

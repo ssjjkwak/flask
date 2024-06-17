@@ -16,8 +16,12 @@
         z-index: 20;
     }
 
-     th:first-child, td:first-child {
-        min-width: 50px; /* 맨 앞 열의 너비 줄이기 */
+    th:first-child, td:first-child {
+        min-width: 50px;
+    }
+
+    th.second-column, td.second-column {
+        min-width: 50px; /* 두 번째 열의 너비 줄이기 */
     }
 
     .table-wrapper {
@@ -33,7 +37,7 @@
     }
 
     th, td {
-        min-width: 150px; /* 모든 테이블 셀에 최소 너비 설정 */
+        min-width: 130px; /* 모든 테이블 셀에 최소 너비 설정 */
     }
 
     /* 기본 고정 열 */
@@ -149,9 +153,6 @@
             <button type="submit" form="registerForm" class="btn btn-light btn-sm shadow-sm ms-3" onclick="showLoadingModal2()">
                 <i class="bi bi-box-arrow-in-down"></i> 실적 등록
             </button>
-<!--            <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">-->
-<!--                <i class="bi bi-search"></i> 조회-->
-<!--            </button>-->
         </div>
     </div>
 
@@ -193,68 +194,6 @@
             </div>
         </div>
     </div>
-
-
-
-
-<!--    <form method="POST" action="{{ url_for('product.register') }}" class="px-4 pb-4" id="registerForm" onsubmit="showLoadingModal()">-->
-<!--         <div class="row">-->
-<!--            <div class="col-md-3">-->
-<!--                <div class="mb-1 col-8 d-flex align-items-center">-->
-<!--                    <label for="plant_code" class="form-label me-3" style="min-width: 110px;">-->
-<!--                        &emsp;&emsp;&emsp;&emsp;공장-->
-<!--                    </label>-->
-<!--                    <select class="form-select form-select-sm" id="plant_code" name="plant_code">-->
-<!--                        <option value="">p710 인공신장기공장</option>-->
-<!--                        {% for plant in plants %}-->
-<!--                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>-->
-<!--                            {{ plant.PLANT_CD }} {{ plant.PLANT_NM }}-->
-<!--                        </option>-->
-<!--                        {% endfor %}-->
-<!--                    </select>-->
-<!--                </div>-->
-<!--                <div class="mb-1 col-8 d-flex align-items-center">-->
-<!--                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">-->
-<!--                        &emsp;&emsp;&emsp;Lot No.-->
-<!--                    </label>-->
-<!--                    <div class="d-flex">-->
-<!--                        <input type="text" class="form-control form-control-sm me-2" id="start_date" name="start_date"-->
-<!--                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') if PLANT_START_DT else '' }}">-->
-<!--                        <span class="mx-2">~</span>-->
-<!--                        <input type="text" class="form-control form-control-sm ms-2" id="end_date" name="end_date"-->
-<!--                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') if PLANT_COMPT_DT else '' }}">-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--            <div class="col-md-3">-->
-<!--                <div class="mb-1 col-8 d-flex align-items-center">-->
-<!--                    <label for="start_date" class="form-label me-3" style="min-width: 110px;">-->
-<!--                        &emsp;&emsp;등록일자-->
-<!--                    </label>-->
-<!--                    <div class="d-flex">-->
-<!--                        <input type="date" class="form-control form-control-sm me-2" id="start_date3" name="start_date"-->
-<!--                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') if PLANT_START_DT else '' }}">-->
-<!--                        <span class="mx-2">~</span>-->
-<!--                        <input type="date" class="form-control form-control-sm ms-2" id="end_date3" name="end_date"-->
-<!--                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') if PLANT_COMPT_DT else '' }}">-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <div class="mb-1 col-8 d-flex align-items-center">-->
-<!--                    <label for="order_status1" class="form-label me-3" style="min-width: 110px;">-->
-<!--                        &emsp;Barcode No.-->
-<!--                    </label>-->
-<!--                     <div class="d-flex">-->
-<!--                        <input type="text" class="form-control form-control-sm me-2" id="start_date1" name="start_date"-->
-<!--                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') if PLANT_START_DT else '' }}">-->
-<!--                        <span class="mx-2">~</span>-->
-<!--                        <input type="text" class="form-control form-control-sm ms-2" id="end_date1" name="end_date"-->
-<!--                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') if PLANT_COMPT_DT else '' }}">-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </form>-->
-
 </div>
 
 <!-- 데이터 테이블 -->
@@ -264,11 +203,12 @@
         <thead class="table-light">
         <tr>
             <th class="sticky"></th>
-            <th>체크박스</th>
+            <th class="second-column"><input type="checkbox" name="" id="chkRowAll"></th>
             <th class="sticky">LOT</th>
             <th class="sticky">product</th>
             <th class="sticky" style="background-color: #e0ffff;">barcode</th>
             <th class="sticky" style="background-color: #e0ffff;">modified</th>
+            <th class="sticky" style="background-color: #e0ffff;">실적처리</th>
             <th class="sticky">err_code</th>
             <th class="sticky" style="background-color: #fffacd;">err_info</th>
             <th class="sticky" style="background-color: #fff0f5;">print_time</th>
@@ -304,11 +244,12 @@
         {% for row in data %}
         <tr>
             <td>{{ loop.index }}</td>
-            <td><input type="checkbox" name="chkRow" id=""></td>
+            <td class="second-column"><input type="checkbox" name="chkRow" id=""></td>
             <td>{{ row.LOT }}</td>
             <td>{{ row.product }}</td>
             <td style="background-color: #e0ffff;">{{ row.barcode }}</td>
             <td style="background-color: #e0ffff;">{{ row.modified }}</td>
+            <td style="background-color: #e0ffff;">{{ row.REPORT_FLAG }}</td>
             <td>{{ row.err_code }}</td>
             <td style="background-color: #fffacd;">{{ row.err_info }}</td>
             <td style="background-color: #fff0f5;">{{ row.print_time }}</td>
@@ -360,7 +301,13 @@
         loadingModal2.show();
     }
 
-
+    // Select All functionality
+    document.getElementById('chkRowAll').addEventListener('change', function() {
+        var checkboxes = document.querySelectorAll('input[name="chkRow"]');
+        for (var checkbox of checkboxes) {
+            checkbox.checked = this.checked;
+        }
+    });
 
 </script>
 {% endblock %}

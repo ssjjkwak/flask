@@ -232,6 +232,27 @@ def product_register():
 # 여기에 조회조건 걸어서 register_result 화면에 데이터 렌더링
 @bp.route('/register_result/', methods=['GET', 'POST'])
 def product_register_result():
+
+    INSRT_DT = None
+    UPDT_DT = None
+
+    if request.method == 'POST':
+        INSRT_DT = request.form.get('insert_date_fr', '')
+        UPDT_DT = request.form.get('insert_date_to', '')
+
+
+
+        if PLANT_START_DT:
+            PLANT_START_DT = datetime.strptime(PLANT_START_DT, '%Y-%m-%d')
+        if PLANT_COMPT_DT:
+            PLANT_COMPT_DT = datetime.strptime(PLANT_COMPT_DT, '%Y-%m-%d')
+    else:
+
+        if plants:
+            PLANT_CD = plants[0].PLANT_CD
+
+
+
     whf10_data = ProductionWHF10.query.all()
     whf30_data = ProductionWHF30.query.all()
     whf60_data = ProductionWHF60.query.all()
