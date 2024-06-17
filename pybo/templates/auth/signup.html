@@ -1,112 +1,94 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+    .form-control-user {
+        font-size: 1.25rem; /* 글자 크기 키우기 */
+        padding: 0.75rem; /* 입력 필드 크기 키우기 */
+    }
+    .btn-user {
+        font-size: 1.25rem; /* 버튼 글자 크기 키우기 */
+        padding: 0.75rem 1.5rem; /* 버튼 크기 키우기 */
+    }
+    .h4 {
+        font-size: 2rem; /* 제목 글자 크기 키우기 */
+    }
 
-<div class="row">
-<!--    <div class="col-md-2">-->
-<!--        &lt;!&ndash; Sidebar &ndash;&gt;-->
-<!--        <div class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">-->
-<!--            <li class="nav-item active">-->
-<!--                <div class="list-group-item list-group-item-action bg-light" style="font-weight: bold;">사용자관리</div>-->
-<!--                <a href="{{ url_for('auth.user_manage') }}" class="list-group-item list-group-item-action bg-light">사용자-->
-<!--                    계정 관리</a>-->
-<!--                <a href="{{ url_for('auth.signup') }}" class="list-group-item list-group-item-action bg-light">사용자 계정-->
-<!--                    생성</a>-->
-<!--                <a href="{{ url_for('auth.user_role') }}" class="list-group-item list-group-item-action bg-light">사용자 권한 관리</a>-->
-<!--                <a href="{{ url_for('auth.role_permission') }}" class="list-group-item list-group-item-action bg-light">메뉴 접근 권한</a>-->
+    .custom-rounded {
+        border-radius: 25px;
+    }
+</style>
 
-<!--            </li>-->
-<!--        </div>-->
-<!--    </div>-->
-    <div class="col-md-12">
-        <div class="container">
-
-            <div class="card o-hidden border-0 shadow-lg my-5">
-                <div class="card-body p-3">
-                    <!-- Nested Row within Card Body -->
-                    <div class="row">
-
-                        <div class="col-lg">
-                            <div class="p-5">
-                                <div class="text-center">
-                                    <h1 class="h4 text-gray-900 mb-4">사용자 계정 생성</h1>
-                                </div>
-                                <form class="User" method="post">
-                                    {{ form.csrf_token }}
-                                    {% include "form_errors.html" %}
-                                    <div class="form-group row">
-                                        <div class="col-sm-6 mb-3 mb-sm-0">
-                                            <input type="text" class="form-control form-control-user" name="USR_NM"
-                                                   id="USR_NM"
-                                                   placeholder="성명" value="{{ form.USR_NM.data or '' }}">
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <input type="text" class="form-control form-control-user" name="USR_ID"
-                                                   id="USR_ID"
-                                                   placeholder="아이디" value="{{ form.USR_ID.data or '' }}">
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="email" class="form-control form-control-user" name="USR_EMAIL"
-                                               id="USR_EMAIL"
-                                               placeholder="이메일" value="{{ form.USR_EMAIL.data or '' }}">
-                                    </div>
-                                    <div class="form-group row">
-                                        <div class="col-sm-6 mb-3 mb-sm-0">
-                                            <input type="password" class="form-control form-control-user"
-                                                   name="USR_PW1" id="USR_PW1"
-                                                   placeholder="비밀번호" value="{{ form.USR_PW1.data or '' }}">
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <input type="password" class="form-control form-control-user"
-                                                   name="USR_PW2" id="USR_PW2"
-                                                   placeholder="비밀번호 확인" value="{{ form.USR_PW2.data or '' }}">
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <div class="col-sm-6 mb-3 mb-sm-0">
-                                            <input type="text" class="form-control form-control-user" name="USR_DEPT"
-                                                   id="USR_DEPT"
-                                                   placeholder="부서" value="{{ form.USR_DEPT.data or '' }}">
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <input type="text" class="form-control form-control-user" name="USR_JOB"
-                                                   id="USR_JOB"
-                                                   placeholder="직책/직위" value="{{ form.USR_JOB.data or '' }}">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-
-                                        <input type="text" class="form-control form-control-user" name="USR_PHONE"
-                                               id="USR_PHONE"
-                                               placeholder="전화번호" value="{{ form.USR_PHONE.data or '' }}">
-
-                                    </div>
-<!--                                    <div class="form-group">-->
-<!--                                        <select class="form-select form-control-user" name="role_name" id="role_name">-->
-<!--                                            <option value="1">기본권한</option>-->
-<!--                                            <option value="2">중간관리자</option>-->
-<!--                                            <option value="3">최고관리자</option>-->
-<!--                                        </select>-->
-<!--                                    </div>-->
-
-
-                                    <button type="submit" class="btn btn-primary btn-user btn-block">
-                                        계정 등록
-                                    </button>
-
-                                </form>
-                                <hr>
-
-                            </div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-8">
+            <div class="card o-hidden border-0 shadow-lg my-5 custom-rounded">
+                <div class="card-body p-5 d-flex justify-content-center">
+                    <div class="text-center w-100">
+                        <div class="text-center">
+                            <h1 class="h4 text-gray-900 mb-4">사용자 계정 생성</h1>
                         </div>
+                        <form class="User" method="post">
+                            {{ form.csrf_token }}
+                            {% include "form_errors.html" %}
+                            <div class="form-group row mb-2">
+                                <div class="col-sm-6 mb-3 mb-sm-0">
+                                    <input type="text" class="form-control form-control-user" name="USR_NM"
+                                           id="USR_NM"
+                                           placeholder="성명" value="{{ form.USR_NM.data or '' }}">
+                                </div>
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control form-control-user" name="USR_ID"
+                                           id="USR_ID"
+                                           placeholder="아이디" value="{{ form.USR_ID.data or '' }}">
+                                </div>
+                            </div>
+                            <div class="form-group mb-2">
+                                <input type="email" class="form-control form-control-user" name="USR_EMAIL"
+                                       id="USR_EMAIL"
+                                       placeholder="이메일" value="{{ form.USR_EMAIL.data or '' }}">
+                            </div>
+                            <div class="form-group row mb-4">
+                                <div class="col-sm-6 mb-3 mb-sm-0">
+                                    <input type="password" class="form-control form-control-user"
+                                           name="USR_PW1" id="USR_PW1"
+                                           placeholder="비밀번호" value="{{ form.USR_PW1.data or '' }}">
+                                </div>
+                                <div class="col-sm-6">
+                                    <input type="password" class="form-control form-control-user"
+                                           name="USR_PW2" id="USR_PW2"
+                                           placeholder="비밀번호 확인" value="{{ form.USR_PW2.data or '' }}">
+                                </div>
+                            </div>
+                            <div class="form-group row mb-2">
+                                <div class="col-sm-6 mb-3 mb-sm-0">
+                                    <input type="text" class="form-control form-control-user" name="USR_DEPT"
+                                           id="USR_DEPT"
+                                           placeholder="부서" value="{{ form.USR_DEPT.data or '' }}">
+                                </div>
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control form-control-user" name="USR_JOB"
+                                           id="USR_JOB"
+                                           placeholder="직책/직위" value="{{ form.USR_JOB.data or '' }}">
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-4">
+                                <input type="text" class="form-control form-control-user" name="USR_PHONE"
+                                       id="USR_PHONE"
+                                       placeholder="전화번호" value="{{ form.USR_PHONE.data or '' }}">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-user btn-block">
+                                계정 등록
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
+
+
 
 {% endblock %}

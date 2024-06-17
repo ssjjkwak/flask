@@ -26,6 +26,25 @@
             display: block;
             margin-top: 0; /* optional: just in case you want a little more space */
         }
+
+            .table-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 10px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #bdbdbd;
+            border-radius: 10px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #d4f4fa;
+        }
+
     </style>
 </head>
 
@@ -48,11 +67,12 @@
                     </ul>
                 </div>
                 <div class="d-flex">
+                    {% if g.user %}
                     <a href="{{ url_for('auth.user_manage') }}" class="mx-2" style="text-decoration-line: none; color: black; font-weight: bold;">
                         사용자관리
                     </a>
 
-                    {% if g.user %}
+
                     <!-- 사용자 이름과 드롭다운 트리거 설정 -->
                     <div class="dropdown">
                         <a style="font-weight: bold; color: #4e73df;" id="navbarDropdown71" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -66,12 +86,12 @@
                     님 환영합니다.
                     {% endif %}
                     {% if not g.user %}
-                    <a href="{{ url_for('auth.login') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">
-                        로그인
-                    </a>
-                    <a href="{{ url_for('auth.signup') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">
-                        회원가입
-                    </a>
+<!--                    <a href="{{ url_for('auth.login') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">-->
+<!--                        로그인-->
+<!--                    </a>-->
+<!--                    <a href="{{ url_for('auth.signup') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">-->
+<!--                        회원가입-->
+<!--                    </a>-->
                     {% endif %}
                 </div>
             </div>
@@ -89,8 +109,9 @@
                             생산관리
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownProduction">
-                            <a class="dropdown-item" href="{{ url_for('product.product_order') }}">제조오더관리</a>
+                            <a class="dropdown-item" href="{{ url_for('product.product_order') }}">제조오더조회</a>
                             <a class="dropdown-item" href="{{ url_for('product.product_register') }}">제조실적등록</a>
+                            <a class="dropdown-item" href="{{ url_for('product.product_register_result') }}">실적결과조회</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown no-arrow mx-2">
@@ -110,7 +131,7 @@
                     </li>
                     <li class="nav-item dropdown no-arrow mx-2">
                         <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
-                            기준정보관리
+                            기준정보
                         </a>
                     </li>
                 </ul>

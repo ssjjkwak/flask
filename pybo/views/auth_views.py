@@ -5,7 +5,7 @@ from werkzeug.utils import redirect, send_file
 
 from pybo import db
 from pybo.forms import UserCreateForm, UserLoginForm, UserModifyForm, UserUpdateForm
-from pybo.models import User
+from pybo.models import User, Role
 import functools
 
 from pybo.views.download_views import convert_to_excel
@@ -77,21 +77,8 @@ def login():
 
         if error is None:
             session.clear()
+            session['logged_in'] = True
             session['USR_ID'] = user.USR_ID  # 수정된 부분: user.USR_ID를 세션에 저장
-
-        #     # 사용자의 roles_id를 세션에 저장
-        #     user_role = Users_Roles.query.filter_by(users_id=user.USR_ID).first()
-        #     if user_role:
-        #         session['roles_id'] = user_role.roles_id
-        #
-        #     _next = request.args.get('next', '')
-        #     if _next:
-        #         return redirect(_next)
-        #     else:
-        #         return redirect(url_for('main.index'))
-        # else:
-        #     flash(error)
-
         return redirect(url_for('main.index'))
 
     return render_template('auth/login.html', form=form, show_navigation_bar=False)
@@ -138,16 +125,28 @@ def modify():
             flash('현재 비밀번호가 올바르지 않습니다.')
     return render_template('auth/modify.html', form=form, show_navigation_bar=True)
 
+
 @bp.route('/user_manage')
 def user_manage():
-    # users_with_roles = db.session.query(User, Roles.rolename)\
-    #     .select_from(User)\
-    #     .join(Users_Roles, Users.users_id == Users_Roles.users_id)\
-    #     .join(Roles, Users_Roles.roles_id == Roles.roles_id)\
-    #     .all()
-    # total_users = len(users_with_roles)
-    users_with_roles = []
-    total_users = 0
+    users = User.query.all()
+    roles = {role.ROLE_ID: role.ROLE_NM for role in Role.query.all()}
+
+    users_with_roles = [
+        {
+            'USR_ID': user.USR_ID,
+            'USR_NM': user.USR_NM,
+            'USR_EMAIL': user.USR_EMAIL,
+            'USR_DEPT': user.USR_DEPT,
+            'USR_JOB': user.USR_JOB,
+            'USR_PHONE': user.USR_PHONE,
+            'ROLES': [roles.get(user.ROLE_ID, 'N/A')],
+            'INSRT_DT': user.INSRT_DT.strftime('%Y-%m-%d'),
+            'UPDT_DT': user.UPDT_DT.strftime('%Y-%m-%d'),
+        }
+        for user in users
+    ]
+
+    total_users = len(users_with_roles)
 
     return render_template('auth/user_manage.html', users_with_roles=users_with_roles, total_users=total_users)
 

@@ -33,27 +33,28 @@
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
             <div class="card o-hidden border-0 shadow-lg my-5 custom-rounded">
-                <div class="card-body p-5">
-                    <div class="text-center">
-                        <img src="{{ url_for('static', filename='img/logo_login.png') }}" class="img-fluid mb-4" alt="Logo">
+                <div class="card-body p-5 d-flex justify-content-center">
+                    <div class="text-center w-100">
+                        <img src="{{ url_for('static', filename='img/logo_login.png') }}" class="img-fluid mb-1" alt="Logo">
+                        <form class="User" method="post" style="width: 22rem; margin: 0 auto;">
+                            {{ form.csrf_token }}
+                            {% include "form_errors.html" %}
+                            <div class="form-group">
+                                <input type="text" class="form-control form-control-user mb-1" id="USR_ID" name="USR_ID" placeholder="아이디" value="{{ form.USR_ID.data or '' }}">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control form-control-user mb-3" id="USR_PW" name="USR_PW" placeholder="비밀번호" value="{{ form.USR_PW.data or '' }}">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-user btn-block">
+                                로그인
+                            </button>
+                        </form>
                     </div>
-                    <form class="User" method="post">
-                        {{ form.csrf_token }}
-                        {% include "form_errors.html" %}
-                        <div class="form-group">
-                            <input type="text" class="form-control form-control-user" id="USR_ID" name="USR_ID" placeholder="아이디" value="{{ form.USR_ID.data or '' }}">
-                        </div>
-                        <div class="form-group">
-                            <input type="password" class="form-control form-control-user" id="USR_PW" name="USR_PW" placeholder="비밀번호" value="{{ form.USR_PW.data or '' }}">
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-user btn-block">
-                            로그인
-                        </button>
-                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 
 {% endblock %}

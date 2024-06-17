@@ -40,10 +40,10 @@
                                     <div class="mb-1 col-8">
                                         <label for="plant_code2" class="form-label">공장:</label>
                                         <select class="form-control" id="plant_code2" name="plant_code">
-                                            <option value="">All</option>
+                                            <option value="">-</option>
                                             {% for plant in plants %}
-                                            <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD
-                                                    %}selected{% endif %}>
+                                            <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD==
+                                                    selected_plant_cd %}selected{% endif %}>
                                                 {{ plant.PLANT_CD }}
                                             </option>
                                             {% endfor %}
@@ -75,7 +75,7 @@
                                 <th>품목명</th>
                                 <th>품목규격</th>
                                 <th>단위</th>
-                                <th>소요량 </th>
+                                <th>소요량</th>
                             </tr>
                             </thead>
 
@@ -94,8 +94,9 @@
             </div>
         </div>
     </div>
-    <!--데이터 테이블-->
+
     <form method="POST" action="{{ url_for('product.product_order') }}" class="px-4" id="searchForm">
+        <input type="hidden" name="form_submitted" value="{{ form_submitted }}">
         <div class="row">
             <div class="col-md-3">
                 <div class="mb-1 col-8 d-flex align-items-center">
@@ -103,9 +104,9 @@
                         &emsp;&emsp;&emsp;&emsp;공장
                     </label>
                     <select class="form-select form-select-sm" id="plant_code" name="plant_code">
-                        <option value="">All</option>
+                        <option value="">-</option>
                         {% for plant in plants %}
-                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
+                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD == PLANT_CD %}selected{% endif %}>
                             {{ plant.PLANT_CD }} {{ plant.PLANT_NM }}
                         </option>
                         {% endfor %}
@@ -116,9 +117,9 @@
                         &emsp;&emsp;&emsp;&emsp;품목
                     </label>
                     <select class="form-select form-select-sm" id="item_cd" name="item_cd">
-                        <option value="">All</option>
+                        <option value="">-</option>
                         {% for item in items %}
-                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
+                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD == ITEM_CD %}selected{% endif %}>
                             {{ item.ITEM_CD }} {{ item.ITEM_NM }}
                         </option>
                         {% endfor %}
@@ -129,7 +130,7 @@
                 <div class="mb-1 col-8 d-flex align-items-center">
                     <label for="wc_cd" class="form-label me-3" style="min-width: 110px;">작업공정</label>
                     <select class="form-select form-select-sm" id="wc_cd" name="wc_cd">
-                        <option value="">All</option>
+                        <option value="">-</option>
                         {% for work_center in work_centers %}
                         <option value="{{ work_center.WC_CD }}" {% if work_center.WC_CD== WC_CD %}selected{% endif %}>
                             {{ work_center.WC_CD }} {{ work_center.WC_NM }}
@@ -143,8 +144,6 @@
                            name="prodt_order_no"
                            value="{{ PRODT_ORDER_NO }}">
                 </div>
-
-
             </div>
             <div class="col-md-3">
                 <div class="mb-1 col-8 d-flex align-items-center">
@@ -173,6 +172,7 @@
 </div>
 
 <div>
+    <!--데이터 테이블-->
     <div>
         {% if orders_with_items and orders_with_wcs %}
         <div class="card-body">
@@ -217,17 +217,21 @@
                     <td>{{ order_item.RELEASE_DT.strftime('%Y-%m-%d') }}</td>
                     <td style="text-align: right;">{{ order_item.PRODT_ORDER_QTY | int }}</td>
                     <td style="text-align: right;">{{ order_item.PROD_QTY_IN_ORDER_UNIT | int }}</td>
-                    <td style="text-align: right;">{{ order_item.BAD_QTY_IN_ORDER_UNIT | int }}</td>
+                    <td style="text-align: right; color: red;">{{ order_item.BAD_QTY_IN_ORDER_UNIT | int }}</td>
                     <td>{{ order_item.PLANT_START_DT.strftime('%Y-%m-%d') }}</td>
                     <td>{{ order_item.PLANT_COMPT_DT.strftime('%Y-%m-%d') }}</td>
-                    <td>{{ order_item.ORDER_STATUS }}</td>
+                    <td style="font-weight: bold;">{{ order_item.ORDER_STATUS }}</td>
                 </tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <p>데이터 없음</p>
+        {% if form_submitted %}
+        <script>
+            alert("데이터 없음");
+        </script>
+        {% endif %}
         {% endif %}
     </div>
 </div>

@@ -12,122 +12,126 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h7 class="m-0 font-weight-bold text-primary">사용자관리 > 사용자 계정 관리</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <div style="font-weight: bold;">전체 유저 수 : <span style="font-weight: bold; color: blue;">{{ total_users }}</span></div>
+            <div>전체 유저 수 : <span style="font-weight: bold; color: blue;">{{ total_users }}</span></div>
             <form class="shadow-sm" style="display: flex;">
                 <div class="input-group">
                     <input type="text" class="form-control bg-light border-0 small" placeholder="검색" aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
                     <div class="input-group-append">
-                        <button class="btn btn-custom" type="button">
+                        <button class="btn btn-light btn shadow-sm" type="button">
                             검색
                         </button>
                     </div>
                 </div>
             </form>
-            <!--            <a href="{{ url_for('download.download_user_manage') }}" class="btn btn-success shadow-sm">Excel 저장</a>-->
-            <a href="{{ url_for('auth.signup') }}" class="btn btn-custom shadow-sm">사용자 계정 생성</a>
-            <a href="{{ url_for('auth.user_role') }}" class="btn btn-custom shadow-sm">권한관리</a>
-            <a href="{{ url_for('auth.role_permission') }}" class="btn btn-custom shadow-sm">메뉴관리</a>
+            <a href="{{ url_for('auth.signup') }}" class="btn btn-light btn-sm shadow-sm ms-3">사용자 계정 생성</a>
+            <a href="{{ url_for('auth.user_role') }}" class="btn btn-light btn-sm shadow-sm">권한관리</a>
+            <a href="{{ url_for('auth.role_permission') }}" class="btn btn-light btn-sm shadow-sm">메뉴관리</a>
         </div>
     </div>
 </div>
-
-
-
-
-
 
 <!--라인-->
 <div>
-    <div>
-        <div class="card-body">
-            <table class="table table-sm table-bordered table-hover" style="text-align: center;
-            border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
-
-                <thead>
-                <!--#192B5B #0d6efd #4e73df-->
-                    <tr>
-
-                        <th style="background-color: #5a5c69; color: white;">사용자ID</th>
-                        <th style="background-color: #5a5c69; color: white;">성명</th>
-                        <th style="background-color: #5a5c69; color: white;">성명(영문)</th>
-                        <th style="background-color: #5a5c69; color: white;">부서</th>
-                        <th style="background-color: #5a5c69; color: white;">직위/직책</th>
-                        <th style="background-color: #5a5c69; color: white;">회사코드</th>
-                        <th style="background-color: #5a5c69; color: white;">권한</th>
-                        <th style="background-color: #5a5c69; color: white;">이메일</th>
-                        <th style="background-color: #5a5c69; color: white;">생성날짜</th>
-                        <th style="background-color: #5a5c69; color: white;">업데이트날짜</th>
-                        <th style="background-color: #5a5c69; color: white;">remark</th>
-
-
-                    </tr>
-                </thead>
-
-                <tbody>
-                {% for user, rolename in users_with_roles %}
-                    <tr data-user-id="{{ user.users_id }}">
-
-                        <td>{{ User.USR_ID }}</td>
-                        <td>{{ User.USR_NM }}</td>
-                        <td></td>
-                        <td>{{ User.USR_DEPT }}</td>
-                        <td>{{ User.USR_JOB }}</td>
-                        <td>KO388</td>
-                        <td></td>
-                        <td>{{ User.USR_EMAIL }}</td>
-                        <td>{{ User.INSRT_DT.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ User.UPDT_DT.strftime('%Y-%m-%d') }}</td>
-                        <td></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-
-            </table>
-        </div>
-        <!-- Modal -->
-        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="confirmModalLabel">확인 요청</h5>
-              </div>
-              <div class="modal-body">
-                데이터 수정 및 비밀번호 초기화를 진행 하시겠습니까?
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="window.location.href='/auth/user_manage'">취소</button>
-                <button type="button" class="btn btn-primary" id="confirmUpdate">확인</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+    <div class="card-body">
+        <table class="table table-sm table-bordered table-hover"
+               style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+            <thead class="table-light">
+            <tr>
+                <th></th>
+                <th style="font-weight: normal;">사용자ID</th>
+                <th style="font-weight: normal;">성명</th>
+                <th style="font-weight: normal;">성명(영문)</th>
+                <th style="font-weight: normal;">부서</th>
+                <th style="font-weight: normal;">직위/직책</th>
+                <th style="font-weight: normal;">회사코드</th>
+                <th style="font-weight: normal;">이메일</th>
+                <th style="font-weight: normal;">생성날짜</th>
+                <th style="font-weight: normal;">업데이트날짜</th>
+                <th style="font-weight: normal;">remark</th>
+                <th style="font-weight: normal;">정보수정</th>
+                <th style="font-weight: normal;">보유권한</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for user in users_with_roles %}
+            <tr data-user-id="{{ user.USR_ID }}">
+                <td>{{ loop.index }}</td>
+                <td>{{ user.USR_ID }}</td>
+                <td>{{ user.USR_NM }}</td>
+                <td></td>
+                <td>{{ user.USR_DEPT }}</td>
+                <td>{{ user.USR_JOB }}</td>
+                <td>KO388</td>
+                <td>{{ user.USR_EMAIL }}</td>
+                <td>{{ user.INSRT_DT }}</td>
+                <td>{{ user.UPDT_DT }}</td>
+                <td></td>
+                <td>
+                    <button class="btn btn-light btn-sm shadow-sm view-roles" data-roles="{{ user.ROLES|join(', ') }}" data-username="{{ user.USR_NM }}">
+                        수정
+                    </button>
+                </td>
+                <td>
+                    <button class="btn btn-light btn-sm shadow-sm view-roles" data-roles="{{ user.ROLES|join(', ') }}" data-username="{{ user.USR_NM }}">
+                        조회
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="rolesModal" tabindex="-1" role="dialog" aria-labelledby="rolesModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rolesModalLabel">권한 정보</h5>
+
+            </div>
+            <div class="modal-body">
+                <p id="modalUsername"></p>
+                <ul id="rolesList"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">추가</button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">삭제</button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const rows = document.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-        row.addEventListener('click', function(event) {
-            event.preventDefault(); // 기본 이벤트 방지
-            const userId = this.dataset.userId; // 데이터 속성에서 사용자 ID 추출
-            if (userId) {
-                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
-                document.getElementById('confirmUpdate').addEventListener('click', function() {
-                    window.location.href = `/auth/user_update/${userId}`; // 사용자 수정 페이지로 이동
-                });
+    document.querySelectorAll('.view-roles').forEach(button => {
+        button.addEventListener('click', function() {
+            const roles = this.dataset.roles.split(', ');
+            const username = this.dataset.username;
+            const rolesList = document.getElementById('rolesList');
+            const modalUsername = document.getElementById('modalUsername');
 
-                modal.show(); // 모달 표시
-            } else {
-                console.error('User ID not found.');
-            }
+            // Clear previous roles
+            rolesList.innerHTML = '';
+            modalUsername.textContent = username + '님의 권한 목록:';
+
+            // Populate new roles
+            roles.forEach(role => {
+                const li = document.createElement('li');
+                li.textContent = role;
+                rolesList.appendChild(li);
+            });
+
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('rolesModal'));
+            modal.show();
         });
     });
 });
 </script>
-
-
-
 
 {% endblock %}

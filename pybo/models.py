@@ -1,6 +1,6 @@
 from pybo import db
 from datetime import datetime
-from sqlalchemy import Column, Integer, Numeric
+from sqlalchemy import Column, Integer, Numeric, Index
 from sqlalchemy.dialects.mssql import NVARCHAR
 from flask_sqlalchemy import SQLAlchemy
 import pytz
@@ -162,7 +162,9 @@ class Production_Order(db.Model):
 # 알파플랜 엑셀 파일
 class Production_Alpha(db.Model):
     __tablename__ = 'P_PRODUCTION_ALPHA'
-    __table_args__ = {'schema': 'dbo'}
+    __table_args__ = (
+        {'schema': 'dbo'}
+    )
 
     LOT = db.Column(db.NVARCHAR(8), nullable=True)
     product = db.Column(db.NVARCHAR(8), nullable=True)
@@ -198,7 +200,7 @@ class Production_Alpha(db.Model):
     prodlabel_time = db.Column(db.DateTime, nullable=True)
     prodlabel_cycles = db.Column(db.NUMERIC(18,0), nullable=True)
     INSRT_DT = db.Column(db.DateTime, default=kst_now)
-    INSRT_USR = db.Column(db.NVARCHAR(13),nullable=True)
+    INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
     UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
     UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
 

@@ -1,5 +1,6 @@
-from flask import Blueprint, url_for
+from flask import Blueprint, url_for, session
 from werkzeug.utils import redirect
+
 
 bp = Blueprint('main', __name__, url_prefix='/')
 
@@ -10,7 +11,10 @@ def hello_pybo():
 
 @bp.route('/')
 def index():
-    return redirect(url_for('dashboard.dashboard'))
+    if 'logged_in' in session and session['logged_in']:
+        return redirect(url_for('dashboard.dashboard'))
+    else:
+        return redirect(url_for('auth.login'))
 
 
 
