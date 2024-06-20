@@ -112,7 +112,7 @@
 
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
-        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 실적결과조회</h7>
+        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 등록실적조회</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
                 <i class="bi bi-search"></i> 조회
@@ -179,41 +179,43 @@
     </form>
 
     <!-- 10 공정 -> 여기에 이제 ASSN 테이블을 보여줄 예정이다. 위에 조회 조건에 의해 필요한 화면만을 렌더링하는 방식으로 진행 -->
-    <div>
-        <h5 class="ps-2 pt-4">실적처리 결과내역</h5>
-    </div>
-    <div class="table-wrapper" id="process10">
+
+    <div class="table-wrapper pt-3 ps-3 pe-3" id="process10">
         <table class="table table-sm table-hover">
             <thead class="table-light">
             <tr>
                 <th class="sticky" style="width: 100px; font-weight: normal"></th>
                 <th class="sticky" style="width: 100px; font-weight: normal">LOT</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">barcode</th>
-                <th class="sticky" style="width: 100px; background-color: #e0ffff;">품목코드</th>
-                <th class="sticky" style="width: 100px; background-color: #e0ffff;">제조오더번호</th>
-                <th class="sticky" style="width: 100px; font-weight: normal"></th>
-                <th class="sticky" style="width: 100px; font-weight: normal">err_code</th>
-                <th class="sticky" style="width: 100px; font-weight: normal"></th>
-                <th class="sticky" style="width: 100px; font-weight: normal">err_info</th>
-                <th class="sticky" style="width: 100px; font-weight: normal"></th>
-                <th class="sticky" style="width: 100px; font-weight: normal">print_time</th>
-                <th class="sticky" style="width: 100px; font-weight: normal"></th>
+                <th class="sticky" style="width: 100px; font-weight: normal">제품</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">바코드</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">제조오더번호</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">공정</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">작업장</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">G/B</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">Box번호</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">출고유형</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">수주번호</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">수주SEQ번호</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">발주번호</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">발주SEQ번호</th>
             </tr>
             </thead>
             <tbody>
             {% for row in whf10_data %}
             <tr>
                 <td >{{ loop.index }}</td>
-                <td>{{ row.LOT }}</td>
-                <td>{{ row.barcode }}</td>
-                <td style="background-color: #e0ffff;">CHF10-120LR</td>
-                <td style="background-color: #e0ffff;">{{ row.PRODT_ORDER_NO }}</td>
                 <td></td>
-                <td>{{ row.err_code }}</td>
                 <td></td>
-                <td>{{ row.err_info }}</td>
                 <td></td>
-                <td>{{ row.print_time }}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
                 <td></td>
 
 

@@ -211,9 +211,11 @@ class Production_Barcode(db.Model):
     __tablename__ = 'P_PRODUCTION_BARCODE'
     __table_args__ = {'schema': 'dbo'}
 
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     LOT = db.Column(db.NVARCHAR(8), nullable=True)
     product = db.Column(db.NVARCHAR(8), nullable=True)
-    barcode = db.Column(db.NVARCHAR(20), primary_key=True)
+    barcode = db.Column(db.NVARCHAR(20), nullable=True)
+    wc_cd = db.Column(db.NVARCHAR(10), nullable=True)
     err_code = db.Column(db.NUMERIC(18, 0), nullable=True)
     err_info = db.Column(db.NVARCHAR(50), nullable=True)
     print_time = db.Column(db.DateTime, nullable=True)
@@ -252,9 +254,10 @@ class Production_Barcode_Assign(db.Model):
     __tablename__ = 'P_PRODUCTION_BARCODE_ASSN'
     __table_args__ = {'schema': 'dbo'}
 
-    barcode = db.Column(db.NVARCHAR(20), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    barcode = db.Column(db.NVARCHAR(20), nullable=True)
     PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), nullable=True)
-    OPR_NO = db.Column(db.NVARCHAR(3), nullable=True)
+    OPR_NO = db.Column(db.NVARCHAR(10), nullable=False, default='10')
     REPORT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
     BOX_NUM = db.Column(db.NVARCHAR(20), nullable=True)
     INSRT_DT = db.Column(db.DateTime, default=kst_now)
@@ -263,21 +266,23 @@ class Production_Barcode_Assign(db.Model):
     UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
     MOV_TYPE = db.Column(db.NVARCHAR(4), nullable=True)
     PO_NO = db.Column(db.NVARCHAR(18), nullable=True)
-    POS_SEQ_NO = db.Column(db.SMALLINT, nullable=True)
+    PO_SEQ_NO = db.Column(db.SMALLINT, nullable=True)
     SO_NO = db.Column(db.NVARCHAR(18), nullable=True)
     SO_SEQ = db.Column(db.SMALLINT, nullable=True)
+    WC_CD = db.Column(db.NVARCHAR(7), nullable=True)
 
 
 class Production_Results(db.Model):
     __tablename__ = 'P_PRODUCTION_RESULTS'
     __table_args__ = {'schema': 'dbo'}
 
-    PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), primary_key=True)
-    OPR_NO = db.Column(db.NVARCHAR(3), primary_key=True)
-    SEQ = db.Column(db.SMALLINT, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), nullable=True)
+    OPR_NO = db.Column(db.NVARCHAR(3), nullable=True)
+    SEQ = db.Column(db.SMALLINT, nullable=True)
     REPORT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
-    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
-    PROD_QTY_IN_ORDER_UNIT = db.Column(db.NUMERIC(18,6),nullable=True)
+    TOTAL_QTY = db.Column(db.NUMERIC(18, 6), nullable=True)
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True, default='p710')
     REPORT_DT = db.Column(db.DateTime, default=kst_now)
     INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
 

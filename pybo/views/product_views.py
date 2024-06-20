@@ -7,19 +7,16 @@ from sqlalchemy import null
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
-from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, ProductionWHF10, ProductionWHF30, ProductionWHF60
+from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
+    Production_Barcode_Assign, Production_Results, kst_now
 
 bp = Blueprint('product', __name__, url_prefix='/product')
 
 ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
 
-# 로깅 설정
-logging.basicConfig(level=logging.DEBUG)
-
 
 @bp.route('/product_order/', methods=('GET', 'POST'))
 def product_order():
-
     orders_with_items = []
     orders_with_wcs = []
     form_submitted = False
@@ -41,7 +38,6 @@ def product_order():
         PLANT_COMPT_DT = request.form.get('end_date', '')
         PRODT_ORDER_NO = request.form.get('prodt_order_no', '')
 
-
         if PLANT_START_DT:
             PLANT_START_DT = datetime.strptime(PLANT_START_DT, '%Y-%m-%d')
         if PLANT_COMPT_DT:
@@ -50,7 +46,6 @@ def product_order():
 
         if plants:
             PLANT_CD = plants[0].PLANT_CD
-
 
     if not PLANT_START_DT:
         PLANT_START_DT = datetime.today()
@@ -107,10 +102,6 @@ def product_order():
                            PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, PLANT_START_DT=PLANT_START_DT,
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            form_submitted=form_submitted)
-
-
-
-
 
 
 @bp.route('/get_bom_data')
@@ -226,114 +217,76 @@ def process_excel(filepath):
 # 여기에 조회조건 걸어서 register 화면에 데이터 렌더링
 @bp.route('/register/', methods=['GET', 'POST'])
 def product_register():
-    alpha_data = Production_Alpha.query.all()
+    alpha_data = Production_Alpha.query.filter_by(REPORT_FLAG='N').all()
     return render_template('product/product_register.html', data=alpha_data)
 
-# 여기에 조회조건 걸어서 register_result 화면에 데이터 렌더링
+
 @bp.route('/register_result/', methods=['GET', 'POST'])
 def product_register_result():
-
-    INSRT_DT = None
-    UPDT_DT = None
-
-    if request.method == 'POST':
-        INSRT_DT = request.form.get('insert_date_fr', '')
-        UPDT_DT = request.form.get('insert_date_to', '')
+    return render_template('product/product_register_result.html')
 
 
-
-        if PLANT_START_DT:
-            PLANT_START_DT = datetime.strptime(PLANT_START_DT, '%Y-%m-%d')
-        if PLANT_COMPT_DT:
-            PLANT_COMPT_DT = datetime.strptime(PLANT_COMPT_DT, '%Y-%m-%d')
-    else:
-
-        if plants:
-            PLANT_CD = plants[0].PLANT_CD
+from datetime import datetime
 
 
+def remove_microseconds(dt):
+    """Remove microseconds from a datetime object."""
+    if dt:
+        return dt.replace(microsecond=0)
+    return dt
 
-    whf10_data = ProductionWHF10.query.all()
-    whf30_data = ProductionWHF30.query.all()
-    whf60_data = ProductionWHF60.query.all()
-    return render_template('product/product_register_result.html', whf10_data=whf10_data, whf30_data=whf30_data,
-                           whf60_data=whf60_data)
 
-# 실적처리
+def parse_datetime(datetime_str):
+    """Parse datetime string with various formats including milliseconds."""
+    for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f%z'):
+        try:
+            dt = datetime.strptime(datetime_str, fmt)
+            return remove_microseconds(dt)
+        except ValueError:
+            continue
+    raise ValueError(f'time data {datetime_str} does not match any known format')
+
+
 @bp.route('/register', methods=['POST'])
 def register():
-    _10g, _30g, _60g = 0, 0, 0
-    _10b, _30b, _60b = 0, 0, 0
+    selected_records = request.form.getlist('chkRow')
+    if not selected_records:
+        return '<script>alert("실적 처리할 레코드를 선택해 주세요."); window.location.href="/product/register/";</script>'
 
-    production_alpha_records = Production_Alpha.query.all()
+    for record_id in selected_records:
+        barcode, modified_str = record_id.split('|')
+        modified = parse_datetime(modified_str)
 
 
-    for record in production_alpha_records:
+        processed_record = Production_Barcode.query.filter_by(barcode=barcode).first()
+        if processed_record:
+            continue
 
+        record = Production_Alpha.query.filter_by(barcode=barcode).first()
 
-        order_10g = Production_Order.query.filter_by(ITEM_CD='CHF10-120LR', ORDER_STATUS='RL').order_by(
-            Production_Order.PRODT_ORDER_NO.asc()).first()
-        order_10b = Production_Order.query.filter_by(ITEM_CD='CHF10-120LR', ORDER_STATUS='RL').order_by(
-            Production_Order.PRODT_ORDER_NO.asc()).first()
-        order_30g = Production_Order.query.filter_by(ITEM_CD='CHF30-120LR', ORDER_STATUS='RL').order_by(
-            Production_Order.PRODT_ORDER_NO.asc()).first()
-        order_30b = Production_Order.query.filter_by(ITEM_CD='CHF30-120LR', ORDER_STATUS='RL').order_by(
-            Production_Order.PRODT_ORDER_NO.asc()).first()
-        order_60g = Production_Order.query.filter_by(ITEM_CD='CHF60-120LR', ORDER_STATUS='RL').order_by(
-            Production_Order.PRODT_ORDER_NO.asc()).first()
-        order_60b = Production_Order.query.filter_by(ITEM_CD='CHF60-120LR', ORDER_STATUS='RL').order_by(
-            Production_Order.PRODT_ORDER_NO.asc()).first()
+        if record:
+            processes = []
+            if record.print_time is not None:
+                processes.append('WSF10')
+            if record.outweight_result == 1:
+                processes.append('WSF30')
+            if record.prodlabel_cycles == 1:
+                processes.append('WSF60')
 
-        # 10공정 양품 처리
-        if record.print_time is not None:
-            _10g += 1
-            if order_10g:
-                whf10 = ProductionWHF10(
+            for process in processes:
+                # Check if the record already exists in Production_Barcode
+                existing_record = Production_Barcode.query.filter_by(barcode=record.barcode, wc_cd=process).first()
+                if existing_record:
+                    continue
+
+                production_barcode = Production_Barcode(
                     LOT=record.LOT,
-                    barcode=record.barcode,
                     product=record.product,
-                    ITEM_CD=order_10g.ITEM_CD,
-                    PRODT_ORDER_NO=order_10g.PRODT_ORDER_NO,
+                    barcode=record.barcode,
+                    wc_cd=process,
                     err_code=record.err_code,
                     err_info=record.err_info,
-                    print_time=record.print_time
-                )
-                db.session.add(whf10)
-                order_10g.PROD_QTY_IN_ORDER_UNIT += 1  # 양품 수량 업데이트
-
-        # 10공정 불량 처리
-        else:
-            _10b += 1
-            if order_10b:
-                whf10 = ProductionWHF10(
-                    LOT=record.LOT,
-                    barcode=record.barcode,
-                    product=record.product,
-                    ITEM_CD=order_10b.ITEM_CD,
-                    PRODT_ORDER_NO=order_10b.PRODT_ORDER_NO,
-                    err_code=record.err_code,
-                    err_info=record.err_info,
-                    print_time=record.print_time
-                )
-                db.session.add(whf10)
-                order_10b.BAD_QTY_IN_ORDER_UNIT += 1  # 불량 수량 업데이트
-
-        # 양, 불 합쳐서 오더의 생산량과 비교, 그 양을 채우면 CL 처리
-        if order_10g and (_10g + _10b >= order_10g.PRODT_ORDER_QTY):
-            order_10g.ORDER_STATUS = 'CL'
-            _10g, _10b = 0, 0
-
-
-        # 30 공정
-        if record.outweight_result == 1:
-            _30g += 1
-            if order_30g:
-                whf30 = ProductionWHF30(
-                    LOT=record.LOT,
-                    barcode=record.barcode,
-                    product=record.product,
-                    ITEM_CD=order_30g.ITEM_CD,
-                    PRODT_ORDER_NO=order_30g.PRODT_ORDER_NO,
+                    print_time=record.print_time,
                     inweight_time=record.inweight_time,
                     inweight_cycles=record.inweight_cycles,
                     inweight_station=record.inweight_station,
@@ -351,56 +304,7 @@ def register():
                     outweight_station=record.outweight_station,
                     outweight_cycles=record.outweight_cycles,
                     outweight_result=record.outweight_result,
-                    outweight_value=record.outweight_value
-                )
-                db.session.add(whf30)
-                order_30g.PROD_QTY_IN_ORDER_UNIT += 1  # 양품 수량 업데이트
-
-        elif record.outweight_result not in (0, 1, None):
-            _30b += 1
-            if order_30b:
-                whf30 = ProductionWHF30(
-                    LOT=record.LOT,
-                    barcode=record.barcode,
-                    product=record.product,
-                    ITEM_CD=order_30b.ITEM_CD,
-                    PRODT_ORDER_NO=order_30b.PRODT_ORDER_NO,
-                    inweight_time=record.inweight_time,
-                    inweight_cycles=record.inweight_cycles,
-                    inweight_station=record.inweight_station,
-                    inweight_result=record.inweight_result,
-                    inweight_value=record.inweight_value,
-                    leaktest_cycles=record.leaktest_cycles,
-                    leaktest_entry=record.leaktest_entry,
-                    leaktest_exit=record.leaktest_exit,
-                    leaktest_station=record.leaktest_station,
-                    leaktest_value=record.leaktest_value,
-                    leaktest_ptest=record.leaktest_ptest,
-                    leaktest_duration=record.leaktest_duration,
-                    leaktest_result=record.leaktest_result,
-                    outweight_time=record.outweight_time,
-                    outweight_station=record.outweight_station,
-                    outweight_cycles=record.outweight_cycles,
-                    outweight_result=record.outweight_result,
-                    outweight_value=record.outweight_value
-                )
-                db.session.add(whf30)
-                order_30b.BAD_QTY_IN_ORDER_UNIT += 1  # 불량 수량 업데이트
-
-        # 양, 불 합쳐서 오더의 생산량과 비교, 그 양을 채우면 CL 처리
-        if order_30g and (_30g + _30b >= order_30g.PRODT_ORDER_QTY):
-            order_30g.ORDER_STATUS = 'CL'
-            _30g, _30b = 0, 0
-
-        if record.prodlabel_cycles == 1:
-            _60g += 1
-            if order_60g:
-                whf60 = ProductionWHF60(
-                    LOT=record.LOT,
-                    barcode=record.barcode,
-                    product=record.product,
-                    ITEM_CD=order_60g.ITEM_CD,
-                    PRODT_ORDER_NO=order_60g.PRODT_ORDER_NO,
+                    outweight_value=record.outweight_value,
                     itest2_time=record.itest2_time,
                     itest2_station=record.itest2_station,
                     itest2_cycles=record.itest2_cycles,
@@ -408,41 +312,155 @@ def register():
                     itest2_value=record.itest2_value,
                     itest2_ptest=record.itest2_ptest,
                     prodlabel_time=record.prodlabel_time,
-                    prodlabel_cycles=record.prodlabel_cycles
+                    prodlabel_cycles=record.prodlabel_cycles,
+                    INSRT_DT=record.INSRT_DT,
+                    INSRT_USR=record.INSRT_USR,
+                    UPDT_DT=record.UPDT_DT,
+                    UPDT_USR=record.UPDT_USR
                 )
-                db.session.add(whf60)
-                order_60g.PROD_QTY_IN_ORDER_UNIT += 1  # 양품 수량 업데이트
+                db.session.add(production_barcode)
 
-        elif record.prodlabel_cycles == 2:
-            _60b += 1
-            if order_60b:
-                whf60 = ProductionWHF60(
-                    LOT=record.LOT,
-                    barcode=record.barcode,
-                    product=record.product,
-                    ITEM_CD=order_60b.ITEM_CD,
-                    PRODT_ORDER_NO=order_60b.PRODT_ORDER_NO,
-                    itest2_time=record.itest2_time,
-                    itest2_station=record.itest2_station,
-                    itest2_cycles=record.itest2_cycles,
-                    itest2_result=record.itest2_result,
-                    itest2_value=record.itest2_value,
-                    itest2_ptest=record.itest2_ptest,
-                    prodlabel_time=record.prodlabel_time,
-                    prodlabel_cycles=record.prodlabel_cycles
-                )
-                db.session.add(whf60)
-                order_60b.BAD_QTY_IN_ORDER_UNIT += 1  # 불량 수량 업데이트
-
-            # 양, 불 합쳐서 오더의 생산량과 비교, 그 양을 채우면 CL 처리
-        if order_60g and (_60g + _60b >= order_60g.PRODT_ORDER_QTY):
-            order_60g.ORDER_STATUS = 'CL'
-            _60g, _60b = 0, 0
-
+            # REPORT_FLAG 업데이트
+            if len(processes) == 3:
+                record.REPORT_FLAG = 'Y'
+                db.session.commit()
 
     db.session.commit()
 
-    return '<script>alert("실적처리가 완료되었습니다."); window.location.href="/product/register/";</script>'
+
+    assign_production_orders()
+
+    return '<script>alert("실적 처리가 완료되었습니다."); window.location.href="/product/register/";</script>'
+
+
+def assign_production_orders():
+    # 바코드 데이터 가져오기
+    barcodes = Production_Barcode.query.all()
+    orders = {wc_cd: [] for wc_cd in ['WSF10', 'WSF30', 'WSF60']}
+
+    # 오더 데이터 가져오기
+    for wc_cd in orders.keys():
+        orders[wc_cd] = Production_Order.query.filter_by(WC_CD=wc_cd).all()
+
+    order_indices = {wc_cd: 0 for wc_cd in orders.keys()}
+    order_quantities = {wc_cd: {'good': 0, 'bad': 0} for wc_cd in orders.keys()}
+
+    # 바코드 매핑
+    for barcode in barcodes:
+        wc_cd = barcode.wc_cd
+        if wc_cd in orders and orders[wc_cd]:
+            order = orders[wc_cd][order_indices[wc_cd]]
+            report_type = 'G' if barcode.err_code == 0 else 'B'
+            opr_no = '10'
+
+            # P_PRODUCTION_BARCODE_ASSN 테이블에 데이터 추가
+            production_barcode_assn = Production_Barcode_Assign(
+                barcode=barcode.barcode,
+                PRODT_ORDER_NO=order.PRODT_ORDER_NO,
+                OPR_NO=opr_no,
+                REPORT_TYPE=report_type,
+                WC_CD=wc_cd,
+                INSRT_DT=barcode.INSRT_DT,
+                INSRT_USR=barcode.INSRT_USR,
+                UPDT_DT=barcode.UPDT_DT,
+                UPDT_USR=barcode.UPDT_USR
+            )
+            db.session.add(production_barcode_assn)
+
+            # 오더 수량 업데이트
+            if report_type == 'G':
+                order.PROD_QTY_IN_ORDER_UNIT += 1
+                order_quantities[wc_cd]['good'] += 1
+            else:
+                order.BAD_QTY_IN_ORDER_UNIT += 1
+                order_quantities[wc_cd]['bad'] += 1
+
+            # order.PRODT_ORDER_QTY 만큼 채워지면 다음 order로 넘어가도록 수정
+            if (order.PROD_QTY_IN_ORDER_UNIT + order.BAD_QTY_IN_ORDER_UNIT) >= order.PRODT_ORDER_QTY:
+                order.ORDER_STATUS = 'CL'
+                order_indices[wc_cd] += 1
+                if order_indices[wc_cd] >= len(orders[wc_cd]):
+                    order_indices[wc_cd] = len(orders[wc_cd]) - 1  # Prevent out of index error
+
+    # commit을 통해 바코드와 오더 매핑을 먼저 수행
+    db.session.commit()
+
+    # 이후, 매핑된 데이터를 바탕으로 Production_Results 테이블에 데이터 삽입
+    for wc_cd in orders.keys():
+        for order in orders[wc_cd]:
+            if order.ORDER_STATUS == 'CL' or order.PROD_QTY_IN_ORDER_UNIT > 0 or order.BAD_QTY_IN_ORDER_UNIT > 0:
+                # 현재 오더에 대해 Production_Results 테이블에서 이미 있는 양품 및 불량 데이터 수량을 가져옴
+                existing_good_qty = db.session.query(
+                    db.func.sum(Production_Results.TOTAL_QTY)
+                ).filter(
+                    Production_Results.PRODT_ORDER_NO == order.PRODT_ORDER_NO,
+                    Production_Results.REPORT_TYPE == 'G'
+                ).scalar() or 0
+
+                existing_bad_qty = db.session.query(
+                    db.func.sum(Production_Results.TOTAL_QTY)
+                ).filter(
+                    Production_Results.PRODT_ORDER_NO == order.PRODT_ORDER_NO,
+                    Production_Results.REPORT_TYPE == 'B'
+                ).scalar() or 0
+
+                # 현재 오더 수량과 기존의 양품 및 불량 수량을 합산
+                good_qty = order.PROD_QTY_IN_ORDER_UNIT - existing_good_qty
+                bad_qty = order.BAD_QTY_IN_ORDER_UNIT - existing_bad_qty
+
+                # 양품 데이터 삽입
+                seq = Production_Results.query.filter_by(PRODT_ORDER_NO=order.PRODT_ORDER_NO).count() + 1
+                production_result_good = Production_Results(
+                    PRODT_ORDER_NO=order.PRODT_ORDER_NO,
+                    OPR_NO='10',
+                    SEQ=seq,
+                    REPORT_TYPE='G',
+                    TOTAL_QTY=good_qty,
+                    PLANT_CD='P710',
+                    REPORT_DT=None
+                )
+                db.session.add(production_result_good)
+
+                # 불량 데이터 삽입
+                seq += 1
+                production_result_bad = Production_Results(
+                    PRODT_ORDER_NO=order.PRODT_ORDER_NO,
+                    OPR_NO='10',
+                    SEQ=seq,
+                    REPORT_TYPE='B',
+                    TOTAL_QTY=bad_qty,
+                    PLANT_CD='P710',
+                    REPORT_DT=None
+                )
+                db.session.add(production_result_bad)
+
+                # 오더 수량 업데이트
+                order.PROD_QTY_IN_ORDER_UNIT = existing_good_qty + good_qty
+                order.BAD_QTY_IN_ORDER_UNIT = existing_bad_qty + bad_qty
+
+    db.session.commit()
+
+
+@bp.route('/assign-orders', methods=['POST'])
+def assign_orders_route():
+    assign_production_orders()
+    return '<script>alert("생산 오더가 할당되었습니다."); window.location.href="/product/assign/";</script>'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
