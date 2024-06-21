@@ -249,6 +249,7 @@ class Production_Barcode(db.Model):
     INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
     UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
     UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+    REPORT_FLAG = db.Column(db.NVARCHAR(1), nullable=False, default='N')
 
 class Production_Barcode_Assign(db.Model):
     __tablename__ = 'P_PRODUCTION_BARCODE_ASSN'
@@ -310,85 +311,4 @@ class Work_Center(db.Model):
     PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
     WC_CD = db.Column(db.NVARCHAR(7), primary_key=True)
     WC_NM = db.Column(db.NVARCHAR(50), nullable=True)
-
-class ProductionWHF10(db.Model):
-    __tablename__ = 'P_PRODUCTION_WHF10'
-    __table_args__ = {'schema': 'dbo'}
-
-    LOT = db.Column(db.NVARCHAR(8), nullable=True)
-    product = db.Column(db.NVARCHAR(8), nullable=True)
-    barcode = db.Column(db.NVARCHAR(20), primary_key=True)
-    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=False)
-    PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), nullable=True)
-    err_code = db.Column(db.NUMERIC(18, 0), nullable=True)
-    err_info = db.Column(db.NVARCHAR(50), nullable=True)
-    print_time = db.Column(db.DateTime, nullable=True)
-    INSRT_DT = db.Column(db.DateTime, default=kst_now)
-    INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
-    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
-    UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
-
-class ProductionWHF30(db.Model):
-    __tablename__ = 'P_PRODUCTION_WHF30'
-    __table_args__ = {'schema': 'dbo'}
-
-    LOT = db.Column(db.NVARCHAR(8), nullable=True)
-    product = db.Column(db.NVARCHAR(8), nullable=True)
-    barcode = db.Column(db.NVARCHAR(20), primary_key=True)
-    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=False)
-    PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), nullable=True)
-    inweight_time = db.Column(db.DateTime, nullable=True)
-    inweight_cycles = db.Column(db.NUMERIC(18, 0), nullable=True)
-    inweight_station = db.Column(db.NUMERIC(18, 0), nullable=True)
-    inweight_result = db.Column(db.NUMERIC(18, 0), nullable=True)
-    inweight_value = db.Column(db.NUMERIC(18, 0), nullable=True)
-    leaktest_cycles = db.Column(db.NUMERIC(18, 0), nullable=True)
-    leaktest_entry = db.Column(db.DateTime, nullable=True)
-    leaktest_exit = db.Column(db.DateTime, nullable=True)
-    leaktest_station = db.Column(db.NUMERIC(18, 0), nullable=True)
-    leaktest_value = db.Column(db.NUMERIC(18, 0), nullable=True)
-    leaktest_ptest = db.Column(db.NUMERIC(18, 0), nullable=True)
-    leaktest_duration = db.Column(db.NUMERIC(18, 0), nullable=True)
-    leaktest_result = db.Column(db.NUMERIC(18, 0), nullable=True)
-    outweight_time = db.Column(db.DateTime, nullable=True)
-    outweight_station = db.Column(db.NUMERIC(18, 0), nullable=True)
-    outweight_cycles = db.Column(db.NUMERIC(18, 0), nullable=True)
-    outweight_result = db.Column(db.NUMERIC(18, 0), nullable=True)
-    outweight_value = db.Column(db.NUMERIC(18, 0), nullable=True)
-    INSRT_DT = db.Column(db.DateTime, default=kst_now)
-    INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
-    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
-    UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
-
-class ProductionWHF60(db.Model):
-    __tablename__ = 'P_PRODUCTION_WHF60'
-    __table_args__ = {'schema': 'dbo'}
-
-    LOT = db.Column(db.NVARCHAR(8), nullable=True)
-    product = db.Column(db.NVARCHAR(8), nullable=True)
-    barcode = db.Column(db.NVARCHAR(20), primary_key=True)
-    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=False)
-    PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), nullable=True)
-    itest2_time = db.Column(db.DateTime, nullable=True)
-    itest2_station = db.Column(db.NUMERIC(18, 0), nullable=True)
-    itest2_cycles = db.Column(db.NUMERIC(18, 0), nullable=True)
-    itest2_result = db.Column(db.NUMERIC(18, 0), nullable=True)
-    itest2_value = db.Column(db.NUMERIC(18, 0), nullable=True)
-    itest2_ptest = db.Column(db.NUMERIC(18, 0), nullable=True)
-    prodlabel_time = db.Column(db.DateTime, nullable=True)
-    prodlabel_cycles = db.Column(db.NUMERIC(18, 0), nullable=True)
-    INSRT_DT = db.Column(db.DateTime, default=kst_now)
-    INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
-    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
-    UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
-
-
-
-
-
-
-
-
-
-
 

@@ -67,9 +67,9 @@
                 <td>{{ user.UPDT_DT }}</td>
                 <td></td>
                 <td>
-                    <button class="btn btn-light btn-sm shadow-sm view-roles" data-roles="{{ user.ROLES|join(', ') }}" data-username="{{ user.USR_NM }}">
+                    <a href="{{ url_for('auth.user_update', USR_ID=user.USR_ID) }}" class="btn btn-light btn-sm shadow-sm">
                         수정
-                    </button>
+                    </a>
                 </td>
                 <td>
                     <button class="btn btn-light btn-sm shadow-sm view-roles" data-roles="{{ user.ROLES|join(', ') }}" data-username="{{ user.USR_NM }}">
@@ -103,8 +103,6 @@
         </div>
     </div>
 </div>
-
-
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

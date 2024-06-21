@@ -158,19 +158,21 @@ def user_update(USR_ID):
         # 사용자 ID가 잘못된 경우에 대한 처리
         return redirect(url_for('main.index'))
 
-    form = UserUpdateForm(obj=user)  # Prepopulate the form with user data
+    form = UserUpdateForm(obj=user)  # 사용자 데이터로 폼을 미리 채움
     if request.method == 'POST' and form.validate_on_submit():
         user.USR_ID = form.USR_ID.data
         user.USR_NM = form.USR_NM.data
         user.USR_EMAIL = form.USR_EMAIL.data
-        user.USR_PW = generate_password_hash(form.password1.data)  # 비밀번호 해싱
+        if form.USR_PW1.data:
+            user.USR_PW = generate_password_hash(form.USR_PW1.data)  # 비밀번호 해싱
         user.USR_DEPT = form.USR_DEPT.data
         user.USR_JOB = form.USR_JOB.data
         user.USR_PHONE = form.USR_PHONE.data
         db.session.commit()
-        return redirect(url_for('main.index'))
+        return redirect(url_for('auth.user_manage'))  # 사용자 관리 페이지로 리디렉션
 
     return render_template('auth/user_update.html', form=form, user=user)
+
 
 @bp.route('/user_role', methods=['GET', 'POST'])
 def user_role():

@@ -2,7 +2,7 @@
 {% block content %}
 <style>
     th, td {
-        padding: 15px;
+        padding: 8px; /* 간격 줄이기 */
         text-align: center;
         white-space: nowrap;
     }
@@ -32,81 +32,7 @@
     }
 
     th, td {
-        min-width: 150px; /* 모든 테이블 셀에 최소 너비 설정 */
-    }
-
-    /* 기본 고정 열 */
-    th.fixed, td.fixed {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 0;
-        background-color: #fff;
-        z-index: 30; /* 기본 고정 열의 z-index 설정 */
-    }
-
-    th.fixed-2, td.fixed-2 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 150px; /* 첫 번째 열 너비에 맞춤 */
-        background-color: #fff;
-        z-index: 30;
-    }
-
-    th.fixed-3, td.fixed-3 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 300px; /* 첫 번째 + 두 번째 열 너비에 맞춤 */
-        background-color: #fff;
-        z-index: 30;
-    }
-
-    th.fixed-4, td.fixed-4 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 450px; /* 첫 번째 + 두 번째 + 세 번째 열 너비에 맞춤 */
-        background-color: #fff;
-        z-index: 30;
-    }
-
-    /* 두 번째 테이블 고정 열 */
-    #process30 th.fixed, #process30 td.fixed {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 0;
-        background-color: #fff;
-        z-index: 40; /* 두 번째 테이블 고정 열의 z-index 설정 */
-    }
-
-    #process30 th.fixed-2, #process30 td.fixed-2 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 150px;
-        background-color: #fff;
-        z-index: 40;
-    }
-
-    #process30 th.fixed-3, #process30 td.fixed-3 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 300px;
-        background-color: #fff;
-        z-index: 40;
-    }
-
-    #process30 th.fixed-4, #process30 td.fixed-4 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 450px;
-        background-color: #fff;
-        z-index: 40;
-    }
-
-    #process30 th.fixed-5, #process30 td.fixed-5 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 600px;
-        background-color: #fff;
-        z-index: 40;
+        min-width: 120px; /* 모든 테이블 셀에 최소 너비 설정 */
     }
 </style>
 
@@ -119,78 +45,69 @@
             </button>
         </div>
     </div>
+    <div class="pd-3">
+        <form method="POST" action="{{ url_for('product.product_register_result') }}" class="px-4 pd-6" id="searchForm">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-1 col-8 d-flex align-items-center">
+                        <label for="plant_code" class="form-label me-3" style="min-width: 110px;">공장</label>
+                        <select class="form-select form-select-sm" id="plant_code" name="plant_code">
+                            <option value="">p710 인공신장기공장</option>
 
-    <form method="POST" action="{{ url_for('product.register') }}" class="px-4" id="registerForm">
-        <div class="row">
-            <div class="col-md-3">
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="plant_code" class="form-label me-3" style="min-width: 110px;">
-                        &emsp;&emsp;&emsp;&emsp;공장
-                    </label>
-                    <select class="form-select form-select-sm" id="plant_code" name="plant_code">
-                        <option value="">p710 인공신장기공장</option>
-                        {% for plant in plants %}
-                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
-                            {{ plant.PLANT_CD }} {{ plant.PLANT_NM }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                        </select>
+                    </div>
+                    <div class="mb-1 col-8 d-flex align-items-center">
+                        <label for="lot_no_start" class="form-label me-3" style="min-width: 110px;">Lot No.</label>
+                        <div class="d-flex">
+                            <input type="text" class="form-control form-control-sm me-2" id="lot_no_start"
+                                   name="lot_no_start" value="{{ LOT_NO_START }}">
+                            <span class="mx-2">~</span>
+                            <input type="text" class="form-control form-control-sm ms-2" id="lot_no_end"
+                                   name="lot_no_end" value="{{ LOT_NO_END }}">
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">
-                        &emsp;&emsp;&emsp;Lot No.
-                    </label>
-                    <div class="d-flex">
-                        <input type="text" class="form-control form-control-sm me-2" id="start_date" name="start_date"
-                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') if PLANT_START_DT else '' }}">
-                        <span class="mx-2">~</span>
-                        <input type="text" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
-                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') if PLANT_COMPT_DT else '' }}">
+                <div class="col-md-6">
+                    <div class="mb-1 col-8 d-flex align-items-center">
+                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">등록일자</label>
+                        <div class="d-flex">
+                            <input type="date" class="form-control form-control-sm me-2" id="start_date"
+                                   name="start_date"
+                                   value="{{ INSRT_DT_START.strftime('%Y-%m-%d') if INSRT_DT_START else '' }}">
+                            <span class="mx-2">~</span>
+                            <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
+                                   value="{{ INSRT_DT_END.strftime('%Y-%m-%d') if INSRT_DT_END else '' }}">
+                        </div>
+                    </div>
+                    <div class="mb-1 col-8 d-flex align-items-center">
+                        <label for="barcode_no_start" class="form-label me-3" style="min-width: 110px;">Barcode No.</label>
+                        <div class="d-flex">
+                            <input type="text" class="form-control form-control-sm me-2" id="barcode_no_start"
+                                   name="barcode_no_start" value="{{ BARCODE_NO_START }}">
+                            <span class="mx-2">~</span>
+                            <input type="text" class="form-control form-control-sm ms-2" id="barcode_no_end"
+                                   name="barcode_no_end" value="{{ BARCODE_NO_END }}">
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="start_date" class="form-label me-3" style="min-width: 110px;">
-                        &emsp;&emsp;등록일자
-                    </label>
-                    <div class="d-flex">
-                        <input type="date" class="form-control form-control-sm me-2" id="start_date3" name="start_date"
-                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') if PLANT_START_DT else '' }}">
-                        <span class="mx-2">~</span>
-                        <input type="date" class="form-control form-control-sm ms-2" id="end_date3" name="end_date"
-                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') if PLANT_COMPT_DT else '' }}">
-                    </div>
-                </div>
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="order_status1" class="form-label me-3" style="min-width: 110px;">
-                        &emsp;Barcode No.
-                    </label>
-                     <div class="d-flex">
-                        <input type="text" class="form-control form-control-sm me-2" id="start_date1" name="start_date"
-                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') if PLANT_START_DT else '' }}">
-                        <span class="mx-2">~</span>
-                        <input type="text" class="form-control form-control-sm ms-2" id="end_date1" name="end_date"
-                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') if PLANT_COMPT_DT else '' }}">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </form>
+        </form>
+    </div>
 
-    <!-- 10 공정 -> 여기에 이제 ASSN 테이블을 보여줄 예정이다. 위에 조회 조건에 의해 필요한 화면만을 렌더링하는 방식으로 진행 -->
+    <div class="gap" style="margin-top: 20px;"></div> <!-- 간격 추가 -->
 
-    <div class="table-wrapper pt-3 ps-3 pe-3" id="process10">
+    <div class="table-wrapper ps-3 pe-3">
         <table class="table table-sm table-hover">
             <thead class="table-light">
             <tr>
-                <th class="sticky" style="width: 100px; font-weight: normal"></th>
+                <th class="sticky" style="width: 50px; font-weight: normal">No</th>
                 <th class="sticky" style="width: 100px; font-weight: normal">LOT</th>
                 <th class="sticky" style="width: 100px; font-weight: normal">제품</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">바코드</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">제조오더번호</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">공정</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">작업장</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">공장</th>
+                <th class="sticky" style="width: 150px; font-weight: normal">바코드</th>
+                <th class="sticky" style="width: 150px; font-weight: normal">제조오더번호</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">Operation</th>
+                <th class="sticky" style="width: 100px; font-weight: normal">작업공정</th>
                 <th class="sticky" style="width: 100px; font-weight: normal">G/B</th>
                 <th class="sticky" style="width: 100px; font-weight: normal">Box번호</th>
                 <th class="sticky" style="width: 100px; font-weight: normal">출고유형</th>
@@ -201,138 +118,28 @@
             </tr>
             </thead>
             <tbody>
-            {% for row in whf10_data %}
+            {% for row in results %}
             <tr>
-                <td >{{ loop.index }}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-
-
-
-
-
+                <td>{{ loop.index }}</td>
+                <td>{{ row[1] }}</td>  <!-- LOT -->
+                <td>{{ row[2] }}</td>  <!-- 제품 -->
+                <td>P710</td>
+                <td>{{ row[0].barcode }}</td>
+                <td>{{ row[0].PRODT_ORDER_NO }}</td>
+                <td>{{ row[0].OPR_NO }}</td>
+                <td>{{ row[0].WC_CD }}</td>
+                <td>{{ row[0].REPORT_TYPE }}</td>
+                <td>{{ row[0].BOX_NUM }}</td>
+                <td>{{ row[0].MOV_TYPE }}</td>
+                <td>{{ row[0].SO_NO }}</td>
+                <td>{{ row[0].SO_SEQ }}</td>
+                <td>{{ row[0].PO_NO }}</td>
+                <td>{{ row[0].PO_SEQ_NO }}</td>
             </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
-
-    <!-- 30 공정 -->
-<!--    <h5 class="ps-2">Out weight (WHF30)</h5>-->
-<!--    <div class="table-wrapper" id="process30" style="border: 3px solid; border-radius: 15px; border-color:#bdbdbd">-->
-<!--        <table class="table table-sm table-hover">-->
-<!--            <thead class="table-light">-->
-<!--            <tr>-->
-<!--                <th class="sticky " style="width: 100px; font-weight: normal"></th>-->
-<!--                <th class="sticky " style="width: 100px; font-weight: normal">LOT</th>-->
-<!--                <th class="sticky " style="width: 100px; font-weight: normal">barcode</th>-->
-<!--                <th class="sticky " style="width: 100px; background-color: #e0ffff;">품목코드</th>-->
-<!--                <th class="sticky " style="width: 100px; background-color: #e0ffff;">제조오더번호</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">inweight_time</th>-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">inweight_cycles</th>&ndash;&gt;-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">inweight_station</th>&ndash;&gt;-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">inweight_result</th>&ndash;&gt;-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">inweight_value</th>&ndash;&gt;-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">leaktest_cycles</th>&ndash;&gt;-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">leaktest_entry</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">leaktest_exit</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">leaktest_station</th>-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">leaktest_value</th>&ndash;&gt;-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">leaktest_ptest</th>&ndash;&gt;-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">leaktest_duration</th>-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">leaktest_result</th>&ndash;&gt;-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">outweight_time</th>-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">outweight_station</th>&ndash;&gt;-->
-<!--&lt;!&ndash;                <th class="sticky" style="width: 100px; font-weight: normal">outweight_cycles</th>&ndash;&gt;-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">outweight_result</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">outweight_value</th>-->
-<!--            </tr>-->
-<!--            </thead>-->
-<!--            <tbody>-->
-<!--            {% for row in whf30_data %}-->
-<!--            <tr>-->
-<!--                <td class="">{{ loop.index }}</td>-->
-<!--                <td class="">{{ row.LOT }}</td>-->
-<!--                <td class="">{{ row.barcode }}</td>-->
-<!--                <td class="" style="background-color: #e0ffff;">CHF30-120LR</td>-->
-<!--                <td class="" style="background-color: #e0ffff;">{{ row.PRODT_ORDER_NO }}</td>-->
-<!--                <td>{{ row.inweight_time }}</td>-->
-<!--&lt;!&ndash;                <td>{{ row.inweight_cycles }}</td>&ndash;&gt;-->
-<!--&lt;!&ndash;                <td>{{ row.inweight_station }}</td>&ndash;&gt;-->
-<!--&lt;!&ndash;                <td>{{ row.inweight_result }}</td>&ndash;&gt;-->
-<!--&lt;!&ndash;                <td>{{ row.inweight_value }}</td>&ndash;&gt;-->
-<!--&lt;!&ndash;                <td>{{ row.leaktest_cycles }}</td>&ndash;&gt;-->
-<!--                <td>{{ row.leaktest_entry }}</td>-->
-<!--                <td>{{ row.leaktest_exit }}</td>-->
-<!--                <td>{{ row.leaktest_station }}</td>-->
-<!--&lt;!&ndash;                <td>{{ row.leaktest_value }}</td>&ndash;&gt;-->
-<!--&lt;!&ndash;                <td>{{ row.leaktest_ptest }}</td>&ndash;&gt;-->
-<!--                <td>{{ row.leaktest_duration }}</td>-->
-<!--&lt;!&ndash;                <td>{{ row.leaktest_result }}</td>&ndash;&gt;-->
-<!--                <td>{{ row.outweight_time }}</td>-->
-<!--&lt;!&ndash;                <td>{{ row.outweight_station }}</td>&ndash;&gt;-->
-<!--&lt;!&ndash;                <td>{{ row.outweight_cycles }}</td>&ndash;&gt;-->
-<!--                <td>{{ row.outweight_result }}</td>-->
-<!--                <td>{{ row.outweight_value }}</td>-->
-<!--            </tr>-->
-<!--            {% endfor %}-->
-<!--            </tbody>-->
-<!--        </table>-->
-<!--    </div>-->
-
-    <!-- 60 공정 -->
-<!--    <h5 class="ps-2">TEST (WHF60)</h5>-->
-<!--    <div class="table-wrapper" id="process60" style="border: 3px solid; border-radius: 15px; border-color:#bdbdbd">-->
-<!--        <table class="table table-sm table-hover">-->
-<!--            <thead class="table-light">-->
-<!--            <tr>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal"></th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">LOT</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">barcode</th>-->
-<!--                <th class="sticky" style="width: 100px; background-color: #e0ffff;">품목코드</th>-->
-<!--                <th class="sticky" style="width: 100px; background-color: #e0ffff;">제조오더번호</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">itest2_time</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">itest2_station</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">itest2_cycles</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">itest2_result</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">itest2_value</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">itest2_ptest</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">prodlabel_time</th>-->
-<!--                <th class="sticky" style="width: 100px; font-weight: normal">prodlabel_cycles</th>-->
-<!--            </tr>-->
-<!--            </thead>-->
-<!--            <tbody>-->
-<!--            {% for row in whf60_data %}-->
-<!--            <tr>-->
-<!--                <td class="">{{ loop.index }}</td>-->
-<!--                <td class="">{{ row.LOT }}</td>-->
-<!--                <td class="">{{ row.barcode }}</td>-->
-<!--                <td class="" style="background-color: #e0ffff;">CHF60-120LR</td>-->
-<!--                <td style="background-color: #e0ffff;">{{ row.PRODT_ORDER_NO }}</td>-->
-<!--                <td>{{ row.itest2_time }}</td>-->
-<!--                <td>{{ row.itest2_station }}</td>-->
-<!--                <td>{{ row.itest2_cycles }}</td>-->
-<!--                <td>{{ row.itest2_result }}</td>-->
-<!--                <td>{{ row.itest2_value }}</td>-->
-<!--                <td>{{ row.itest2_ptest }}</td>-->
-<!--                <td>{{ row.prodlabel_time }}</td>-->
-<!--                <td>{{ row.prodlabel_cycles }}</td>-->
-<!--            </tr>-->
-<!--            {% endfor %}-->
-<!--            </tbody>-->
-<!--        </table>-->
-<!--    </div>-->
 </div>
 
 <script>
