@@ -35,6 +35,20 @@ class Role(db.Model):
     UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
 
 
+class UserRole(db.Model):
+    __tablename__ = 'Z_USER_ROLE'
+    __table_args__ = {'schema': 'dbo'}
+
+    USR_ID = db.Column(db.VARCHAR(20), db.ForeignKey('dbo.Z_USER.USR_ID'), primary_key=True)
+    ROLE_ID = db.Column(db.VARCHAR(10), db.ForeignKey('dbo.Z_ROLE.ROLE_ID'), primary_key=True)
+    INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+
+    user = db.relationship('User', backref=db.backref('user_roles', cascade='all, delete-orphan'))
+    role = db.relationship('Role', backref=db.backref('user_roles', cascade='all, delete-orphan'))
+
+
+
 # 기준정보
 class Item(db.Model):
     __tablename__ = 'B_ITEM'
@@ -215,7 +229,6 @@ class Production_Barcode(db.Model):
     LOT = db.Column(db.NVARCHAR(8), nullable=True)
     product = db.Column(db.NVARCHAR(8), nullable=True)
     barcode = db.Column(db.NVARCHAR(20), nullable=True)
-    wc_cd = db.Column(db.NVARCHAR(10), nullable=True)
     err_code = db.Column(db.NUMERIC(18, 0), nullable=True)
     err_info = db.Column(db.NVARCHAR(50), nullable=True)
     print_time = db.Column(db.DateTime, nullable=True)
@@ -280,6 +293,7 @@ class Production_Results(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), nullable=True)
     OPR_NO = db.Column(db.NVARCHAR(3), nullable=True)
+    WC_CD = db.Column(db.NVARCHAR(7), nullable=True)
     SEQ = db.Column(db.SMALLINT, nullable=True)
     REPORT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
     TOTAL_QTY = db.Column(db.NUMERIC(18, 6), nullable=True)
@@ -311,4 +325,26 @@ class Work_Center(db.Model):
     PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
     WC_CD = db.Column(db.NVARCHAR(7), primary_key=True)
     WC_NM = db.Column(db.NVARCHAR(50), nullable=True)
+
+class Packing_Hdr(db.Model):
+    __tablename__ = 'P_PACKING_HDR'
+    __table_args__ = {'schema': 'dbo'}
+
+    prodt_order_no = db.Column(db.String(18), primary_key=True, nullable=False)
+    m_box_no = db.Column(db.String(18), nullable=True)
+    plant_start_dt = db.Column(db.DateTime, nullable=True)
+    prodt_order_qty = db.Column(db.Numeric(18, 6), nullable=True)
+    prod_qty_in_order_unit = db.Column(db.Numeric(18, 6), nullable=True)
+    order_status = db.Column(db.String(4), nullable=True)
+
+class Packing_Dtl(db.Model):
+    __tablename__ = 'P_PACKING_DTL'
+    __table_args__ = {'schema': 'dbo'}
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
+    m_box_no = db.Column(db.String(18), nullable=True)
+    barcode = db.Column(db.String(20), nullable=True)
+    udi_code = db.Column(db.String(20), nullable=True)
+    packing_dt = db.Column(db.DateTime, nullable=True)
+    box_di_num = db.Column(db.String(20), nullable=True)
 

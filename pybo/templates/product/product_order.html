@@ -9,8 +9,34 @@
     .completed-order {
         background-color: #e0ffff !important;
     }
+
+    th {
+        background-color: #f8f9fa;
+        box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+
+    .table-wrapper {
+        overflow: auto;
+        height: calc(100vh - 300px); /* 화면 높이에 따라 조절 */
+        width: 100%;
+
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        min-width: 50px;
+    }
 </style>
 
+<!-- 조회조건 -->
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 제조오더조회</h7>
@@ -106,7 +132,7 @@
                     <select class="form-select form-select-sm" id="plant_code" name="plant_code">
                         <option value="">-</option>
                         {% for plant in plants %}
-                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD == PLANT_CD %}selected{% endif %}>
+                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
                             {{ plant.PLANT_CD }} {{ plant.PLANT_NM }}
                         </option>
                         {% endfor %}
@@ -119,7 +145,7 @@
                     <select class="form-select form-select-sm" id="item_cd" name="item_cd">
                         <option value="">-</option>
                         {% for item in items %}
-                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD == ITEM_CD %}selected{% endif %}>
+                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
                             {{ item.ITEM_CD }} {{ item.ITEM_NM }}
                         </option>
                         {% endfor %}
@@ -162,41 +188,49 @@
                     <label for="order_status" class="form-label me-3" style="min-width: 110px;">
                         &emsp;&emsp;오더상태
                     </label>
-                    <input type="text" class="form-control form-control-sm flex-grow-1" id="order_status"
-                           name="order_status"
-                           value="{{ order_status }}">
+                    <div class="form-group">
+                        <select class="form-select form-select-sm" id="order_status" name="order_status">
+                            <option value="" {% if ORDER_STATUS=='' %}selected{% endif %}>-</option>
+                            <option value="CL" {% if ORDER_STATUS=='CL' %}selected{% endif %}>CL</option>
+                            <option value="RL" {% if ORDER_STATUS=='RL' %}selected{% endif %}>RL</option>
+                        </select>
+
+                    </div>
                 </div>
             </div>
         </div>
     </form>
 </div>
 
+
+<div class="gap" style="margin-top: 20px;"></div>
+
 <div>
     <!--데이터 테이블-->
     <div>
         {% if orders_with_items and orders_with_wcs %}
-        <div class="card-body">
-            <table class="table table-sm table-bordered table-hover"
+        <div class="table-wrapper">
+            <table class="table table-sm table-hover"
                    style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
                 <thead class="table-light">
                 <tr>
-                    <th></th>
-                    <th style="font-weight: normal;">제조오더번호</th>
-                    <th style="font-weight: normal;">Seq</th>
-                    <th style="font-weight: normal;">공장</th>
-                    <th style="font-weight: normal;">작업공정</th>
-                    <th style="font-weight: normal;">공정명</th>
-                    <th style="font-weight: normal;">품목</th>
-                    <th style="font-weight: normal;">품목명</th>
-                    <th style="font-weight: normal;">품목규격</th>
-                    <th style="font-weight: normal;">단위</th>
-                    <th style="font-weight: normal;">계획지시일</th>
-                    <th style="font-weight: normal;">계획수량</th>
-                    <th style="font-weight: normal;">실적수량</th>
-                    <th style="font-weight: normal;">불량수량</th>
-                    <th style="font-weight: normal;">계획시작일자</th>
-                    <th style="font-weight: normal;">계획완료일자</th>
-                    <th style="font-weight: normal;">오더상태</th>
+                    <th class="sticky"></th>
+                    <th class="sticky">제조오더번호</th>
+                    <th class="sticky">Seq</th>
+                    <th class="sticky">공장</th>
+                    <th class="sticky">작업공정</th>
+                    <th class="sticky">공정명</th>
+                    <th class="sticky">품목</th>
+                    <th class="sticky">품목명</th>
+                    <th class="sticky">품목규격</th>
+                    <th class="sticky">단위</th>
+                    <th class="sticky">계획지시일</th>
+                    <th class="sticky">계획수량</th>
+                    <th class="sticky">실적수량</th>
+                    <th class="sticky">불량수량</th>
+                    <th class="sticky">계획시작일자</th>
+                    <th class="sticky">계획완료일자</th>
+                    <th class="sticky">오더상태</th>
                 </tr>
                 </thead>
 
@@ -262,7 +296,7 @@
             document.getElementById('modal_item_cd').value = selectedItemCd;
             fetchModalData(selectedOrderNo, selectedItemCd);
         } else {
-            alert('먼저 제조오더를 선택하세요.');
+            alert('조회할 제조오더를 선택해주세요.');
         }
     });
 

@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .selected-row {
+        background-color: #D6EAF8 !important;
+    }
+
+    .completed-order {
+        background-color: #e0ffff !important;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    .table-wrapper {
+        overflow: auto;
+        height: calc(100vh - 300px); /* 화면 높이에 따라 조절 */
+        width: 100%;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        min-width: 50px;
+    }
+</style>
+
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
+        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > Packing등록</h7>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton"><i
+                    class="bi bi-box-seam"></i>
+                Packing 실적등록
+            </button>
+            <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
+                <i class="bi bi-search"></i> 조회
+            </button>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('product.product_register_packing') }}" class="px-4" id="searchForm">
+        <input type="hidden" name="form_submitted" value="{{ form_submitted }}">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="plant_code" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;&emsp;공장
+                    </label>
+                    <select class="form-select form-select-sm" id="plant_code" name="plant_code" disabled>
+                        <option value="">p710 인공신장기공장</option>
+                        {% for plant in plants %}
+                        <option value="{{ plant[0] }}" {% if plant[0]== PLANT_CD %}selected{% endif %}>
+                            {{ plant[0] }} 인공신장기공장
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;&emsp;품목
+                    </label>
+                    <select class="form-select form-select-sm" id="item_cd" name="item_cd" disabled>
+                        <option value="">-</option>
+                        {% for item in items %}
+                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
+                            {{ item.ITEM_CD }} {{ item.ITEM_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="wc_cd" class="form-label me-3" style="min-width: 110px;">작업공정</label>
+                    <select class="form-select form-select-sm" id="wc_cd" name="wc_cd" disabled>
+                        <option value="WSF70" selected>WSF70</option>
+                    </select>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="prodt_order_no" class="form-label me-3" style="min-width: 110px;">제조오더번호</label>
+                    <input type="text" class="form-control form-control-sm flex-grow-1" id="prodt_order_no"
+                           name="prodt_order_no"
+                           value="{{ PRODT_ORDER_NO }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="start_date" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;계획일자
+                    </label>
+                    <div class="d-flex">
+                        <input type="date" class="form-control form-control-sm me-2" id="start_date" name="start_date"
+                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') }}">
+                        <span class="mx-2">~</span>
+                        <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
+                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') }}">
+                    </div>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="order_status" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;오더상태
+                    </label>
+                    <div class="form-group">
+                        <select class="form-select form-select-sm" id="order_status" name="order_status">
+                            <option value="" {% if ORDER_STATUS==
+                            '' %}selected{% endif %}>-</option>
+                            <option value="CL" {% if ORDER_STATUS==
+                            'CL' %}selected{% endif %}>CL</option>
+                            <option value="RL" {% if ORDER_STATUS==
+                            'RL' %}selected{% endif %}>RL</option>
+                        </select>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="gap" style="margin-top: 20px;"></div>
+
+<div>
+    <!--데이터 테이블-->
+    <div>
+        {% if orders_with_hdr %}
+        <div class="table-wrapper">
+            <table class="table table-sm table-hover"
+                   style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+                <thead class="table-light">
+                <tr>
+                    <th class="sticky"></th>
+                    <th class="sticky">제조오더번호</th>
+                    <th class="sticky">작업공정</th>
+                    <th class="sticky">품목</th>
+                    <th class="sticky">품목명</th>
+                    <th class="sticky">계획지시일</th>
+                    <th class="sticky">계획수량</th>
+                    <th class="sticky">실적수량</th>
+                    <th class="sticky">Master Box no.</th>
+                    <th class="sticky">오더상태</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for order in orders_with_hdr %}
+                <tr data-order-no="{{ order.prodt_order_no }}"
+                    class="{% if order.order_status == 'CL' %}completed-order{% endif %}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ order.prodt_order_no }}</td>
+                    <td>WSF70</td>
+                    <td>CHF70-120LR</td>
+                    <td>Packing</td>
+                    <td>{{ order.plant_start_dt.strftime('%Y-%m-%d') if order.plant_start_dt else '' }}</td>
+                    <td>{{ order.prodt_order_qty | int }}</td>
+                    <td>0</td> <!-- 실적수량 -->
+                    <td>{{ order.m_box_no or '' }}</td> <!-- Master Box no. -->
+                    <td>{{ order.order_status }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        {% if form_submitted %}
+        <script>
+            alert("데이터 없음");
+        </script>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Packing 실적등록 모달 -->
+<div class="modal fade" id="packingModal" tabindex="-1" role="dialog" aria-labelledby="packingModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="packingModalLabel">Packing 실적등록</h5>
+            </div>
+
+
+            <div class="modal-body">
+                <!-- 모달 바디 내용 추가 -->
+                <form id="packingForm" class="px-5">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-1 col-14">
+                                <label for="packing_order_no">제조오더번호</label>
+                                <input type="text" class="form-control" id="packing_order_no" disabled>
+                            </div>
+                            <div class="mb-1 col-14">
+                                <label for="barcode_scan" style="visibility: hidden;"><span style="color: red;">※ 바코드, UDI QR 순서로 </span></label>
+                                <label for="barcode_scan">Box DI 번호</label>
+                                <input type="text" class="form-control" id="barcode_scan"
+                                       placeholder="Master Box no. 입력" disabled>
+
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+
+                            <div class="mb-1 col-14">
+
+                                <label for="barcode_scan"><span style="color: red;">※ Barcode, UDI QR 순서로 </span></label>
+                                <label for="barcode_scan"><span style="color: red;">스캔해주시기 바랍니다.</span></label>
+                                <input type="text" class="form-control" style="visibility: hidden;" id="barcode_scan2"
+                                       placeholder="Master Box no. 입력" disabled>
+
+                            </div>
+
+                            <div class="mb-1 col-14">
+
+                                <label for="barcode_scan">Packing 일자</label>
+                                <input type="text" class="form-control" id="barcode_scan3"
+                                       placeholder="Master Box no. 입력" disabled>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- 필요한 다른 필드들 추가 -->
+                </form>
+                <br>
+                <table class="table table-sm table-bordered table-hover"
+                       style="text-align: center; border-collapse: collapse;" id="dataTable_modal" width="100%"
+                       cellspacing="0">
+                    <thead class="table-light">
+                    <tr>
+                        <th></th>
+                        <th>Barcode</th>
+                        <th>UDI QR</th>
+                        <th>검사결과</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="modalTableBody">
+
+
+                    </tbody>
+                </table>
+            </div>
+
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="closeModalButton">Close</button>
+                <button type="button" class="btn btn-primary" id="saveChangesButton">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var selectedOrderNo = '';
+
+    document.getElementById('closeModalButton').addEventListener('click', function() {
+        $('#packingModal').modal('hide');
+    });
+
+    document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+        row.addEventListener('click', function() {
+
+            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+                row.classList.remove('selected-row');
+            });
+
+
+            this.classList.add('selected-row');
+
+
+            selectedOrderNo = this.getAttribute('data-order-no');
+        });
+    });
+
+    document.getElementById('openModalButton').addEventListener('click', function() {
+        if (selectedOrderNo) {
+            document.getElementById('packing_order_no').value = selectedOrderNo;
+            $('#packingModal').modal('show');
+        } else {
+            alert('등록할 제조오더를 선택해주세요.');
+        }
+    });
+
+    document.getElementById('saveChangesButton').addEventListener('click', function() {
+
+        const masterBoxNo = document.getElementById('barcode_scan').value;
+        if (masterBoxNo) {
+            // Save the master box number (make an AJAX call or form submission)
+
+            $('#packingModal').modal('hide');
+            alert('저장되었습니다.');
+        } else {
+            alert('Master Box no.을 입력해주세요.');
+        }
+    });
+
+     window.onload = function() {
+
+            var today = new Date();
+            var day = today.getDate();
+            var month = today.getMonth() + 1;
+            var year = today.getFullYear();
+            var tableBody = document.getElementById('modalTableBody');
+            var rows = 24;
+
+
+            if(day < 10) day = '0' + day;
+            if(month < 10) month = '0' + month;
+
+            var todayString = year + '-' + month + '-' + day;
+
+
+            document.getElementById('barcode_scan3').value = todayString;
+
+            for (var i = 1; i <= rows; i++) {
+                var row = document.createElement('tr');
+
+
+                var cell = document.createElement('td');
+                cell.textContent = i;
+                row.appendChild(cell);
+
+
+                var barcodeCell = document.createElement('td');
+                var barcodeInput = document.createElement('input');
+                barcodeInput.type = 'text';
+                barcodeInput.className = 'form-control';
+                barcodeInput.id = 'barcode-di-' + i;
+                barcodeCell.appendChild(barcodeInput);
+                row.appendChild(barcodeCell);
+
+                var udiCell = document.createElement('td');
+                var udiInput = document.createElement('input');
+                udiInput.type = 'text';
+                udiInput.className = 'form-control';
+                udiInput.id = 'udi-qr-' + i;
+                udiCell.appendChild(udiInput);
+                row.appendChild(udiCell);
+
+                var resultCell = document.createElement('td');
+                var resultInput = document.createElement('input');
+                resultInput.type = 'text';
+                resultInput.className = 'form-control';
+                resultInput.id = 'result-packing-' + i;
+                resultCell.appendChild(resultInput);
+                row.appendChild(resultCell);
+
+                tableBody.appendChild(row);
+
+
+                barcodeInput.addEventListener('keyup', moveToNextInput);
+                udiInput.addEventListener('keyup', moveToNextInput);
+                resultInput.addEventListener('keyup', moveToNextInput);
+            }
+        };
+
+        function moveToNextInput(event) {
+            if (event.target.value.length > 0) {
+                var inputs = document.querySelectorAll('#modalTableBody input');
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i] === event.target) {
+                        if (i < inputs.length - 1) {
+                            inputs[i + 1].focus();
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+</script>
+
+{% endblock %}

@@ -2,13 +2,14 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
-from flask import Blueprint, url_for, render_template, request, current_app, jsonify
+from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g
 from sqlalchemy import null
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now
+    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr
+from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
 
@@ -23,6 +24,7 @@ def product_order():
     PLANT_CD = ''
     WC_CD = ''
     ITEM_CD = ''
+    ORDER_STATUS = ''
     PLANT_START_DT = None
     PLANT_COMPT_DT = None
     PRODT_ORDER_NO = ''
@@ -34,6 +36,7 @@ def product_order():
         PLANT_CD = request.form.get('plant_code', '')
         WC_CD = request.form.get('wc_cd', '')
         ITEM_CD = request.form.get('item_cd', '')
+        ORDER_STATUS = request.form.get('order_status', '')
         PLANT_START_DT = request.form.get('start_date', '')
         PLANT_COMPT_DT = request.form.get('end_date', '')
         PRODT_ORDER_NO = request.form.get('prodt_order_no', '')
@@ -43,7 +46,6 @@ def product_order():
         if PLANT_COMPT_DT:
             PLANT_COMPT_DT = datetime.strptime(PLANT_COMPT_DT, '%Y-%m-%d')
     else:
-
         if plants:
             PLANT_CD = plants[0].PLANT_CD
 
@@ -62,6 +64,8 @@ def product_order():
         query_item = query_item.filter(Production_Order.WC_CD == WC_CD)
     if ITEM_CD:
         query_item = query_item.filter(Production_Order.ITEM_CD == ITEM_CD)
+    if ORDER_STATUS:
+        query_item = query_item.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
     if PLANT_START_DT:
         query_item = query_item.filter(Production_Order.PLANT_START_DT >= PLANT_START_DT)
     if PLANT_COMPT_DT:
@@ -81,6 +85,8 @@ def product_order():
         query_wc = query_wc.filter(Production_Order.WC_CD == WC_CD)
     if ITEM_CD:
         query_wc = query_wc.filter(Production_Order.ITEM_CD == ITEM_CD)
+    if ORDER_STATUS:
+        query_wc = query_wc.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
     if PLANT_START_DT:
         query_wc = query_wc.filter(Production_Order.PLANT_START_DT >= PLANT_START_DT)
     if PLANT_COMPT_DT:
@@ -99,9 +105,10 @@ def product_order():
                            plants=plants,
                            work_centers=work_centers,
                            items=items,
-                           PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, PLANT_START_DT=PLANT_START_DT,
+                           PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS, PLANT_START_DT=PLANT_START_DT,
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            form_submitted=form_submitted)
+
 
 
 @bp.route('/get_bom_data')
@@ -205,7 +212,9 @@ def process_excel(filepath):
             'prodlabel_time': convert_value(row.get('prodlabel_time')),
             'prodlabel_cycles': convert_value(row.get('prodlabel_cycles')),
             'INSRT_DT': convert_value(row.get('INSRT_DT')),
+            'INSRT_USR': g.user.USR_ID,
             'UPDT_DT': convert_value(row.get('UPDT_DT')),
+            'UPDT_USR': g.user.USR_ID,
             'REPORT_FLAG': convert_value(row.get('REPORT_FLAG'))
         }
 
@@ -225,11 +234,15 @@ def process_excel(filepath):
     db.session.commit()
 
 
+
+
 # 여기에 조회조건 걸어서 register 화면에 데이터 렌더링
 @bp.route('/register/', methods=['GET', 'POST'])
 def product_register():
     alpha_data = Production_Alpha.query.filter_by(REPORT_FLAG='N').all()
     return render_template('product/product_register.html', data=alpha_data)
+
+
 
 
 @bp.route('/register_result/', methods=['GET', 'POST'])
@@ -283,10 +296,15 @@ def product_register_result():
     if BARCODE_NO_START and BARCODE_NO_END:
         query = query.filter(Production_Barcode_Assign.barcode.between(BARCODE_NO_START, BARCODE_NO_END))
 
-    results = query.all()
+    all_results = query.all()
+
+    # 중복된 바코드 데이터를 그룹화하여 하나의 바코드당 제조오더번호 목록을 생성
+    grouped_results = defaultdict(list)
+    for idx, result in enumerate(all_results):
+        grouped_results[result[0].barcode].append((idx + 1, result))
 
     return render_template('product/product_register_result.html',
-                           results=results,
+                           grouped_results=grouped_results,
                            plants=plants,
                            LOT_NO_START=LOT_NO_START,
                            LOT_NO_END=LOT_NO_END,
@@ -295,6 +313,7 @@ def product_register_result():
                            BARCODE_NO_START=BARCODE_NO_START,
                            BARCODE_NO_END=BARCODE_NO_END,
                            form_submitted=form_submitted)
+
 
 
 
@@ -323,82 +342,108 @@ def register():
     if not selected_records:
         return '<script>alert("실적 처리할 레코드를 선택해 주세요."); window.location.href="/product/register/";</script>'
 
-    new_records = []
-    updated_records = []
+    new_alpha_records = []
+    new_barcode_records = []
+    updated_alpha_records = []
 
     for record_id in selected_records:
         barcode, modified_str = record_id.split('|')
         modified = parse_datetime(modified_str)
 
-        processed_record = Production_Barcode.query.filter_by(barcode=barcode).first()
-        if processed_record:
-            continue
+        alpha_record = Production_Alpha.query.filter_by(barcode=barcode).first()
 
-        record = Production_Alpha.query.filter_by(barcode=barcode).first()
+        if alpha_record:
+            # P_PRODUCTION_BARCODE에 데이터 추가
+            barcode_record = {
+                'LOT': alpha_record.LOT,
+                'product': alpha_record.product,
+                'barcode': alpha_record.barcode,
+                'modified': alpha_record.modified,
+                'err_code': alpha_record.err_code,
+                'err_info': alpha_record.err_info,
+                'print_time': alpha_record.print_time,
+                'inweight_time': alpha_record.inweight_time,
+                'inweight_cycles': alpha_record.inweight_cycles,
+                'inweight_station': alpha_record.inweight_station,
+                'inweight_result': alpha_record.inweight_result,
+                'inweight_value': alpha_record.inweight_value,
+                'leaktest_cycles': alpha_record.leaktest_cycles,
+                'leaktest_entry': alpha_record.leaktest_entry,
+                'leaktest_exit': alpha_record.leaktest_exit,
+                'leaktest_station': alpha_record.leaktest_station,
+                'leaktest_value': alpha_record.leaktest_value,
+                'leaktest_ptest': alpha_record.leaktest_ptest,
+                'leaktest_duration': alpha_record.leaktest_duration,
+                'leaktest_result': alpha_record.leaktest_result,
+                'outweight_time': alpha_record.outweight_time,
+                'outweight_station': alpha_record.outweight_station,
+                'outweight_cycles': alpha_record.outweight_cycles,
+                'outweight_result': alpha_record.outweight_result,
+                'outweight_value': alpha_record.outweight_value,
+                'itest2_time': alpha_record.itest2_time,
+                'itest2_station': alpha_record.itest2_station,
+                'itest2_cycles': alpha_record.itest2_cycles,
+                'itest2_result': alpha_record.itest2_result,
+                'itest2_value': alpha_record.itest2_value,
+                'itest2_ptest': alpha_record.itest2_ptest,
+                'prodlabel_time': alpha_record.prodlabel_time,
+                'prodlabel_cycles': alpha_record.prodlabel_cycles,
+                'INSRT_DT': alpha_record.INSRT_DT,
+                'INSRT_USR': g.user.USR_ID,
+                'UPDT_DT': alpha_record.UPDT_DT,
+                'UPDT_USR': g.user.USR_ID,
+                'REPORT_FLAG': alpha_record.REPORT_FLAG
+            }
+            new_barcode_records.append(barcode_record)
 
-        if record:
             processes = []
-            if record.print_time is not None:
-                processes.append('WSF10')
-            if record.outweight_result == 1:
-                processes.append('WSF30')
-            if record.prodlabel_cycles == 1:
-                processes.append('WSF60')
+            if alpha_record.err_code != 0:
+                # 불량 로직
+                if alpha_record.print_time is not None and alpha_record.outweight_value is not None:
+                    processes.append(('WSF10', 'G'))
+                    processes.append(('WSF30', 'G'))
+                    processes.append(('WSF60', 'B'))
+                elif alpha_record.print_time is not None:
+                    processes.append(('WSF10', 'G'))
+                    processes.append(('WSF30', 'B'))
+                    processes.append(('WSF60', 'B'))
+                else:
+                    processes.append(('WSF10', 'B'))
+                    processes.append(('WSF30', 'B'))
+                    processes.append(('WSF60', 'B'))
+            elif alpha_record.print_time is not None or alpha_record.outweight_value is not None:
+                # 정상 로직
+                processes.append(('WSF10', 'G'))
+                if alpha_record.outweight_value is not None:
+                    processes.append(('WSF30', 'G'))
+                if alpha_record.prodlabel_cycles == 1:
+                    processes.append(('WSF60', 'G'))
+            else:
+                continue  # 해당 칼럼들에 값이 없으면 보류
 
-            for process in processes:
-                existing_record = Production_Barcode.query.filter_by(barcode=record.barcode, wc_cd=process).first()
-                if existing_record:
-                    continue
-
-                production_barcode = {
-                    'LOT': record.LOT,
-                    'product': record.product,
-                    'barcode': record.barcode,
-                    'wc_cd': process,
-                    'err_code': record.err_code,
-                    'err_info': record.err_info,
-                    'print_time': convert_value(record.print_time),
-                    'inweight_time': convert_value(record.inweight_time),
-                    'inweight_cycles': convert_value(record.inweight_cycles),
-                    'inweight_station': convert_value(record.inweight_station),
-                    'inweight_result': convert_value(record.inweight_result),
-                    'inweight_value': convert_value(record.inweight_value),
-                    'leaktest_cycles': convert_value(record.leaktest_cycles),
-                    'leaktest_entry': convert_value(record.leaktest_entry),
-                    'leaktest_exit': convert_value(record.leaktest_exit),
-                    'leaktest_station': convert_value(record.leaktest_station),
-                    'leaktest_value': convert_value(record.leaktest_value),
-                    'leaktest_ptest': convert_value(record.leaktest_ptest),
-                    'leaktest_duration': convert_value(record.leaktest_duration),
-                    'leaktest_result': convert_value(record.leaktest_result),
-                    'outweight_time': convert_value(record.outweight_time),
-                    'outweight_station': convert_value(record.outweight_station),
-                    'outweight_cycles': convert_value(record.outweight_cycles),
-                    'outweight_result': convert_value(record.outweight_result),
-                    'outweight_value': convert_value(record.outweight_value),
-                    'itest2_time': convert_value(record.itest2_time),
-                    'itest2_station': convert_value(record.itest2_station),
-                    'itest2_cycles': convert_value(record.itest2_cycles),
-                    'itest2_result': convert_value(record.itest2_result),
-                    'itest2_value': convert_value(record.itest2_value),
-                    'itest2_ptest': convert_value(record.itest2_ptest),
-                    'prodlabel_time': convert_value(record.prodlabel_time),
-                    'prodlabel_cycles': convert_value(record.prodlabel_cycles),
-                    'INSRT_DT': convert_value(record.INSRT_DT),
-                    'INSRT_USR': record.INSRT_USR,
-                    'UPDT_DT': convert_value(record.UPDT_DT),
-                    'UPDT_USR': record.UPDT_USR
+            for wc_cd, report_type in processes:
+                assn_record = {
+                    'barcode': alpha_record.barcode,
+                    'PRODT_ORDER_NO': None,  # 이 부분은 assign_production_orders 함수에서 업데이트
+                    'OPR_NO': '10',
+                    'REPORT_TYPE': report_type,
+                    'WC_CD': wc_cd,
+                    'INSRT_DT': alpha_record.INSRT_DT,
+                    'INSRT_USR': g.user.USR_ID,
+                    'UPDT_DT': alpha_record.UPDT_DT,
+                    'UPDT_USR': g.user.USR_ID
                 }
-                new_records.append(production_barcode)
+                new_alpha_records.append(assn_record)
 
-            if len(processes) == 3:
-                record.REPORT_FLAG = 'Y'
-                updated_records.append(record)
+            alpha_record.REPORT_FLAG = 'Y'
+            updated_alpha_records.append(alpha_record)
 
-    if new_records:
-        db.session.bulk_insert_mappings(Production_Barcode, new_records)
-    if updated_records:
-        db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_records])
+    if new_barcode_records:
+        db.session.bulk_insert_mappings(Production_Barcode, new_barcode_records)
+    if new_alpha_records:
+        db.session.bulk_insert_mappings(Production_Barcode_Assign, new_alpha_records)
+    if updated_alpha_records:
+        db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
 
     db.session.commit()
 
@@ -407,8 +452,10 @@ def register():
     return '<script>alert("실적 처리가 완료되었습니다."); window.location.href="/product/register/";</script>'
 
 
+
+
 def assign_production_orders():
-    barcodes = Production_Barcode.query.filter(Production_Barcode.REPORT_FLAG == 'N').all()
+    barcodes = Production_Barcode_Assign.query.filter(Production_Barcode_Assign.PRODT_ORDER_NO == None).all()
     orders = {wc_cd: [] for wc_cd in ['WSF10', 'WSF30', 'WSF60']}
 
     for wc_cd in orders.keys():
@@ -416,38 +463,15 @@ def assign_production_orders():
 
     order_indices = {wc_cd: 0 for wc_cd in orders.keys()}
     assn_records = []
-    updated_barcodes = []
 
     for barcode in barcodes:
-        wc_cd = barcode.wc_cd
+        wc_cd = barcode.WC_CD
         if wc_cd in orders and orders[wc_cd]:
             order = orders[wc_cd][order_indices[wc_cd]]
 
-            if wc_cd == 'WSF10' and barcode.print_time is None:
-                report_type = 'B'
-            elif wc_cd == 'WSF30' and barcode.outweight_result == (5,6):
-                report_type = 'B'
-            elif wc_cd == 'WSF60' and barcode.prodlabel_cycles == 2:
-                report_type = 'B'
-            else:
-                report_type = 'G'
+            barcode.PRODT_ORDER_NO = order.PRODT_ORDER_NO
 
-            opr_no = '10'
-
-            assn_record = {
-                'barcode': barcode.barcode,
-                'PRODT_ORDER_NO': order.PRODT_ORDER_NO,
-                'OPR_NO': opr_no,
-                'REPORT_TYPE': report_type,
-                'WC_CD': wc_cd,
-                'INSRT_DT': barcode.INSRT_DT,
-                'INSRT_USR': barcode.INSRT_USR,
-                'UPDT_DT': barcode.UPDT_DT,
-                'UPDT_USR': barcode.UPDT_USR
-            }
-            assn_records.append(assn_record)
-
-            if report_type == 'G':
+            if barcode.REPORT_TYPE == 'G':
                 order.PROD_QTY_IN_ORDER_UNIT += 1
             else:
                 order.BAD_QTY_IN_ORDER_UNIT += 1
@@ -458,17 +482,19 @@ def assign_production_orders():
                 if order_indices[wc_cd] >= len(orders[wc_cd]):
                     order_indices[wc_cd] = len(orders[wc_cd]) - 1
 
-            barcode.REPORT_FLAG = 'Y'
-            updated_barcodes.append(barcode)
+            barcode.INSRT_USR = g.user.USR_ID
+            barcode.UPDT_USR = g.user.USR_ID
+
+            assn_records.append(barcode)
 
     if assn_records:
-        db.session.bulk_insert_mappings(Production_Barcode_Assign, assn_records)
-    if updated_barcodes:
-        db.session.bulk_update_mappings(Production_Barcode, [barcode.__dict__ for barcode in updated_barcodes])
+        db.session.bulk_update_mappings(Production_Barcode_Assign, [record.__dict__ for record in assn_records])
 
     db.session.commit()
 
     insert_production_results(orders)
+
+
 
 
 def insert_production_results(orders):
@@ -499,11 +525,14 @@ def insert_production_results(orders):
                     result_record_good = {
                         'PRODT_ORDER_NO': order.PRODT_ORDER_NO,
                         'OPR_NO': '10',
+                        'WC_CD': order.WC_CD,
                         'SEQ': seq,
                         'REPORT_TYPE': 'G',
                         'TOTAL_QTY': good_qty,
                         'PLANT_CD': 'P710',
-                        'REPORT_DT': None
+                        'REPORT_DT': None,
+                        'INSRT_USR': g.user.USR_ID,
+                        'UPDT_USR': g.user.USR_ID
                     }
                     result_records.append(result_record_good)
 
@@ -512,11 +541,14 @@ def insert_production_results(orders):
                     result_record_bad = {
                         'PRODT_ORDER_NO': order.PRODT_ORDER_NO,
                         'OPR_NO': '10',
+                        'WC_CD': order.WC_CD,
                         'SEQ': seq,
                         'REPORT_TYPE': 'B',
                         'TOTAL_QTY': bad_qty,
                         'PLANT_CD': 'P710',
-                        'REPORT_DT': None
+                        'REPORT_DT': None,
+                        'INSRT_USR': g.user.USR_ID,
+                        'UPDT_USR': g.user.USR_ID
                     }
                     result_records.append(result_record_bad)
 
@@ -529,9 +561,89 @@ def insert_production_results(orders):
     db.session.commit()
 
 
+
+
 @bp.route('/assign-orders', methods=['POST'])
 def assign_orders_route():
     assign_production_orders()
     return '<script>alert("생산 오더가 할당되었습니다."); window.location.href="/product/assign/";</script>'
+
+
+
+@bp.route('/register_result_packing/', methods=['GET', 'POST'])
+def product_register_packing():
+    form_submitted = False
+    PLANT_CD = ''
+    WC_CD = 'WSF70'  # 작업공정 고정 값
+    ITEM_CD = ''  # 품목 고정 값
+    ORDER_STATUS = ''
+    PLANT_START_DT = datetime.today()
+    PLANT_COMPT_DT = datetime.today() + timedelta(days=30)
+    PRODT_ORDER_NO = ''
+
+    plants = db.session.query(Production_Order.PLANT_CD).distinct().all()
+    items = db.session.query(Item.ITEM_CD).distinct().all()
+
+    if len(items) > 4:
+        ITEM_CD = items[3][0]  # 품목 고정 값 설정 (4번째 요소)
+
+    if request.method == 'POST':
+        form_submitted = True
+        PLANT_CD = request.form.get('plant_code', '')
+        ORDER_STATUS = request.form.get('order_status', '')
+        PLANT_START_DT = request.form.get('start_date', '')
+        PLANT_COMPT_DT = request.form.get('end_date', '')
+        PRODT_ORDER_NO = request.form.get('prodt_order_no', '')
+
+        if PLANT_START_DT:
+            PLANT_START_DT = datetime.strptime(PLANT_START_DT, '%Y-%m-%d')
+        else:
+            PLANT_START_DT = datetime.today()
+
+        if PLANT_COMPT_DT:
+            PLANT_COMPT_DT = datetime.strptime(PLANT_COMPT_DT, '%Y-%m-%d')
+        else:
+            PLANT_COMPT_DT = datetime.today() + timedelta(days=30)
+    else:
+        if plants:
+            PLANT_CD = plants[0][0]  # 첫 번째 공장을 기본값으로 설정
+
+    query = db.session.query(Packing_Hdr).join(
+        Production_Order, Packing_Hdr.prodt_order_no == Production_Order.PRODT_ORDER_NO
+    ).join(
+        Item, Production_Order.ITEM_CD == Item.ITEM_CD
+    )
+
+    if PLANT_CD:
+        query = query.filter(Production_Order.PLANT_CD == PLANT_CD)
+    if WC_CD:
+        query = query.filter(Production_Order.WC_CD == WC_CD)
+    if ITEM_CD:
+        query = query.filter(Production_Order.ITEM_CD == ITEM_CD)
+    if ORDER_STATUS:
+        query = query.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
+    if PLANT_START_DT:
+        query = query.filter(Production_Order.PLANT_START_DT >= PLANT_START_DT)
+    if PLANT_COMPT_DT:
+        query = query.filter(Production_Order.PLANT_COMPT_DT <= PLANT_COMPT_DT)
+    if PRODT_ORDER_NO:
+        query = query.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
+
+    orders_with_hdr = query.all()
+
+    work_centers = db.session.query(Work_Center).all()
+    items = db.session.query(Item).all()
+
+    return render_template('product/product_register_packing.html',
+                           orders_with_hdr=orders_with_hdr,
+                           plants=plants,
+                           work_centers=work_centers,
+                           items=items,
+                           PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS, PLANT_START_DT=PLANT_START_DT,
+                           PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
+                           form_submitted=form_submitted)
+
+
+
 
 

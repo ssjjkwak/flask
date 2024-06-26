@@ -54,12 +54,19 @@ def create_app():
     # Register filters
     from .filter import format_datetime
     app.jinja_env.filters['datetime'] = format_datetime
+    app.jinja_env.filters['none_to_dash'] = none_to_dash
 
     return app
 
 def make_shell_context():
     from . import models  # Ensure models are imported
     return {'db': db, 'models': models}
+
+def none_to_dash(value):
+    return value if value is not None else ''
+
+
+
 
 # Ensure the app is created and shell context is set correctly
 app = create_app()

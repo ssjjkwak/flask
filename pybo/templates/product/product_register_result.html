@@ -2,7 +2,7 @@
 {% block content %}
 <style>
     th, td {
-        padding: 8px; /* 간격 줄이기 */
+        padding: 8px;
         text-align: center;
         white-space: nowrap;
     }
@@ -16,12 +16,12 @@
     }
 
     th:first-child, td:first-child {
-        min-width: 50px; /* 맨 앞 열의 너비 줄이기 */
+        min-width: 50px;
     }
 
     .table-wrapper {
         overflow: auto;
-        height: 300px;
+        height: calc(100vh - 260px); /* 초기 높이 설정 */
         width: 100%;
         margin-bottom: 20px;
     }
@@ -32,13 +32,13 @@
     }
 
     th, td {
-        min-width: 120px; /* 모든 테이블 셀에 최소 너비 설정 */
+        min-width: 120px;
     }
 </style>
 
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
-        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 등록실적조회</h7>
+        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 제조실적조회</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
                 <i class="bi bi-search"></i> 조회
@@ -53,7 +53,6 @@
                         <label for="plant_code" class="form-label me-3" style="min-width: 110px;">공장</label>
                         <select class="form-select form-select-sm" id="plant_code" name="plant_code">
                             <option value="">p710 인공신장기공장</option>
-
                         </select>
                     </div>
                     <div class="mb-1 col-8 d-flex align-items-center">
@@ -96,46 +95,47 @@
 
     <div class="gap" style="margin-top: 20px;"></div> <!-- 간격 추가 -->
 
-    <div class="table-wrapper ps-3 pe-3">
-        <table class="table table-sm table-hover">
+    <div class="table-wrapper ps-3 pe-3" id="tableWrapper">
+        <table class="table table-sm table-hover" style="table-layout:fixed;">
             <thead class="table-light">
             <tr>
                 <th class="sticky" style="width: 50px; font-weight: normal">No</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">LOT</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">제품</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">공장</th>
-                <th class="sticky" style="width: 150px; font-weight: normal">바코드</th>
-                <th class="sticky" style="width: 150px; font-weight: normal">제조오더번호</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">Operation</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">작업공정</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">G/B</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">Box번호</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">출고유형</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">수주번호</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">수주SEQ번호</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">발주번호</th>
-                <th class="sticky" style="width: 100px; font-weight: normal">발주SEQ번호</th>
+                <th class="sticky" style="width: 50px; font-weight: normal">LOT</th>
+                <th class="sticky" style="width: 50px; font-weight: normal">제품</th>
+                <th class="sticky" style="width: 50px; font-weight: normal">공장</th>
+                <th class="sticky" style="width: 70px; font-weight: normal">바코드</th>
+                <th class="sticky" style="width: 90px; font-weight: normal">제조오더번호</th>
+                <th class="sticky" style="width: 50px; font-weight: normal">Operation</th>
+                <th class="sticky" style="width: 50px; font-weight: normal">작업공정</th>
+                <th class="sticky" style="width: 50px; font-weight: normal">G/B</th>
+                <th class="sticky" style="width: 50px; font-weight: normal">Box번호</th>
+                <th class="sticky" style="width: 390px; font-weight: normal"></th>
             </tr>
             </thead>
             <tbody>
-            {% for row in results %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ row[1] }}</td>  <!-- LOT -->
-                <td>{{ row[2] }}</td>  <!-- 제품 -->
-                <td>P710</td>
-                <td>{{ row[0].barcode }}</td>
-                <td>{{ row[0].PRODT_ORDER_NO }}</td>
-                <td>{{ row[0].OPR_NO }}</td>
-                <td>{{ row[0].WC_CD }}</td>
-                <td>{{ row[0].REPORT_TYPE }}</td>
-                <td>{{ row[0].BOX_NUM }}</td>
-                <td>{{ row[0].MOV_TYPE }}</td>
-                <td>{{ row[0].SO_NO }}</td>
-                <td>{{ row[0].SO_SEQ }}</td>
-                <td>{{ row[0].PO_NO }}</td>
-                <td>{{ row[0].PO_SEQ_NO }}</td>
-            </tr>
+            {% for barcode, records in grouped_results.items() %}
+                {% for row_index, row in records %}
+                    <tr>
+                        <td>{{ row_index }}</td>
+                        {% if loop.index0 == 0 %}
+                            <td>{{ row[1] }}</td>  <!-- LOT -->
+                            <td>{{ row[2] }}</td>  <!-- 제품 -->
+                            <td>P710</td>
+                            <td>{{ row[0].barcode }}</td>
+                        {% else %}
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        {% endif %}
+                        <td>{{ row[0].PRODT_ORDER_NO }}</td>
+                        <td>{{ row[0].OPR_NO }}</td>
+                        <td>{{ row[0].WC_CD }}</td>
+                        <td>{{ row[0].REPORT_TYPE }}</td>
+                        <td>{{ row[0].BOX_NUM | none_to_dash }}</td>
+                        <td></td>
+                    </tr>
+                {% endfor %}
             {% endfor %}
             </tbody>
         </table>
@@ -143,14 +143,16 @@
 </div>
 
 <script>
-    document.getElementById('openModalButton').addEventListener('click', function() {
-        var uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
-        uploadModal.show();
-    });
-
-    function showLoadingModal() {
-        var loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-        loadingModal.show();
+    function adjustTableHeight() {
+        var tableWrapper = document.getElementById('tableWrapper');
+        var headerHeight = document.querySelector('header').offsetHeight; // 헤더 높이
+        var footerHeight = document.querySelector('footer').offsetHeight; // 푸터 높이
+        var searchFormHeight = document.getElementById('searchForm').offsetHeight; // 검색 폼 높이
+        var availableHeight = window.innerHeight - headerHeight - footerHeight - searchFormHeight - 40; // 40은 여유 공간
+        tableWrapper.style.height = availableHeight + 'px';
     }
+
+    window.addEventListener('resize', adjustTableHeight);
+    window.addEventListener('load', adjustTableHeight);
 </script>
 {% endblock %}

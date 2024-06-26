@@ -1,11 +1,14 @@
+from sqlite3 import IntegrityError
+
 import pandas as pd
 from flask import Blueprint, url_for, render_template, flash, request, session, g, app, jsonify
+from sqlalchemy import func, literal_column, cast, String
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import redirect, send_file
 
 from pybo import db
 from pybo.forms import UserCreateForm, UserLoginForm, UserModifyForm, UserUpdateForm
-from pybo.models import User, Role
+from pybo.models import User, Role, UserRole
 import functools
 
 from pybo.views.download_views import convert_to_excel
@@ -139,7 +142,7 @@ def user_manage():
             'USR_DEPT': user.USR_DEPT,
             'USR_JOB': user.USR_JOB,
             'USR_PHONE': user.USR_PHONE,
-            'ROLES': [roles.get(user.ROLE_ID, 'N/A')],
+            'ROLES': [roles[user_role.ROLE_ID] for user_role in user.user_roles],
             'INSRT_DT': user.INSRT_DT.strftime('%Y-%m-%d'),
             'UPDT_DT': user.UPDT_DT.strftime('%Y-%m-%d'),
         }
@@ -147,8 +150,22 @@ def user_manage():
     ]
 
     total_users = len(users_with_roles)
+    all_roles = Role.query.all()  # 모든 권한 정보를 가져옴
 
-    return render_template('auth/user_manage.html', users_with_roles=users_with_roles, total_users=total_users)
+    return render_template('auth/user_manage.html', users_with_roles=users_with_roles, total_users=total_users, all_roles=all_roles)
+
+@bp.route('/user_account', methods=['GET'])
+def user_account():
+    users_with_roles = db.session.query(
+        User.USR_ID, User.USR_NM, User.USR_DEPT, User.USR_JOB, User.USR_EMAIL, User.INSRT_DT, User.UPDT_DT,
+        func.string_agg(cast(Role.ROLE_NM, String), literal_column("','")).label('ROLES')
+    ).outerjoin(UserRole, User.USR_ID == UserRole.USR_ID).outerjoin(Role, UserRole.ROLE_ID == Role.ROLE_ID).group_by(
+        User.USR_ID, User.USR_NM, User.USR_DEPT, User.USR_JOB, User.USR_EMAIL, User.INSRT_DT, User.UPDT_DT).all()
+
+    total_users = db.session.query(User).count()
+    all_roles = Role.query.all()
+    return render_template('auth/user_account.html', users_with_roles=users_with_roles, total_users=total_users, all_roles=all_roles)
+
 
 
 @bp.route('/user_update/<string:USR_ID>', methods=['GET', 'POST'])
@@ -176,29 +193,99 @@ def user_update(USR_ID):
 
 @bp.route('/user_role', methods=['GET', 'POST'])
 def user_role():
-    # 임시 데이터로 빈 리스트와 기본 값 설정
-    roles = []
-    users_with_roles = []
-
-    if request.method == 'POST':
-        # 임시로 POST 요청 처리 부분도 정의
-        user_id = request.form.get('user_id')
-        new_role_id = request.form.get('role_id')
-        # 실제 DB 작업 없이 임시로 처리
-        print(f"User ID: {user_id}, New Role ID: {new_role_id}")
-        return redirect(url_for('auth.user_role'))
-
-    return render_template('auth/user_role.html', users_with_roles=users_with_roles, roles=roles)
+    roles = Role.query.all()
+    roles_data = [
+        {
+            'ROLE_ID': role.ROLE_ID,
+            'ROLE_NM': role.ROLE_NM
+        }
+        for role in roles
+    ]
+    return render_template('auth/user_role.html', roles_data=roles_data)
 
 
-@bp.route('/role_permission/', methods=['GET', 'POST'])
-def role_permission():
-    # 임시 데이터로 기본 값 설정
-    admin_count = 0
-    mid_manager_count = 0
-    user_count = 0
 
-    return render_template('auth/role_permission.html', admin_count=admin_count, mid_manager_count=mid_manager_count, user_count=user_count)
+@bp.route('/create_role', methods=['POST'])
+def create_role():
+    role_id = request.form['role_id']
+    role_nm = request.form['role_nm']
+    remark = request.form.get('remark')
+
+    new_role = Role(ROLE_ID=role_id, ROLE_NM=role_nm, INSRT_DT=db.func.now(), UPDT_DT=db.func.now())
+
+    try:
+        db.session.add(new_role)
+        db.session.commit()
+        flash('권한이 성공적으로 생성되었습니다.', 'success')
+    except IntegrityError:
+        db.session.rollback()
+        flash('권한 생성 중 오류가 발생했습니다. Role 아이디가 이미 존재할 수 있습니다.', 'danger')
+
+    return redirect(url_for('auth.user_role'))
+
+
+@bp.route('/delete_roles', methods=['POST'])
+def delete_roles():
+    role_ids = request.form.getlist('role_ids')
+
+    if not role_ids:
+        flash('삭제할 권한을 선택해주세요.', 'warning')
+    else:
+        try:
+            Role.query.filter(Role.ROLE_ID.in_(role_ids)).delete(synchronize_session='fetch')
+            db.session.commit()
+            flash('선택된 권한이 성공적으로 삭제되었습니다.', 'success')
+        except IntegrityError:
+            db.session.rollback()
+            flash('권한 삭제 중 오류가 발생했습니다.', 'danger')
+
+    return redirect(url_for('auth.user_role'))
+
+
+@bp.route('/update_user_roles', methods=['POST'])
+def update_user_roles():
+    user_id = request.form['user_id']
+    new_role_ids = request.form.getlist('newRoles')
+
+    try:
+        for new_role_id in new_role_ids:
+            new_user_role = UserRole(USR_ID=user_id, ROLE_ID=new_role_id, INSRT_DT=db.func.now(), UPDT_DT=db.func.now())
+            db.session.add(new_user_role)
+        db.session.commit()
+        flash('권한이 성공적으로 추가되었습니다.', 'success')
+    except IntegrityError:
+        db.session.rollback()
+        flash('권한 추가 중 오류가 발생했습니다. 권한이 이미 존재할 수 있습니다.', 'danger')
+
+    return redirect(url_for('auth.user_manage'))
+
+
+
+@bp.route('/delete_user_roles', methods=['POST'])
+def delete_user_roles():
+    user_id = request.form['user_id']
+    roles_to_delete = request.form.getlist('roles')
+
+    if not user_id or not roles_to_delete:
+        flash('사용자 ID 또는 권한이 선택되지 않았습니다.', 'warning')
+        return redirect(url_for('auth.user_manage'))
+
+    try:
+        UserRole.query.filter(UserRole.USR_ID == user_id, UserRole.ROLE_ID.in_(roles_to_delete)).delete(synchronize_session='fetch')
+        db.session.commit()
+        flash('권한이 성공적으로 삭제되었습니다.', 'success')
+    except IntegrityError:
+        db.session.rollback()
+        flash('권한 삭제 중 오류가 발생했습니다.', 'danger')
+
+    return redirect(url_for('auth.user_manage'))
+
+
+
+
+
+
+
 
 
 

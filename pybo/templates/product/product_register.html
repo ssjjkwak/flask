@@ -13,20 +13,68 @@
         box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4);
         position: sticky;
         top: 0;
-        z-index: 20;
+        z-index: 40; /* 헤더의 z-index를 높임 */
     }
 
-    th:first-child, td:first-child {
-        min-width: 50px;
+    th.fixed, td.fixed {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 0;
+        background-color: #fff;
+        z-index: 50; /* 고정 열의 z-index를 높임 */
     }
 
-    th.second-column, td.second-column {
-        min-width: 50px; /* 두 번째 열의 너비 줄이기 */
+    th.fixed-2, td.fixed-2 {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 50px;
+        background-color: #fff;
+        z-index: 50;
+    }
+
+    th.fixed-3, td.fixed-3 {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 150px;
+        background-color: #fff;
+        z-index: 50;
+    }
+
+    th.fixed-4, td.fixed-4 {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 250px;
+        background-color: #fff;
+        z-index: 50;
+    }
+
+    th.fixed-5, td.fixed-5 {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 350px;
+        background-color: #fff;
+        z-index: 50;
+    }
+
+    th.fixed-6, td.fixed-6 {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 450px;
+        background-color: #fff;
+        z-index: 50;
+    }
+
+    th.fixed-7, td.fixed-7 {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 550px;
+        background-color: #fff;
+        z-index: 50;
     }
 
     .table-wrapper {
         overflow: auto;
-        height: 580px;
+        height: calc(100vh - 186px); /* 화면 높이에 따라 조절 */
         width: 100%;
         margin-bottom: 20px;
     }
@@ -37,83 +85,10 @@
     }
 
     th, td {
-        min-width: 130px; /* 모든 테이블 셀에 최소 너비 설정 */
-    }
-
-    /* 기본 고정 열 */
-    th.fixed, td.fixed {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 0;
-        background-color: #fff;
-        z-index: 30; /* 기본 고정 열의 z-index 설정 */
-    }
-
-    th.fixed-2, td.fixed-2 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 150px; /* 첫 번째 열 너비에 맞춤 */
-        background-color: #fff;
-        z-index: 30;
-    }
-
-    th.fixed-3, td.fixed-3 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 300px; /* 첫 번째 + 두 번째 열 너비에 맞춤 */
-        background-color: #fff;
-        z-index: 30;
-    }
-
-    th.fixed-4, td.fixed-4 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 450px; /* 첫 번째 + 두 번째 + 세 번째 열 너비에 맞춤 */
-        background-color: #fff;
-        z-index: 30;
-    }
-
-    /* 두 번째 테이블 고정 열 */
-    #process30 th.fixed, #process30 td.fixed {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 0;
-        background-color: #fff;
-        z-index: 40; /* 두 번째 테이블 고정 열의 z-index 설정 */
-    }
-
-    #process30 th.fixed-2, #process30 td.fixed-2 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 150px;
-        background-color: #fff;
-        z-index: 40;
-    }
-
-    #process30 th.fixed-3, #process30 td.fixed-3 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 300px;
-        background-color: #fff;
-        z-index: 40;
-    }
-
-    #process30 th.fixed-4, #process30 td.fixed-4 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 450px;
-        background-color: #fff;
-        z-index: 40;
-    }
-
-    #process30 th.fixed-5, #process30 td.fixed-5 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 600px;
-        background-color: #fff;
-        z-index: 40;
+        min-width: 100px;
     }
 </style>
+
 
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px 15px;">
@@ -156,7 +131,6 @@
         </div>
     </div>
 
-    <!-- 플래시 메시지 -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -168,7 +142,6 @@
         {% endif %}
     {% endwith %}
 
-    <!-- 로딩 중 모달 -->
     <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -196,62 +169,62 @@
     </div>
 </div>
 
-<!-- 데이터 테이블 -->
 <form id="registerForm" method="post" action="{{ url_for('product.register') }}">
     <div class="table-wrapper">
         <table class="table table-sm table-hover" style="border-collapse: collapse;" id="dataTable1"
                width="100%" cellspacing="0">
             <thead class="table-light">
             <tr>
-                <th class="sticky"></th>
-                <th class="second-column"><input type="checkbox" name="" id="chkRowAll"></th>
-                <th class="sticky">LOT</th>
-                <th class="sticky">product</th>
-                <th class="sticky" style="background-color: #e0ffff;">barcode</th>
-                <th class="sticky" style="background-color: #e0ffff;">modified</th>
-                <th class="sticky" style="background-color: #e0ffff;">실적처리</th>
-                <th class="sticky">err_code</th>
-                <th class="sticky" style="background-color: #fffacd;">err_info</th>
-                <th class="sticky" style="background-color: #fff0f5;">print_time</th>
-                <th class="sticky">inweight_time</th>
-                <th class="sticky">inweight_cycles</th>
-                <th class="sticky">inweight_station</th>
-                <th class="sticky">inweight_result</th>
-                <th class="sticky">inweight_value</th>
-                <th class="sticky">leaktest_cycles</th>
-                <th class="sticky">leaktest_entry</th>
-                <th class="sticky">leaktest_exit</th>
-                <th class="sticky">leaktest_station</th>
-                <th class="sticky">leaktest_value</th>
-                <th class="sticky">leaktest_ptest</th>
-                <th class="sticky">leaktest_duration</th>
-                <th class="sticky">leaktest_result</th>
-                <th class="sticky" style="background-color: #fff0f5;">outweight_time</th>
-                <th class="sticky">outweight_station</th>
-                <th class="sticky">outweight_cycles</th>
-                <th class="sticky">outweight_result</th>
-                <th class="sticky">outweight_value</th>
-                <th class="sticky">itest2_time</th>
-                <th class="sticky">itest2_station</th>
-                <th class="sticky">itest2_cycles</th>
-                <th class="sticky">itest2_result</th>
-                <th class="sticky">itest2_value</th>
-                <th class="sticky">itest2_ptest</th>
-                <th class="sticky" style="background-color: #fff0f5;">prodlabel_time</th>
-                <th class="sticky" style="background-color: #fff0f5;">prodlabel_cycles</th>
+                <th class="fixed" style="z-index: 100;"></th>
+                <th class="fixed-2" style="z-index: 100;"><input type="checkbox" name="" id="chkRowAll"></th>
+                <th class="fixed-3" style="z-index: 100;">LOT</th>
+                <th class="fixed-4" style="z-index: 100;">product</th>
+                <th class="fixed-5" style="background-color: #e0ffff; z-index: 100;">barcode</th>
+                <th class="fixed-6" style="background-color: #e0ffff; z-index: 100;">modified</th>
+                <th>실적처리</th>
+                <th>err_code</th>
+                <th style="background-color: #fffacd;">err_info</th>
+                <th style="background-color: #fff0f5;">print_time</th>
+                <th>inweight_time</th>
+                <th>inweight_cycles</th>
+                <th>inweight_station</th>
+                <th>inweight_result</th>
+                <th>inweight_value</th>
+                <th>leaktest_cycles</th>
+                <th>leaktest_entry</th>
+                <th>leaktest_exit</th>
+                <th>leaktest_station</th>
+                <th>leaktest_value</th>
+                <th>leaktest_ptest</th>
+                <th>leaktest_duration</th>
+                <th>leaktest_result</th>
+                <th style="background-color: #fff0f5;">outweight_time</th>
+                <th>outweight_station</th>
+                <th>outweight_cycles</th>
+                <th>outweight_result</th>
+                <th>outweight_value</th>
+                <th>itest2_time</th>
+                <th>itest2_station</th>
+                <th>itest2_cycles</th>
+                <th>itest2_result</th>
+                <th>itest2_value</th>
+                <th>itest2_ptest</th>
+                <th style="background-color: #fff0f5;">prodlabel_time</th>
+                <th style="background-color: #fff0f5;">prodlabel_cycles</th>
+
             </tr>
             </thead>
             <tbody>
             {% for row in data %}
             {% if row.REPORT_FLAG == 'N' %}
             <tr>
-                <td>{{ loop.index }}</td>
-                <td class="second-column"><input type="checkbox" name="chkRow" value="{{ row.barcode }}|{{ row.modified }}"></td>
-                <td>{{ row.LOT }}</td>
-                <td>{{ row.product }}</td>
-                <td style="background-color: #e0ffff;">{{ row.barcode }}</td>
-                <td style="background-color: #e0ffff;">{{ row.modified.strftime('%Y-%m-%d %H:%M:%S') if row.modified else '' }}</td>
-                <td style="background-color: #e0ffff;">{{ row.REPORT_FLAG }}</td>
+                <td class="fixed">{{ loop.index }}</td>
+                <td class="fixed-2"><input type="checkbox" name="chkRow" value="{{ row.barcode }}|{{ row.modified }}"></td>
+                <td class="fixed-3">{{ row.LOT }}</td>
+                <td class="fixed-4">{{ row.product }}</td>
+                <td class="fixed-5" style="background-color: #e0ffff;">{{ row.barcode }}</td>
+                <td class="fixed-6" style="background-color: #e0ffff;">{{ row.modified.strftime('%Y-%m-%d %H:%M:%S') if row.modified else '' }}</td>
+                <td>{{ row.REPORT_FLAG }}</td>
                 <td>{{ row.err_code }}</td>
                 <td style="background-color: #fffacd;">{{ row.err_info }}</td>
                 <td style="background-color: #fff0f5;">{{ row.print_time.strftime('%Y-%m-%d %H:%M:%S') if row.print_time else '' }}</td>
@@ -281,6 +254,7 @@
                 <td>{{ row.itest2_ptest }}</td>
                 <td style="background-color: #fff0f5;">{{ row.prodlabel_time.strftime('%Y-%m-%d %H:%M:%S') if row.prodlabel_time else '' }}</td>
                 <td style="background-color: #fff0f5;">{{ row.prodlabel_cycles }}</td>
+
             </tr>
             {% endif %}
             {% endfor %}
@@ -288,6 +262,7 @@
         </table>
     </div>
 </form>
+
 
 <script>
     document.getElementById('openModalButton').addEventListener('click', function() {

@@ -1,56 +1,109 @@
-<!--{% extends "base.html" %}-->
-<!--{% block content %}-->
+{% extends "base.html" %}
+{% block content %}
 
-<!--<div class="row">-->
-<!--    <div class="card shadow col-md-12 justify-content-end">-->
-<!--        <div class="card-header py-3">-->
-<!--            <h5 class="m-0 font-weight-bold text-primary">사용자 권한 관리</h5>-->
-<!--        </div>-->
-<!--        <div class="card-body">-->
-<!--            <table class="table table-bordered table-sm table-hover" style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">-->
-<!--                <thead>-->
-<!--                    <tr>-->
-<!--                        <th style="background-color: #5a5c69; color: white;">Index</th>-->
-<!--                        <th style="background-color: #5a5c69; color: white;">사용자ID</th>-->
-<!--                        <th style="background-color: #5a5c69; color: white;">성명</th>-->
-<!--                        <th style="background-color: #5a5c69; color: white;">부서</th>-->
-<!--                        <th style="background-color: #5a5c69; color: white;">직책/직위</th>-->
-<!--                        <th style="background-color: #5a5c69; color: white;">권한</th>-->
-<!--                        <th style="background-color: #5a5c69; color: white;">선택</th>-->
-<!--                    </tr>-->
-<!--                </thead>-->
-<!--                <tbody>-->
-<!--                    {% for user, current_role_id in users_with_roles %}-->
-<!--                    <tr>-->
-<!--                        <form action="{{ url_for('auth.user_role') }}" method="POST" onsubmit="alert('권한이 변경되었습니다.');">-->
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h7 class="m-0 font-weight-bold text-primary">사용자관리 > 권한관리</h7>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <form class="shadow-sm" style="display: flex;" method="GET" action="{{ url_for('auth.user_role') }}">
+                <div class="input-group">
+                    <input type="text" class="form-control bg-light border-0 small" placeholder="검색" aria-label="Search" id="search_kw" name="kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-light btn shadow-sm" type="submit">
+                            검색
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <button class="btn btn-light btn-sm shadow-sm ms-3" data-toggle="modal" data-target="#createRoleModal">
+                <i class="bi bi-plus-square"></i> 권한생성
+            </button>
+            <button class="btn btn-light btn-sm shadow-sm" onclick="deleteRoles()">
+                <i class="bi bi-dash-square"></i> 권한삭제
+            </button>
+        </div>
+    </div>
+</div>
 
-<!--                            <td>{{ user.users_id }}</td>-->
-<!--                            <td>{{ user.username }}</td>-->
-<!--                            <td>{{ user.name }}</td>-->
-<!--                            <td>{{ user.department }}</td>-->
-<!--                            <td>{{ user.jobtitle }}</td>-->
-<!--                            <td>-->
-<!--                                <input type="hidden" name="user_id" value="{{ user.users_id }}">-->
-<!--                                <select class="form-select form-select-sm" name="role_id">-->
-<!--                                    {% for role in roles %}-->
-<!--                                    <option value="{{ role.roles_id }}" {% if role.roles_id == current_role_id %}selected{% endif %}>-->
-<!--                                        {{ role.rolename }}-->
-<!--                                    </option>-->
-<!--                                    {% endfor %}-->
-<!--                                </select>-->
-<!--                            </td>-->
-<!--                            <td><button type="submit" class="btn btn-sm btn-primary">수정</button></td>-->
-<!--                        </form>-->
-<!--                    </tr>-->
-<!--                    {% endfor %}-->
-<!--                </tbody>-->
-<!--            </table>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
+<div>
+    <div class="card-body">
+        <form id="deleteForm" method="POST" action="{{ url_for('auth.delete_roles') }}">
+            <table class="table table-sm table-hover" style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+                <thead class="table-light">
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th style="font-weight: normal;">Role 아이디</th>
+                    <th style="font-weight: normal;">Role 이름</th>
+                    <th style="font-weight: normal;">Role 유형</th>
+                    <th style="font-weight: normal;">Remark</th>
+                    <th style="font-weight: normal; width:700px;"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for role in roles_data %}
+                <tr>
+                    <td><input type="checkbox" name="role_ids" value="{{ role.ROLE_ID }}"></td>
+                    <td>{{ role.ROLE_ID }}</td>
+                    <td>{{ role.ROLE_NM }}</td>
+                    <td>Menu Role</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
 
+<!-- Create Role Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('auth.create_role') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createRoleModalLabel">권한 생성</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="role_id" class="form-label">Role 아이디</label>
+                        <input type="text" class="form-control" id="role_id" name="role_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role_nm" class="form-label">Role 이름</label>
+                        <input type="text" class="form-control" id="role_nm" name="role_nm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="remark" class="form-label">Remark</label>
+                        <input type="text" class="form-control" id="remark" name="remark">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                    <button type="submit" class="btn btn-primary">생성</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+<script>
+    document.getElementById('selectAll').addEventListener('change', function() {
+        var checkboxes = document.querySelectorAll('input[name="role_ids"]');
+        for (var checkbox of checkboxes) {
+            checkbox.checked = this.checked;
+        }
+    });
 
-<!--{% endblock %}-->
+    function deleteRoles() {
+        var checkboxes = document.querySelectorAll('input[name="role_ids"]:checked');
+        if (checkboxes.length === 0) {
+            alert('삭제할 권한을 선택해주세요.');
+            return;
+        }
+        var form = document.getElementById('deleteForm');
+        form.submit();
+    }
+</script>
 
-
+{% endblock %}

@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+
     <!-- pybo CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -111,7 +112,8 @@
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownProduction">
                             <a class="dropdown-item" href="{{ url_for('product.product_order') }}">제조오더조회</a>
                             <a class="dropdown-item" href="{{ url_for('product.product_register') }}">제조실적등록</a>
-                            <a class="dropdown-item" href="{{ url_for('product.product_register_result') }}">등록실적조회</a>
+                            <a class="dropdown-item" href="{{ url_for('product.product_register_packing') }}">Packing등록</a>
+                            <a class="dropdown-item" href="{{ url_for('product.product_register_result') }}">제조실적조회</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown no-arrow mx-2">
@@ -119,11 +121,11 @@
                             영업관리
                         </a>
                     </li>
-                    <li class="nav-item dropdown no-arrow mx-2">
-                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
-                            출하관리
-                        </a>
-                    </li>
+<!--                    <li class="nav-item dropdown no-arrow mx-2">-->
+<!--                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">-->
+<!--                            출하관리-->
+<!--                        </a>-->
+<!--                    </li>-->
                     <li class="nav-item dropdown no-arrow mx-2">
                         <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
                             재고관리
@@ -188,6 +190,7 @@
 <script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
 <script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>
 
+
 <!-- 메뉴 자체를 눌러도 해당 최상위 메뉴로 이동시키기 위한 script -->
 <script>
     document.getElementById('navbarDropdown7').addEventListener('click', function() {
@@ -202,6 +205,10 @@
     document.getElementById('navbarDropdown5').addEventListener('click', function() {
         window.location.href = "{{ url_for('delivery.delivery_select') }}"; // 원하는 URL로 변경
     });
+
+
 </script>
+
+
 
 </html>

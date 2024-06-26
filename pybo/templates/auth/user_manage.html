@@ -1,13 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-<style>
-    .btn-custom {
-        background-color: #d3d3d3; /* 옅은 밝은색 배경 */
-        color: #343a40; /* 찐한 글자 색 */
-        font-weight: bold; /* 글자를 찐하게 */
-    }
-</style>
+<!-- 스타일 및 제목 부분 -->
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h7 class="m-0 font-weight-bold text-primary">사용자관리 > 사용자 계정 관리</h7>
@@ -25,12 +19,11 @@
             </form>
             <a href="{{ url_for('auth.signup') }}" class="btn btn-light btn-sm shadow-sm ms-3">사용자 계정 생성</a>
             <a href="{{ url_for('auth.user_role') }}" class="btn btn-light btn-sm shadow-sm">권한관리</a>
-            <a href="{{ url_for('auth.role_permission') }}" class="btn btn-light btn-sm shadow-sm">메뉴관리</a>
         </div>
     </div>
 </div>
 
-<!--라인-->
+<!-- 사용자 테이블 -->
 <div>
     <div class="card-body">
         <table class="table table-sm table-bordered table-hover"
@@ -40,14 +33,11 @@
                 <th></th>
                 <th style="font-weight: normal;">사용자ID</th>
                 <th style="font-weight: normal;">성명</th>
-                <th style="font-weight: normal;">성명(영문)</th>
                 <th style="font-weight: normal;">부서</th>
                 <th style="font-weight: normal;">직위/직책</th>
-                <th style="font-weight: normal;">회사코드</th>
                 <th style="font-weight: normal;">이메일</th>
                 <th style="font-weight: normal;">생성날짜</th>
                 <th style="font-weight: normal;">업데이트날짜</th>
-                <th style="font-weight: normal;">remark</th>
                 <th style="font-weight: normal;">정보수정</th>
                 <th style="font-weight: normal;">권한조회</th>
             </tr>
@@ -58,21 +48,18 @@
                 <td>{{ loop.index }}</td>
                 <td>{{ user.USR_ID }}</td>
                 <td>{{ user.USR_NM }}</td>
-                <td></td>
                 <td>{{ user.USR_DEPT }}</td>
                 <td>{{ user.USR_JOB }}</td>
-                <td>KO388</td>
                 <td>{{ user.USR_EMAIL }}</td>
                 <td>{{ user.INSRT_DT }}</td>
                 <td>{{ user.UPDT_DT }}</td>
-                <td></td>
                 <td>
                     <a href="{{ url_for('auth.user_update', USR_ID=user.USR_ID) }}" class="btn btn-light btn-sm shadow-sm">
                         수정
                     </a>
                 </td>
                 <td>
-                    <button class="btn btn-light btn-sm shadow-sm view-roles" data-roles="{{ user.ROLES|join(', ') }}" data-username="{{ user.USR_NM }}">
+                    <button class="btn btn-light btn-sm shadow-sm view-roles" data-roles="{{ user.ROLES|join(', ') }}" data-user-id="{{ user.USR_ID }}" data-username="{{ user.USR_NM }}">
                         조회
                     </button>
                 </td>
@@ -83,51 +70,170 @@
     </div>
 </div>
 
-<!-- Modal -->
+<!-- 권한 조회 모달 -->
 <div class="modal fade" id="rolesModal" tabindex="-1" role="dialog" aria-labelledby="rolesModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="rolesModalLabel">권한 정보</h5>
-
-            </div>
-            <div class="modal-body">
-                <p id="modalUsername"></p>
-                <ul id="rolesList"></ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">추가</button>
-                <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">삭제</button>
-                <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">닫기</button>
-            </div>
+            <form id="updateRolesForm" method="POST" action="{{ url_for('auth.update_user_roles') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rolesModalLabel">권한 정보</h5>
+                </div>
+                <div class="modal-body">
+                    <p id="modalUsername"></p>
+                    <ul id="rolesList"></ul>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" id="modalUserId" name="user_id">
+                    <button type="button" class="btn btn-light btn-sm shadow-sm" id="addRoleButton">추가</button>
+                    <button type="button" class="btn btn-light btn-sm shadow-sm" id="deleteRoleButton">삭제</button>
+                    <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">닫기</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
+<!-- 권한 추가 모달 -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" role="dialog" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="addRoleForm" method="POST" action="{{ url_for('auth.update_user_roles') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addRoleModalLabel">새로운 권한 추가</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newRoles" class="form-label">새로운 권한 선택</label>
+                        <table class="table table-sm table-bordered table-hover" style="text-align: center; border-collapse: collapse;" width="100%" cellspacing="0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>선택</th>
+                                    <th>권한 ID</th>
+                                    <th>권한 이름</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for role in all_roles %}
+                                <tr>
+                                    <td><input type="checkbox" name="newRoles" value="{{ role.ROLE_ID }}"></td>
+                                    <td>{{ role.ROLE_ID }}</td>
+                                    <td>{{ role.ROLE_NM }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" id="addRoleUserId" name="user_id">
+                    <button type="submit" class="btn btn-light btn-sm shadow-sm">추가</button>
+                    <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">닫기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 권한 삭제 모달 -->
+<div class="modal fade" id="deleteRoleModal" tabindex="-1" role="dialog" aria-labelledby="deleteRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="deleteRoleForm" method="POST" action="{{ url_for('auth.delete_user_roles') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteRoleModalLabel">권한 삭제</h5>
+                </div>
+                <div class="modal-body">
+                    <p id="deleteModalUsername"></p>
+                    <table class="table table-sm table-bordered table-hover" style="text-align: center; border-collapse: collapse;" width="100%" cellspacing="0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>선택</th>
+                                <th>권한 이름</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deleteRolesList">
+                            <!-- 삭제할 권한 리스트가 여기 추가됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" id="deleteRoleUserId" name="user_id">
+                    <button type="submit" class="btn btn-light btn-sm shadow-sm">삭제</button>
+                    <button type="button" class="btn btn-light btn-sm shadow-sm" data-dismiss="modal">닫기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.view-roles').forEach(button => {
         button.addEventListener('click', function() {
             const roles = this.dataset.roles.split(', ');
+            const userId = this.dataset.userId;
             const username = this.dataset.username;
             const rolesList = document.getElementById('rolesList');
             const modalUsername = document.getElementById('modalUsername');
+            const modalUserId = document.getElementById('modalUserId');
 
-            // Clear previous roles
+            // 기존 역할 목록 초기화
             rolesList.innerHTML = '';
             modalUsername.textContent = username + '님의 권한 목록:';
+            modalUserId.value = userId;
 
-            // Populate new roles
+            // 새로운 역할 목록 추가
             roles.forEach(role => {
                 const li = document.createElement('li');
                 li.textContent = role;
+                li.dataset.roleId = role;
+                li.classList.add('role-item');
                 rolesList.appendChild(li);
             });
 
-            // Show the modal
             const modal = new bootstrap.Modal(document.getElementById('rolesModal'));
             modal.show();
         });
+    });
+
+    document.getElementById('addRoleButton').addEventListener('click', function() {
+        const userId = document.getElementById('modalUserId').value;
+        document.getElementById('addRoleUserId').value = userId;
+
+        const addRoleModal = new bootstrap.Modal(document.getElementById('addRoleModal'));
+        addRoleModal.show();
+    });
+
+    document.getElementById('deleteRoleButton').addEventListener('click', function() {
+        const userId = document.getElementById('modalUserId').value;
+        document.getElementById('deleteRoleUserId').value = userId;
+        const roles = document.querySelectorAll('#rolesList .role-item');
+        const deleteRolesList = document.getElementById('deleteRolesList');
+
+        // 기존 삭제 역할 목록 초기화
+        deleteRolesList.innerHTML = '';
+
+        // 새로운 삭제 역할 목록 추가
+        roles.forEach(role => {
+            const tr = document.createElement('tr');
+            const tdCheckbox = document.createElement('td');
+            const tdRoleName = document.createElement('td');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'roles';
+            checkbox.value = role.dataset.roleId;
+
+            tdCheckbox.appendChild(checkbox);
+            tdRoleName.textContent = role.textContent;
+
+            tr.appendChild(tdCheckbox);
+            tr.appendChild(tdRoleName);
+            deleteRolesList.appendChild(tr);
+        });
+
+        const deleteRoleModal = new bootstrap.Modal(document.getElementById('deleteRoleModal'));
+        deleteRoleModal.show();
     });
 });
 </script>
