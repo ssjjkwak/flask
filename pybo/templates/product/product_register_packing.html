@@ -31,6 +31,12 @@
 
     th, td {
         min-width: 50px;
+        padding: 4px 8px; /* 패딩 값을 조정하여 간격을 줄임 */
+    }
+
+    /* 모달 테이블 패딩 조정 */
+    #dataTable_modal th, #dataTable_modal td {
+        padding: 2px 4px; /* 모달 테이블의 패딩을 더 줄임 */
     }
 </style>
 
@@ -59,7 +65,7 @@
                     <select class="form-select form-select-sm" id="plant_code" name="plant_code" disabled>
                         <option value="">p710 인공신장기공장</option>
                         {% for plant in plants %}
-                        <option value="{{ plant[0] }}" {% if plant[0]== PLANT_CD %}selected{% endif %}>
+                        <option value="{{ plant[0] }}" {% if plant[0] == PLANT_CD %}selected{% endif %}>
                             {{ plant[0] }} 인공신장기공장
                         </option>
                         {% endfor %}
@@ -69,10 +75,10 @@
                     <label for="item_cd" class="form-label me-3" style="min-width: 110px;">
                         &emsp;&emsp;&emsp;&emsp;품목
                     </label>
-                    <select class="form-select form-select-sm" id="item_cd" name="item_cd" disabled>
+                    <select class="form-select form-select-sm" id="item_cd" name="item_cd">
                         <option value="">-</option>
                         {% for item in items %}
-                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
+                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD == ITEM_CD %}selected{% endif %}>
                             {{ item.ITEM_CD }} {{ item.ITEM_NM }}
                         </option>
                         {% endfor %}
@@ -112,12 +118,8 @@
                     </label>
                     <div class="form-group">
                         <select class="form-select form-select-sm" id="order_status" name="order_status">
-                            <option value="" {% if ORDER_STATUS==
-                            '' %}selected{% endif %}>-</option>
-                            <option value="CL" {% if ORDER_STATUS==
-                            'CL' %}selected{% endif %}>CL</option>
-                            <option value="RL" {% if ORDER_STATUS==
-                            'RL' %}selected{% endif %}>RL</option>
+
+                            <option value="RL" {% if ORDER_STATUS == 'RL' %}selected{% endif %}>RL</option>
                         </select>
 
                     </div>
@@ -148,6 +150,7 @@
                     <th class="sticky">실적수량</th>
                     <th class="sticky">Master Box no.</th>
                     <th class="sticky">오더상태</th>
+                    <th class="sticky" style="width: 590px; font-weight: normal"></th>
                 </tr>
                 </thead>
 
@@ -165,6 +168,7 @@
                     <td>0</td> <!-- 실적수량 -->
                     <td>{{ order.m_box_no or '' }}</td> <!-- Master Box no. -->
                     <td>{{ order.order_status }}</td>
+                    <td></td>
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -182,8 +186,8 @@
 
 <!-- Packing 실적등록 모달 -->
 <div class="modal fade" id="packingModal" tabindex="-1" role="dialog" aria-labelledby="packingModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+     aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg" data-bs-target="#staticBackdrop">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="packingModalLabel">Packing 실적등록</h5>
@@ -199,31 +203,19 @@
                                 <label for="packing_order_no">제조오더번호</label>
                                 <input type="text" class="form-control" id="packing_order_no" disabled>
                             </div>
-                            <div class="mb-1 col-14">
-                                <label for="barcode_scan" style="visibility: hidden;"><span style="color: red;">※ 바코드, UDI QR 순서로 </span></label>
-                                <label for="barcode_scan">Box DI 번호</label>
-                                <input type="text" class="form-control" id="barcode_scan"
-                                       placeholder="Master Box no. 입력" disabled>
-
-                            </div>
                         </div>
                         <div class="col-md-4">
-
                             <div class="mb-1 col-14">
-
-                                <label for="barcode_scan"><span style="color: red;">※ Barcode, UDI QR 순서로 </span></label>
-                                <label for="barcode_scan"><span style="color: red;">스캔해주시기 바랍니다.</span></label>
-                                <input type="text" class="form-control" style="visibility: hidden;" id="barcode_scan2"
-                                       placeholder="Master Box no. 입력" disabled>
-
-                            </div>
-
-                            <div class="mb-1 col-14">
-
                                 <label for="barcode_scan">Packing 일자</label>
                                 <input type="text" class="form-control" id="barcode_scan3"
                                        placeholder="Master Box no. 입력" disabled>
-
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-1 col-14">
+                                <label for="barcode_scan">Master Box no.</label>
+                                <input type="text" class="form-control" id="barcode_scan4"
+                                       placeholder="Master Box no. 입력" disabled>
                             </div>
                         </div>
                     </div>
@@ -304,80 +296,74 @@
         }
     });
 
-     window.onload = function() {
+    window.onload = function() {
 
-            var today = new Date();
-            var day = today.getDate();
-            var month = today.getMonth() + 1;
-            var year = today.getFullYear();
-            var tableBody = document.getElementById('modalTableBody');
-            var rows = 24;
+        var today = new Date();
+        var day = today.getDate();
+        var month = today.getMonth() + 1;
+        var year = today.getFullYear();
+        var tableBody = document.getElementById('modalTableBody');
+        var rows = 24;
 
+        if (day < 10) day = '0' + day;
+        if (month < 10) month = '0' + month;
 
-            if(day < 10) day = '0' + day;
-            if(month < 10) month = '0' + month;
+        var todayString = year + '-' + month + '-' + day;
 
-            var todayString = year + '-' + month + '-' + day;
+        document.getElementById('barcode_scan3').value = todayString;
 
+        for (var i = 1; i <= rows; i++) {
+            var row = document.createElement('tr');
 
-            document.getElementById('barcode_scan3').value = todayString;
+            var cell = document.createElement('td');
+            cell.textContent = i;
+            row.appendChild(cell);
 
-            for (var i = 1; i <= rows; i++) {
-                var row = document.createElement('tr');
+            var barcodeCell = document.createElement('td');
+            var barcodeInput = document.createElement('input');
+            barcodeInput.type = 'text';
+            barcodeInput.className = 'form-control';
+            barcodeInput.id = 'barcode-di-' + i;
+            barcodeCell.appendChild(barcodeInput);
+            row.appendChild(barcodeCell);
 
+            var udiCell = document.createElement('td');
+            var udiInput = document.createElement('input');
+            udiInput.type = 'text';
+            udiInput.className = 'form-control';
+            udiInput.id = 'udi-qr-' + i;
+            udiCell.appendChild(udiInput);
+            row.appendChild(udiCell);
 
-                var cell = document.createElement('td');
-                cell.textContent = i;
-                row.appendChild(cell);
+            var resultCell = document.createElement('td');
+            var resultInput = document.createElement('input');
+            resultInput.type = 'text';
+            resultInput.className = 'form-control';
+            resultInput.id = 'result-packing-' + i;
+            resultCell.appendChild(resultInput);
+            row.appendChild(resultCell);
 
+            tableBody.appendChild(row);
 
-                var barcodeCell = document.createElement('td');
-                var barcodeInput = document.createElement('input');
-                barcodeInput.type = 'text';
-                barcodeInput.className = 'form-control';
-                barcodeInput.id = 'barcode-di-' + i;
-                barcodeCell.appendChild(barcodeInput);
-                row.appendChild(barcodeCell);
+            barcodeInput.addEventListener('keyup', moveToNextInput);
+            udiInput.addEventListener('keyup', moveToNextInput);
+            resultInput.addEventListener('keyup', moveToNextInput);
+        }
+    };
 
-                var udiCell = document.createElement('td');
-                var udiInput = document.createElement('input');
-                udiInput.type = 'text';
-                udiInput.className = 'form-control';
-                udiInput.id = 'udi-qr-' + i;
-                udiCell.appendChild(udiInput);
-                row.appendChild(udiCell);
-
-                var resultCell = document.createElement('td');
-                var resultInput = document.createElement('input');
-                resultInput.type = 'text';
-                resultInput.className = 'form-control';
-                resultInput.id = 'result-packing-' + i;
-                resultCell.appendChild(resultInput);
-                row.appendChild(resultCell);
-
-                tableBody.appendChild(row);
-
-
-                barcodeInput.addEventListener('keyup', moveToNextInput);
-                udiInput.addEventListener('keyup', moveToNextInput);
-                resultInput.addEventListener('keyup', moveToNextInput);
-            }
-        };
-
-        function moveToNextInput(event) {
-            if (event.target.value.length > 0) {
-                var inputs = document.querySelectorAll('#modalTableBody input');
-                for (var i = 0; i < inputs.length; i++) {
-                    if (inputs[i] === event.target) {
-                        if (i < inputs.length - 1) {
-                            inputs[i + 1].focus();
-                        }
-                        break;
+    function moveToNextInput(event) {
+        if (event.target.value.length > 0) {
+            var inputs = document.querySelectorAll('#modalTableBody input');
+            for (var i = 0; i < inputs.length; i++) {
+                if (inputs[i] === event.target) {
+                    if (i < inputs.length - 1) {
+                        inputs[i + 1].focus();
                     }
+                    break;
                 }
             }
         }
-
+    }
 </script>
 
 {% endblock %}

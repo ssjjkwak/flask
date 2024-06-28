@@ -15,7 +15,6 @@ bp = Blueprint('product', __name__, url_prefix='/product')
 
 ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
 
-
 @bp.route('/product_order/', methods=('GET', 'POST'))
 def product_order():
     orders_with_items = []
@@ -109,8 +108,6 @@ def product_order():
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            form_submitted=form_submitted)
 
-
-
 @bp.route('/get_bom_data')
 def get_bom_data():
     order_no = request.args.get('order_no')
@@ -131,10 +128,8 @@ def get_bom_data():
 
     return jsonify(results)
 
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 @bp.route('/upload_excel', methods=['POST'])
 def upload_excel():
@@ -151,7 +146,6 @@ def upload_excel():
         return '<script>alert("Excel 파일 업로드 완료."); window.location.href="/product/register/";</script>'
     else:
         return '<script>alert("Allowed file types are xls, xlsx"); window.location.href="/product/register/";</script>'
-
 
 def convert_value(value):
     if pd.isna(value):
@@ -234,16 +228,11 @@ def process_excel(filepath):
     db.session.commit()
 
 
-
-
 # 여기에 조회조건 걸어서 register 화면에 데이터 렌더링
 @bp.route('/register/', methods=['GET', 'POST'])
 def product_register():
     alpha_data = Production_Alpha.query.filter_by(REPORT_FLAG='N').all()
     return render_template('product/product_register.html', data=alpha_data)
-
-
-
 
 @bp.route('/register_result/', methods=['GET', 'POST'])
 def product_register_result():
@@ -314,16 +303,11 @@ def product_register_result():
                            BARCODE_NO_END=BARCODE_NO_END,
                            form_submitted=form_submitted)
 
-
-
-
-
 def remove_microseconds(dt):
     """Remove microseconds from a datetime object."""
     if dt:
         return dt.replace(microsecond=0)
     return dt
-
 
 def parse_datetime(datetime_str):
     """Parse datetime string with various formats including milliseconds."""
@@ -451,9 +435,6 @@ def register():
 
     return '<script>alert("실적 처리가 완료되었습니다."); window.location.href="/product/register/";</script>'
 
-
-
-
 def assign_production_orders():
     barcodes = Production_Barcode_Assign.query.filter(Production_Barcode_Assign.PRODT_ORDER_NO == None).all()
     orders = {wc_cd: [] for wc_cd in ['WSF10', 'WSF30', 'WSF60']}
@@ -493,9 +474,6 @@ def assign_production_orders():
     db.session.commit()
 
     insert_production_results(orders)
-
-
-
 
 def insert_production_results(orders):
     result_records = []
@@ -561,14 +539,10 @@ def insert_production_results(orders):
     db.session.commit()
 
 
-
-
 @bp.route('/assign-orders', methods=['POST'])
 def assign_orders_route():
     assign_production_orders()
     return '<script>alert("생산 오더가 할당되었습니다."); window.location.href="/product/assign/";</script>'
-
-
 
 @bp.route('/register_result_packing/', methods=['GET', 'POST'])
 def product_register_packing():
