@@ -144,7 +144,7 @@
                 </div>
                 <div class="modal-body">
                     <p id="deleteModalUsername"></p>
-                    <table class="table table-sm table-bordered table-hover" style="text-align: center; border-collapse: collapse;" width="100%" cellspacing="0">
+                    <table class="table table-sm table-hover" style="text-align: center; border-collapse: collapse;" width="100%" cellspacing="0">
                         <thead class="table-light">
                             <tr>
                                 <th>선택</th>
@@ -218,17 +218,17 @@ document.addEventListener('DOMContentLoaded', function() {
         roles.forEach(role => {
             const tr = document.createElement('tr');
             const tdCheckbox = document.createElement('td');
-            const tdRoleName = document.createElement('td');
+            const tdRoleId = document.createElement('td');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.name = 'roles';
             checkbox.value = role.dataset.roleId;
 
             tdCheckbox.appendChild(checkbox);
-            tdRoleName.textContent = role.textContent;
+            tdRoleId.textContent = role.dataset.roleId;
 
             tr.appendChild(tdCheckbox);
-            tr.appendChild(tdRoleName);
+            tr.appendChild(tdRoleId);
             deleteRolesList.appendChild(tr);
         });
 

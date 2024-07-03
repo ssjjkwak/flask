@@ -2,6 +2,8 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
+
+import win32com
 from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g
 from sqlalchemy import null
 from werkzeug.utils import redirect, secure_filename
@@ -617,7 +619,34 @@ def product_register_packing():
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            form_submitted=form_submitted)
 
+@bp.route('/print', methods=['POST'])
+def print_label():
+    # 웹 폼에서 데이터 받기
+    product_name = request.form['product_name']
+    product_code = request.form['product_code']
+    price = request.form['price']
 
+    try:
+        # CODESOFT 애플리케이션 객체 생성
+        codesoft = win32com.client.Dispatch("Lppx2.Application")
+        codesoft.Open("C:\\path\\to\\your\\label.lab")  # .lab 파일 경로 지정
+
+        # 라벨 문서 객체 가져오기
+        label = codesoft.ActiveDocument
+
+        # 변수 값 설정 (변수 이름과 매핑)
+        label.Variables.Item("ProductName").Value = product_name
+        label.Variables.Item("ProductCode").Value = product_code
+        label.Variables.Item("Price").Value = price
+
+        # 라벨 프린터 설정 및 출력
+        label.PrintOut(False, False)
+        codesoft.Quit()
+
+        return "Label printed successfully!"
+
+    except Exception as e:
+        return str(e)
 
 
 
