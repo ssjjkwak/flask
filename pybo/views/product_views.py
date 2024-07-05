@@ -5,12 +5,12 @@ from datetime import datetime, timedelta
 
 import win32com
 from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g
-from sqlalchemy import null
+from sqlalchemy import null, func
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr
+    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl
 from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
@@ -619,34 +619,120 @@ def product_register_packing():
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            form_submitted=form_submitted)
 
-@bp.route('/print', methods=['POST'])
+#바코드 스캔 데이터 검증 로직
+@bp.route('/check_barcode/', methods=['POST'])
+def check_barcode():
+    barcode = request.json.get('barcode')
+    if not barcode:
+        return jsonify({"status": "error", "message": "Barcode is required"}), 400
+
+    barcode_data = db.session.query(Production_Barcode_Assign).filter(
+        Production_Barcode_Assign.barcode == barcode,
+        Production_Barcode_Assign.WC_CD == 'WSF60',
+        Production_Barcode_Assign.REPORT_TYPE == 'G'
+    ).first()
+
+    if barcode_data:
+        return jsonify({"status": "success", "message": "PASS"})
+    else:
+        return jsonify({"status": "fail", "message": "FAIL"})
+
+#box 번호 자동으로 넘어가는 로직
+@bp.route('/get_next_master_box_no/', methods=['GET'])
+def get_next_master_box_no():
+    last_master_box_no = db.session.query(func.max(Packing_Hdr.m_box_no)).filter(Packing_Hdr.m_box_no.like('0880%')).scalar()
+    if last_master_box_no:
+        next_master_box_no = int(last_master_box_no[4:]) + 1
+        next_master_box_no = '0880' + str(next_master_box_no).zfill(8)
+    else:
+        next_master_box_no = '088000000001'
+    return jsonify({"status": "success", "next_master_box_no": next_master_box_no})
+
+#데이터 db에 insert
+@bp.route('/save_packing_data/', methods=['POST'])
+def save_packing_data():
+    data = request.json
+
+    prodt_order_no = data['prodt_order_no']
+    master_box_no = data['master_box_no']
+    lot_no = data['lot_no']
+    serial_no = data['serial_no']
+    quantity = data['quantity']
+    expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d')
+    rows = data['rows']
+
+    # P_PACKING_HDR 테이블 업데이트
+    hdr = db.session.query(Packing_Hdr).filter_by(prodt_order_no=prodt_order_no).first()
+    if hdr:
+        hdr.m_box_no = master_box_no
+    else:
+        hdr = Packing_Hdr(
+            prodt_order_no=prodt_order_no,
+            m_box_no=master_box_no,
+            plant_start_dt=datetime.now(),
+            prod_qty_in_order_unit=quantity,
+            order_status='RL'
+        )
+        db.session.add(hdr)
+
+    # P_PACKING_DTL 테이블 삽입
+    for row in rows:
+        dtl = Packing_Dtl(
+            m_box_no=master_box_no,
+            lot_no=lot_no,
+            udi_code=row['barcode'],
+            barcode=row['udi_qr'],
+            packing_dt=datetime.now(),
+            exp_date=expiry_date
+        )
+        db.session.add(dtl)
+
+    db.session.commit()
+
+    return jsonify({"status": "success"})
+
+
+@bp.route('/print_label/', methods=['POST'])
 def print_label():
-    # 웹 폼에서 데이터 받기
-    product_name = request.form['product_name']
-    product_code = request.form['product_code']
-    price = request.form['price']
+    data = request.json
+
+
+    master_box_no = data.get('master_box_no')
+    lot_no = data.get('lot_no')
+    serial_no = data.get('serial_no')
+    quantity = data.get('quantity')
+    expiry_date = data.get('expiry_date')
+
+    # QR 코드 데이터 생성 (예시: 여러 값을 하나의 문자열로 결합)
+    qr_code_data = f"{master_box_no};{serial_no};{lot_no};{expiry_date}"
 
     try:
         # CODESOFT 애플리케이션 객체 생성
         codesoft = win32com.client.Dispatch("Lppx2.Application")
-        codesoft.Open("C:\\path\\to\\your\\label.lab")  # .lab 파일 경로 지정
+        codesoft.Open("C:\\Users\\Desktop\\Desktop\\flask-master\\pybo\\static\\lbl")
 
         # 라벨 문서 객체 가져오기
         label = codesoft.ActiveDocument
 
-        # 변수 값 설정 (변수 이름과 매핑)
-        label.Variables.Item("ProductName").Value = product_name
-        label.Variables.Item("ProductCode").Value = product_code
-        label.Variables.Item("Price").Value = price
+        label.Variables.Item("UDI-DI").Value = master_box_no
+        label.Variables.Item("LOT_NO").Value = lot_no
+        label.Variables.Item("UDI-SERIAL").Value = serial_no
+        label.Variables.Item("QTY").Value = quantity
+        label.Variables.Item("EXP_DATE").Value = expiry_date
+        label.Variables.Item("BARCODE").Value = qr_code_data
 
         # 라벨 프린터 설정 및 출력
         label.PrintOut(False, False)
         codesoft.Quit()
 
-        return "Label printed successfully!"
+        return "프린트 성공"
 
     except Exception as e:
-        return str(e)
+        return f"An error occurred: {e}"
+
+
+
+
 
 
 

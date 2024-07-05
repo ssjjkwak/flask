@@ -13,7 +13,6 @@
     th {
         background-color: #f8f9fa;
         box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4);
-
         top: 0;
         z-index: 20;
     }
@@ -36,14 +35,25 @@
 
     /* 모달 테이블 패딩 조정 */
     #dataTable_modal th, #dataTable_modal td {
-        padding: 2px 4px; /* 모달 테이블의 패딩을 더 줄임 */
+        padding: 0px 4px; /* 모달 테이블의 패딩을 더 줄임 */
     }
 
     .modal-input {
-        width: 140px;
+        width: 220px;
         height: 20px;
         font-size: 12px;
         border-style:hidden;
+    }
+
+    .modal-input2 {
+        width: 100px;
+        height: 20px;
+        font-size: 12px;
+        border-style:hidden;
+    }
+
+    .hidden {
+        display: none;
     }
 
 </style>
@@ -213,35 +223,35 @@
                                 <input type="text" class="form-control" id="packing_order_no" disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan">Packing 제조일자</label>
+                                <label for="barcode_scan3">Packing 제조일자</label>
                                 <input type="text" class="form-control" id="barcode_scan3"
-                                       placeholder="240704" disabled>
+                                        disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan">Master Box No.</label>
+                                <label for="barcode_scan4">Master Box No.</label>
                                 <input type="text" class="form-control" id="barcode_scan4"
-                                       placeholder="08801234567" disabled>
+                                        disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan">Lot No.</label>
+                                <label for="barcode_scan5">Lot No.</label>
                                 <input type="text" class="form-control" id="barcode_scan5"
-                                       placeholder="10001" disabled>
+                                        disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan">Serial No.</label>
+                                <label for="barcode_scan8">Serial No.</label>
                                 <input type="text" class="form-control" id="barcode_scan8"
-                                       placeholder="240704001" disabled>
+                                        disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan">수량</label>
+                                <label for="barcode_scan6">수량</label>
                                 <input type="text" class="form-control" id="barcode_scan6"
-                                       placeholder="0" disabled>
+                                        disabled>
                             </div>
 
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan">유효기간</label>
+                                <label for="barcode_scan7">유효기간</label>
                                 <input type="text" class="form-control" id="barcode_scan7"
-                                       placeholder="2027-06-28" disabled>
+                                        disabled>
                             </div>
 
                             <div class="mb-1 col-10 text-center">
@@ -285,12 +295,52 @@
                         id="closeModalButton">닫기
                 </button>
                 <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="saveChangesButton">
-                    <i class="bi bi-printer"></i> 등록 및 label 발행
+                    <i class="bi bi-printer"></i> 등록 및 label 인쇄
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- 실패 메시지 모달 -->
+<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 400px; left: 10%; position: absolute;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel"> <i class="bi bi-exclamation-octagon-fill"></i> Error</h5>
+            </div>
+            <div class="modal-body">
+                문제가 발생했습니다.<br>
+                바코드 스캔 데이터를 초기화합니다.<br>
+                <span style="color: red; font-weight: bold;">문제 발생 데이터 번호: <span id="errorRowNumber"></span></span>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal" id="closeErrorModalButton">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 성공 메시지 모달 -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 400px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel"><i class="bi bi-check-circle-fill"></i> Success</h5>
+            </div>
+            <div class="modal-body">
+                데이터가 성공적으로 저장되었습니다.<br>
+                라벨을 인쇄하시겠습니까?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal" id="closeSuccessModalButton">닫기</button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="printLabelButton"><i class="bi bi-printer"></i> Label 인쇄</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <script>
     var selectedOrderNo = '';
@@ -299,17 +349,16 @@
         $('#packingModal').modal('hide');
     });
 
+    document.getElementById('closeErrorModalButton').addEventListener('click', function() {
+        clearInputs();
+    });
+
     document.querySelectorAll('#dataTable tbody tr').forEach(row => {
         row.addEventListener('click', function() {
-
             document.querySelectorAll('#dataTable tbody tr').forEach(row => {
                 row.classList.remove('selected-row');
             });
-
-
             this.classList.add('selected-row');
-
-
             selectedOrderNo = this.getAttribute('data-order-no');
         });
     });
@@ -318,26 +367,20 @@
         if (selectedOrderNo) {
             document.getElementById('packing_order_no').value = selectedOrderNo;
             $('#packingModal').modal('show');
+
+            setTimeout(function() {
+                document.querySelector('#modalTableBody input').focus();
+            }, 500);
         } else {
             alert('등록할 제조오더를 선택해주세요.');
         }
     });
 
     document.getElementById('saveChangesButton').addEventListener('click', function() {
-
-        const masterBoxNo = document.getElementById('barcode_scan').value;
-        if (masterBoxNo) {
-            // Save the master box number (make an AJAX call or form submission)
-
-            $('#packingModal').modal('hide');
-            alert('저장되었습니다.');
-        } else {
-            alert('Master Box no.을 입력해주세요.');
-        }
+        savePackingData();
     });
 
     window.onload = function() {
-
         var today = new Date();
         var day = today.getDate();
         var month = today.getMonth() + 1;
@@ -347,17 +390,17 @@
 
         if (day < 10) day = '0' + day;
         if (month < 10) month = '0' + month;
-
         var todayString = year + '-' + month + '-' + day;
 
         document.getElementById('barcode_scan3').value = todayString;
 
         for (var i = 1; i <= rows; i++) {
             var row = document.createElement('tr');
-
             var cell = document.createElement('td');
             cell.textContent = i;
+            cell.className =
             row.appendChild(cell);
+
 
             var barcodeCell = document.createElement('td');
             var barcodeInput = document.createElement('input');
@@ -370,7 +413,7 @@
             var udiCell = document.createElement('td');
             var udiInput = document.createElement('input');
             udiInput.type = 'text';
-            udiInput.className = 'modal-input';
+            udiInput.className = 'modal-input2';
             udiInput.id = 'udi-qr-' + i;
             udiCell.appendChild(udiInput);
             row.appendChild(udiCell);
@@ -378,32 +421,214 @@
             var resultCell = document.createElement('td');
             var resultInput = document.createElement('input');
             resultInput.type = 'text';
-            resultInput.className = 'modal-input';
+            resultInput.className = 'modal-input2';
+            resultCell.className = 'modal-width';
             resultInput.id = 'result-packing-' + i;
+            resultInput.readOnly = true;
             resultCell.appendChild(resultInput);
             row.appendChild(resultCell);
 
             tableBody.appendChild(row);
 
-            barcodeInput.addEventListener('keyup', moveToNextInput);
-            udiInput.addEventListener('keyup', moveToNextInput);
-            resultInput.addEventListener('keyup', moveToNextInput);
+            barcodeInput.addEventListener('keyup', handleBarcodeInput);
+            udiInput.addEventListener('keyup', handleUdiInput);
         }
     };
 
+    function handleUdiInput(event) {
+        if (event.target.value.length === 11) {
+            var barcode = event.target.value;
+            var row = event.target.parentNode.parentNode;
+            var resultInput = row.querySelector('input[id^="result-packing-"]');
+            var rowIndex = row.rowIndex;
+            checkBarcode(barcode, resultInput, rowIndex);
+            moveToNextInput(event);
+        }
+    }
+
+    function handleBarcodeInput(event) {
+        if (event.target.value.length === 31) {
+            moveToNextInput(event);
+        }
+    }
+
+    function checkBarcode(barcode, resultInput, rowIndex) {
+        fetch('/product/check_barcode/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ barcode: barcode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                resultInput.value = 'PASS';
+
+            } else {
+                resultInput.value = 'FAIL';
+                showErrorModal(rowIndex);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showErrorModal(rowIndex);
+        });
+    }
+
+    function showErrorModal(rowIndex) {
+        document.getElementById('errorRowNumber').textContent = rowIndex;
+        $('#errorModal').modal('show');
+    }
+
     function moveToNextInput(event) {
-        if (event.target.value.length > 0) {
-            var inputs = document.querySelectorAll('#modalTableBody input');
-            for (var i = 0; i < inputs.length; i++) {
-                if (inputs[i] === event.target) {
-                    if (i < inputs.length - 1) {
-                        inputs[i + 1].focus();
-                    }
-                    break;
+        var inputs = document.querySelectorAll('#modalTableBody input');
+        for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i] === event.target) {
+                var nextInput = findNextInput(i, inputs);
+                if (nextInput) {
+                    nextInput.focus();
+                    nextInput.dispatchEvent(new KeyboardEvent('keyup', {'keyCode': 13}));
                 }
+                break;
             }
         }
     }
+
+    function findNextInput(currentIndex, inputs) {
+        for (var i = currentIndex + 1; i < inputs.length; i++) {
+            if (!inputs[i].readOnly) {
+                return inputs[i];
+            }
+        }
+        return null;
+    }
+
+    function clearInputs() {
+        var inputs = document.querySelectorAll('#modalTableBody input');
+        inputs.forEach(input => {
+            input.value = '';
+        });
+        $('#errorModal').modal('hide');
+        document.querySelector('#modalTableBody input').focus();
+    }
+
+    function savePackingData() {
+        var packingOrderNo = document.getElementById('packing_order_no').value;
+        var packingDate = document.getElementById('barcode_scan3').value;
+        var tableBody = document.getElementById('modalTableBody');
+        var rows = tableBody.getElementsByTagName('tr');
+
+        var lotNo = 10001;
+        var serialNoBase = packingDate.replace(/-/g, '') + '001';
+        var quantity = rows.length;
+        var expiryDate = new Date(packingDate);
+        expiryDate.setFullYear(expiryDate.getFullYear() + 3);
+        expiryDate = expiryDate.toISOString().split('T')[0];
+
+        var packingData = {
+            prodt_order_no: packingOrderNo,
+            lot_no: lotNo,
+            serial_no: serialNoBase,
+            quantity: quantity,
+            expiry_date: expiryDate,
+            rows: []
+        };
+
+        for (var i = 0; i < rows.length; i++) {
+            var udiQr = rows[i].querySelector('input[id^="udi-qr-"]').value;
+            var barcode = rows[i].querySelector('input[id^="barcode-di-"]').value;
+            packingData.rows.push({
+                udi_qr: udiQr,
+                barcode: barcode
+            });
+        }
+
+        fetch('/product/get_next_master_box_no/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                packingData.master_box_no = data.next_master_box_no;
+
+                fetch('/product/save_packing_data/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(packingData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('데이터가 성공적으로 저장되었습니다.');
+
+                        document.getElementById('barcode_scan4').value = packingData.master_box_no;
+                        document.getElementById('barcode_scan5').value = packingData.lot_no;
+                        document.getElementById('barcode_scan8').value = packingData.serial_no;
+                        document.getElementById('barcode_scan6').value = packingData.quantity;
+                        document.getElementById('barcode_scan7').value = packingData.expiry_date;
+
+                        $('#successModal').modal('show');
+
+                    } else {
+                        alert('데이터 저장 중 오류가 발생했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('데이터 저장 중 오류가 발생했습니다.');
+                });
+            } else {
+                alert('마스터 박스 번호 생성 중 오류가 발생했습니다.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('마스터 박스 번호 생성 중 오류가 발생했습니다.');
+        });
+    }
+
+     document.getElementById('printLabelButton').addEventListener('click', function() {
+        var packingOrderNo = document.getElementById('packing_order_no').value;
+        var masterBoxNo = document.getElementById('barcode_scan4').value;
+        var lotNo = document.getElementById('barcode_scan5').value;
+        var serialNo = document.getElementById('barcode_scan8').value;
+        var quantity = document.getElementById('barcode_scan6').value;
+        var expiryDate = document.getElementById('barcode_scan7').value;
+
+        var printData = {
+            packing_order_no: packingOrderNo,
+            master_box_no: masterBoxNo,
+            lot_no: lotNo,
+            serial_no: serialNo,
+            quantity: quantity,
+            expiry_date: expiryDate
+        };
+
+        fetch('/product/print_label/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(printData)
+        })
+        .then(response => response.text())
+        .then(data => {
+            alert(data);
+            $('#successModal').modal('hide');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('라벨 인쇄 중 오류가 발생했습니다.');
+        });
+    });
 </script>
+
+
 
 {% endblock %}

@@ -56,6 +56,7 @@ def create_app():
     app.jinja_env.filters['datetime'] = format_datetime
     app.jinja_env.filters['none_to_dash'] = none_to_dash
 
+
     return app
 
 def make_shell_context():
@@ -66,11 +67,9 @@ def none_to_dash(value):
     return value if value is not None else ''
 
 
-
-
 # Ensure the app is created and shell context is set correctly
 app = create_app()
 app.shell_context_processor(make_shell_context)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8001)

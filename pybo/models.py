@@ -343,8 +343,10 @@ class Packing_Dtl(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     m_box_no = db.Column(db.String(18), nullable=True)
+    lot_no = db.Column(db.String(18), nullable=True)
     barcode = db.Column(db.String(20), nullable=True)
-    udi_code = db.Column(db.String(20), nullable=True)
+    udi_code = db.Column(db.String(40), nullable=True)
     packing_dt = db.Column(db.DateTime, nullable=True)
-    box_di_num = db.Column(db.String(20), nullable=True)
+    exp_date = db.Column(db.DateTime, nullable=True)
+
 
