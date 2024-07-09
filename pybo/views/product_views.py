@@ -3,7 +3,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
-import win32com
+import win32com.client
 from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g
 from sqlalchemy import null, func
 from werkzeug.utils import redirect, secure_filename
@@ -696,14 +696,11 @@ def save_packing_data():
 def print_label():
     data = request.json
 
-
     master_box_no = data.get('master_box_no')
     lot_no = data.get('lot_no')
     serial_no = data.get('serial_no')
     quantity = data.get('quantity')
     expiry_date = data.get('expiry_date')
-
-    # QR 코드 데이터 생성 (예시: 여러 값을 하나의 문자열로 결합)
     qr_code_data = f"{master_box_no};{serial_no};{lot_no};{expiry_date}"
 
     try:
