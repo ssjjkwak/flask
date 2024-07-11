@@ -560,8 +560,6 @@ def product_register_packing():
     plants = db.session.query(Production_Order.PLANT_CD).distinct().all()
     items = db.session.query(Item.ITEM_CD).distinct().all()
 
-    if len(items) > 4:
-        ITEM_CD = items[3][0]  # 품목 고정 값 설정 (4번째 요소)
 
     if request.method == 'POST':
         form_submitted = True
@@ -706,26 +704,30 @@ def print_label():
     try:
         # CODESOFT 애플리케이션 객체 생성
         codesoft = win32com.client.Dispatch("Lppx2.Application")
-        codesoft.Open("C:\\Users\\Desktop\\Desktop\\flask-master\\pybo\\static\\lbl")
+
+        label_document = codesoft.Documents.Open(r'C:\\Users\\Desktop\\Desktop\\flask-master\\pybo\\static\\lbl')
+
 
         # 라벨 문서 객체 가져오기
-        label = codesoft.ActiveDocument
 
-        label.Variables.Item("UDI-DI").Value = master_box_no
-        label.Variables.Item("LOT_NO").Value = lot_no
-        label.Variables.Item("UDI-SERIAL").Value = serial_no
-        label.Variables.Item("QTY").Value = quantity
-        label.Variables.Item("EXP_DATE").Value = expiry_date
-        label.Variables.Item("BARCODE").Value = qr_code_data
+        label_document.Variables.Item("UDI-DI").Value = master_box_no
+        label_document.Variables.Item("LOT_NO").Value = lot_no
+        label_document.Variables.Item("UDI-SERIAL").Value = serial_no
+        label_document.Variables.Item("QTY").Value = quantity
+        label_document.Variables.Item("EXP_DATE").Value = expiry_date
+        label_document.Variables.Item("BARCODE").Value = qr_code_data
 
         # 라벨 프린터 설정 및 출력
-        label.PrintOut(False, False)
-        codesoft.Quit()
+        label_document.PrintDocument(1)
 
-        return "프린트 성공"
+        label_document.Close(False)
 
+        return jsonify({'message': 'CodeSoft executed successfully.'})
     except Exception as e:
-        return f"An error occurred: {e}"
+        return jsonify({'error': str(e)}), 500
+
+
+
 
 
 

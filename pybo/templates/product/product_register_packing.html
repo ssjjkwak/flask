@@ -35,22 +35,38 @@
 
     /* 모달 테이블 패딩 조정 */
     #dataTable_modal th, #dataTable_modal td {
-        padding: 0px 4px; /* 모달 테이블의 패딩을 더 줄임 */
+        padding: 0px 4px;
     }
 
     .modal-input {
-        width: 220px;
+        width: 300px;
         height: 20px;
-        font-size: 12px;
-        border-style:hidden;
+        font-size: 17px;
+        border-style: hidden;
     }
 
     .modal-input2 {
-        width: 100px;
+        width: 120px;
         height: 20px;
-        font-size: 12px;
-        border-style:hidden;
+        font-size: 17px;
+        text-align: center;
+        border-style: hidden;
     }
+
+    .modal-input3, .modal-width, .result {
+
+        width: 180px;
+        height: 20px;
+        font-size: 17px;
+        text-align: center;
+        border-style: hidden;
+    }
+
+    input:focus {
+
+        outline: none; /* 필요에 따라 제거 */
+    }
+
 
     .hidden {
         display: none;
@@ -259,21 +275,20 @@
 
                             </div>
                         </div>
-                        <div class="col">
-                            <table class="table table-sm table-hover ms-auto"
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless ms-auto"
                                    style="text-align: center; border-collapse: collapse;" id="dataTable_modal"
                                    width="100%"
                                    cellspacing="0">
-                                <thead class="table-light table-sm">
+                                <thead class="table-sm">
                                 <tr>
-                                    <th></th>
                                     <th>UDI QR</th>
                                     <th>Barcode</th>
-                                    <th>검사결과</th>
+                                    <th class="result">검사결과</th>
                                 </tr>
                                 </thead>
 
-                                <tbody id="modalTableBody">
+                                <tbody id="modalTableBody" style="border-bottom: left;">
 
 
                                 </tbody>
@@ -281,8 +296,6 @@
                         </div>
 
                     </div>
-
-
                     <!-- 필요한 다른 필드들 추가 -->
                 </form>
                 <br>
@@ -398,9 +411,9 @@
             var row = document.createElement('tr');
             var cell = document.createElement('td');
             cell.textContent = i;
-            cell.className =
+            cell.className = 'index-cell';
+            cell.style.display = 'none';
             row.appendChild(cell);
-
 
             var barcodeCell = document.createElement('td');
             var barcodeInput = document.createElement('input');
@@ -421,7 +434,7 @@
             var resultCell = document.createElement('td');
             var resultInput = document.createElement('input');
             resultInput.type = 'text';
-            resultInput.className = 'modal-input2';
+            resultInput.className = 'modal-input3';
             resultCell.className = 'modal-width';
             resultInput.id = 'result-packing-' + i;
             resultInput.readOnly = true;
@@ -464,6 +477,7 @@
         .then(data => {
             if (data.status === 'success') {
                 resultInput.value = 'PASS';
+
 
             } else {
                 resultInput.value = 'FAIL';
