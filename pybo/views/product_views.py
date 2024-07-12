@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
 import win32com.client
-from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g
+from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g, flash
 from sqlalchemy import null, func
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
@@ -136,18 +136,22 @@ def allowed_file(filename):
 @bp.route('/upload_excel', methods=['POST'])
 def upload_excel():
     if 'excelFile' not in request.files:
-        return '<script>alert("No file part"); window.location.href="/product/register/";</script>'
+        flash('No file part', 'error')
+        return redirect(url_for('product.product_register'))
     file = request.files['excelFile']
     if file.filename == '':
-        return '<script>alert("No selected file"); window.location.href="/product/register/";</script>'
+        flash('No selected file', 'error')
+        return redirect(url_for('product.product_register'))
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         process_excel(filepath)
-        return '<script>alert("Excel 파일 업로드 완료."); window.location.href="/product/register/";</script>'
+        flash('Excel 파일 업로드 완료.', 'success')
+        return redirect(url_for('product.product_register'))
     else:
-        return '<script>alert("Allowed file types are xls, xlsx"); window.location.href="/product/register/";</script>'
+        flash('Allowed file types are xls, xlsx', 'error')
+        return redirect(url_for('product.product_register'))
 
 def convert_value(value):
     if pd.isna(value):
@@ -435,7 +439,8 @@ def register():
 
     assign_production_orders()
 
-    return '<script>alert("실적 처리가 완료되었습니다."); window.location.href="/product/register/";</script>'
+    flash('실적처리 완료.','success')
+    return redirect(url_for('product.product_register'))
 
 def assign_production_orders():
     barcodes = Production_Barcode_Assign.query.filter(Production_Barcode_Assign.PRODT_ORDER_NO == None).all()
@@ -725,7 +730,6 @@ def print_label():
         return jsonify({'message': 'CodeSoft executed successfully.'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 
 

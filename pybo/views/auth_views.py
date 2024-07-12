@@ -142,7 +142,7 @@ def user_manage():
             'USR_DEPT': user.USR_DEPT,
             'USR_JOB': user.USR_JOB,
             'USR_PHONE': user.USR_PHONE,
-            'ROLES': [roles[user_role.ROLE_ID] for user_role in user.user_roles],
+            'ROLES': [{'ROLE_ID': user_role.ROLE_ID, 'ROLE_NM': roles[user_role.ROLE_ID]} for user_role in user.user_roles],
             'INSRT_DT': user.INSRT_DT.strftime('%Y-%m-%d'),
             'UPDT_DT': user.UPDT_DT.strftime('%Y-%m-%d'),
         }
@@ -153,6 +153,7 @@ def user_manage():
     all_roles = Role.query.all()  # 모든 권한 정보를 가져옴
 
     return render_template('auth/user_manage.html', users_with_roles=users_with_roles, total_users=total_users, all_roles=all_roles)
+
 
 @bp.route('/user_account', methods=['GET'])
 def user_account():
@@ -197,7 +198,8 @@ def user_role():
     roles_data = [
         {
             'ROLE_ID': role.ROLE_ID,
-            'ROLE_NM': role.ROLE_NM
+            'ROLE_NM': role.ROLE_NM,
+            'REMARK': role.REMARK
         }
         for role in roles
     ]
@@ -209,17 +211,17 @@ def user_role():
 def create_role():
     role_id = request.form['role_id']
     role_nm = request.form['role_nm']
-    remark = request.form.get('remark')
+    remark = request.form['remark']
 
-    new_role = Role(ROLE_ID=role_id, ROLE_NM=role_nm, INSRT_DT=db.func.now(), UPDT_DT=db.func.now())
+    new_role = Role(ROLE_ID=role_id, ROLE_NM=role_nm, REMARK=remark, INSRT_DT=db.func.now(), UPDT_DT=db.func.now())
 
     try:
         db.session.add(new_role)
         db.session.commit()
-        flash('권한이 성공적으로 생성되었습니다.', 'success')
+        # flash('권한이 성공적으로 생성되었습니다.', 'success')
     except IntegrityError:
         db.session.rollback()
-        flash('권한 생성 중 오류가 발생했습니다. Role 아이디가 이미 존재할 수 있습니다.', 'danger')
+        # flash('권한 생성 중 오류가 발생했습니다. Role 아이디가 이미 존재할 수 있습니다.', 'danger')
 
     return redirect(url_for('auth.user_role'))
 
@@ -234,10 +236,10 @@ def delete_roles():
         try:
             Role.query.filter(Role.ROLE_ID.in_(role_ids)).delete(synchronize_session='fetch')
             db.session.commit()
-            flash('선택된 권한이 성공적으로 삭제되었습니다.', 'success')
+            # flash('선택된 권한이 성공적으로 삭제되었습니다.', 'success')
         except IntegrityError:
             db.session.rollback()
-            flash('권한 삭제 중 오류가 발생했습니다.', 'danger')
+            # flash('권한 삭제 중 오류가 발생했습니다.', 'danger')
 
     return redirect(url_for('auth.user_role'))
 
@@ -252,10 +254,10 @@ def update_user_roles():
             new_user_role = UserRole(USR_ID=user_id, ROLE_ID=new_role_id, INSRT_DT=db.func.now(), UPDT_DT=db.func.now())
             db.session.add(new_user_role)
         db.session.commit()
-        flash('권한이 성공적으로 추가되었습니다.', 'success')
+        # flash('권한이 성공적으로 추가되었습니다.', 'success')
     except IntegrityError:
         db.session.rollback()
-        flash('권한 추가 중 오류가 발생했습니다. 권한이 이미 존재할 수 있습니다.', 'danger')
+        #  flash('권한 추가 중 오류가 발생했습니다. 권한이 이미 존재할 수 있습니다.', 'danger')
 
     return redirect(url_for('auth.user_manage'))
 
@@ -267,16 +269,16 @@ def delete_user_roles():
     roles_to_delete = request.form.getlist('roles')
 
     if not user_id or not roles_to_delete:
-        flash('사용자 ID 또는 권한이 선택되지 않았습니다.', 'warning')
+        # flash('사용자 ID 또는 권한이 선택되지 않았습니다.', 'warning')
         return redirect(url_for('auth.user_manage'))
 
     try:
         UserRole.query.filter(UserRole.USR_ID == user_id, UserRole.ROLE_ID.in_(roles_to_delete)).delete(synchronize_session='fetch')
         db.session.commit()
-        flash('권한이 성공적으로 삭제되었습니다.', 'success')
+        # flash('권한이 성공적으로 삭제되었습니다.', 'success')
     except IntegrityError:
         db.session.rollback()
-        flash('권한 삭제 중 오류가 발생했습니다.', 'danger')
+        # flash('권한 삭제 중 오류가 발생했습니다.', 'danger')
 
     return redirect(url_for('auth.user_manage'))
 

@@ -31,6 +31,7 @@ class Role(db.Model):
 
     ROLE_ID = db.Column(db.VARCHAR(10), primary_key=True)
     ROLE_NM = db.Column(db.VARCHAR(20), nullable=True)
+    REMARK = db.Column(db.VARCHAR(50), nullable=True)
     INSRT_DT = db.Column(db.DateTime, default=kst_now)
     UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
 

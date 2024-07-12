@@ -11,11 +11,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
     <!-- Other head elements -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
 
     <title>Synopex Dialyze MES</title>
 
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+          rel="stylesheet">
     <link rel="preload" href="{{ url_for('static', filename='img/logo_white.png') }}" as="image">
 
     <style>
@@ -61,7 +63,8 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <div class="nav-link active font-weight-bold" aria-current="page" style="font-weight: bold; color: #4e73df;">
+                            <div class="nav-link active font-weight-bold" aria-current="page"
+                                 style="font-weight: bold; color: #4e73df;">
                                 DIALYZE MES
                             </div>
                         </li>
@@ -69,14 +72,16 @@
                 </div>
                 <div class="d-flex">
                     {% if g.user %}
-                    <a href="{{ url_for('auth.user_manage') }}" class="mx-2" style="text-decoration-line: none; color: black; font-weight: bold;">
+                    <a href="{{ url_for('auth.user_manage') }}" class="mx-2"
+                       style="text-decoration-line: none; color: black; font-weight: bold;">
                         사용자관리
                     </a>
 
 
                     <!-- 사용자 이름과 드롭다운 트리거 설정 -->
                     <div class="dropdown">
-                        <a style="font-weight: bold; color: #4e73df;" id="navbarDropdown71" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a style="font-weight: bold; color: #4e73df;" id="navbarDropdown71" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {{ g.user.USR_NM }}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown71">
@@ -87,12 +92,12 @@
                     님 환영합니다.
                     {% endif %}
                     {% if not g.user %}
-<!--                    <a href="{{ url_for('auth.login') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">-->
-<!--                        로그인-->
-<!--                    </a>-->
-<!--                    <a href="{{ url_for('auth.signup') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">-->
-<!--                        회원가입-->
-<!--                    </a>-->
+                    <!--                    <a href="{{ url_for('auth.login') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">-->
+                    <!--                        로그인-->
+                    <!--                    </a>-->
+                    <!--                    <a href="{{ url_for('auth.signup') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">-->
+                    <!--                        회원가입-->
+                    <!--                    </a>-->
                     {% endif %}
                 </div>
             </div>
@@ -101,40 +106,62 @@
         <!-- Main Content -->
         <div id="content">
             <!-- Topbar -->
-            <nav class="navbar navbar-expand topbar mb-2 static-top shadow navbar-custom" style="background-color: #192B5B;">
+            <nav class="navbar navbar-expand topbar mb-2 static-top shadow navbar-custom"
+                 style="background-color: #192B5B;">
                 <!-- Topbar Navbar -->
                 {% if g.user %}
                 <ul class="navbar-nav mr-auto font-weight-bold">
                     <li class="nav-item dropdown no-arrow mx-2">
-                        <a class="nav-link" href="#" id="navbarDropdownProduction" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: white; font-weight: bold; font-size: 1.16rem;">
+                        <a class="nav-link" href="#" id="navbarDropdownProduction" role="button" data-toggle="dropdown"
+                           aria-haspopup="true" aria-expanded="false"
+                           style="color: white; font-weight: bold; font-size: 1.16rem;">
                             생산관리
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownProduction">
                             <a class="dropdown-item" href="{{ url_for('product.product_order') }}">제조오더조회</a>
                             <a class="dropdown-item" href="{{ url_for('product.product_register') }}">제조실적등록</a>
-                            <a class="dropdown-item" href="{{ url_for('product.product_register_packing') }}">Packing등록</a>
+                            <a class="dropdown-item"
+                               href="{{ url_for('product.product_register_packing') }}">Packing등록</a>
                             <a class="dropdown-item" href="{{ url_for('product.product_register_result') }}">제조실적조회</a>
+                            <a class="dropdown-item" href="">외주발주조회</a>
+                            <a class="dropdown-item" href="">외주진행조회 및 실적처리</a>
+
                         </div>
                     </li>
                     <li class="nav-item dropdown no-arrow mx-2">
-                        <a class="nav-link font-weight-bold" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
+                        <a class="nav-link" href="#" id="navbarDropdownSales" role="button" data-toggle="dropdown"
+                           aria-haspopup="true" aria-expanded="false"
+                           style="color: white; font-weight: bold; font-size: 1.16rem;">
                             영업관리
                         </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownSales">
+                            <a class="dropdown-item" href="">수주정보조회</a>
+                            <a class="dropdown-item" href="">공급내역등록</a>
+                        </div>
                     </li>
-<!--                    <li class="nav-item dropdown no-arrow mx-2">-->
-<!--                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">-->
-<!--                            출하관리-->
-<!--                        </a>-->
-<!--                    </li>-->
+
                     <li class="nav-item dropdown no-arrow mx-2">
-                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
+                        <a class="nav-link" href="#" id="navbarDropdownInventory" role="button" data-toggle="dropdown"
+                           aria-haspopup="true" aria-expanded="false"
+                           style="color: white; font-weight: bold; font-size: 1.16rem;">
                             재고관리
                         </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownInventory">
+                            <a class="dropdown-item" href="">재고조회</a>
+                        </div>
                     </li>
                     <li class="nav-item dropdown no-arrow mx-2">
-                        <a class="nav-link" href="{{ url_for('auth.user_manage') }}" role="button" style="color: white; font-weight: bold; font-size: 1.16rem;">
+                        <a class="nav-link" href="#" id="navbarDropdownMasterData" role="button" data-toggle="dropdown"
+                           aria-haspopup="true" aria-expanded="false"
+                           style="color: white; font-weight: bold; font-size: 1.16rem;">
                             기준정보
                         </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMasterData">
+                            <a class="dropdown-item" href="">품목정보조회</a>
+                            <a class="dropdown-item" href="">BOM정보조회</a>
+                            <a class="dropdown-item" href="">거래처정보조회</a>
+
+                        </div>
                     </li>
                 </ul>
                 {% endif %}
@@ -163,6 +190,48 @@
                 {% endblock %}
             </div>
             <!-- /.container-fluid -->
+
+            <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 400px;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="errorModalLabel"><i class="bi bi-exclamation-octagon-fill"></i>
+                                Error</h5>
+                        </div>
+                        <div class="modal-body" id="errorModalBody">
+                            <!-- 에러 메시지가 여기 들어감 -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal">
+                                닫기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complete Modal -->
+            <div class="modal fade" id="completeModal" tabindex="-1" role="dialog" aria-labelledby="completeModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 400px;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="completeModalLabel"><i class="bi bi-check-circle-fill"></i>
+                                Success</h5>
+                        </div>
+                        <div class="modal-body" id="completeModalBody">
+                            <!-- 완료 메시지가 여기 들어감 -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal">
+                                닫기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <!-- End of Main Content -->
     </div>
@@ -208,7 +277,6 @@
 
 
 </script>
-
 
 
 </html>

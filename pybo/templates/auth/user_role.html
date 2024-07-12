@@ -35,8 +35,8 @@
                     <th style="font-weight: normal;">Role 아이디</th>
                     <th style="font-weight: normal;">Role 이름</th>
                     <th style="font-weight: normal;">Role 유형</th>
-                    <th style="font-weight: normal;">Remark</th>
-                    <th style="font-weight: normal; width:1000px;"></th>
+                    <th style="font-weight: normal; width: 420px;">Remark</th>
+                    <th style="font-weight: normal; width:650px;"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -46,7 +46,7 @@
                     <td>{{ role.ROLE_ID }}</td>
                     <td>{{ role.ROLE_NM }}</td>
                     <td>Menu Role</td>
-                    <td></td>
+                    <td style="width: 420px;">{{ role.REMARK }}</td>
                     <td></td>
                 </tr>
                 {% endfor %}

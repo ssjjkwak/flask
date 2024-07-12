@@ -59,7 +59,7 @@
                     </a>
                 </td>
                 <td>
-                    <button class="btn btn-light btn-sm shadow-sm view-roles" data-roles="{{ user.ROLES|join(', ') }}" data-user-id="{{ user.USR_ID }}" data-username="{{ user.USR_NM }}">
+                    <button class="btn btn-light btn-sm shadow-sm view-roles" data-roles='{{ user.ROLES | tojson }}' data-user-id="{{ user.USR_ID }}" data-username="{{ user.USR_NM }}">
                         조회
                     </button>
                 </td>
@@ -148,6 +148,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>선택</th>
+                                <th>권한 ID</th>
                                 <th>권한 이름</th>
                             </tr>
                         </thead>
@@ -171,7 +172,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.view-roles').forEach(button => {
         button.addEventListener('click', function() {
-            const roles = this.dataset.roles.split(', ');
+            const roles = JSON.parse(this.dataset.roles);
             const userId = this.dataset.userId;
             const username = this.dataset.username;
             const rolesList = document.getElementById('rolesList');
@@ -186,8 +187,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 새로운 역할 목록 추가
             roles.forEach(role => {
                 const li = document.createElement('li');
-                li.textContent = role;
-                li.dataset.roleId = role;
+                li.textContent = `${role.ROLE_ID}: ${role.ROLE_NM}`;
+                li.dataset.roleId = role.ROLE_ID;
+                li.dataset.roleName = role.ROLE_NM;
                 li.classList.add('role-item');
                 rolesList.appendChild(li);
             });
@@ -219,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const tr = document.createElement('tr');
             const tdCheckbox = document.createElement('td');
             const tdRoleId = document.createElement('td');
+            const tdRoleName = document.createElement('td');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.name = 'roles';
@@ -226,9 +229,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             tdCheckbox.appendChild(checkbox);
             tdRoleId.textContent = role.dataset.roleId;
+            tdRoleName.textContent = role.dataset.roleName;
 
             tr.appendChild(tdCheckbox);
             tr.appendChild(tdRoleId);
+            tr.appendChild(tdRoleName);
             deleteRolesList.appendChild(tr);
         });
 

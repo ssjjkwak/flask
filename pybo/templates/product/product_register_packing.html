@@ -254,11 +254,6 @@
                                         disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan8">Serial No.</label>
-                                <input type="text" class="form-control" id="barcode_scan8"
-                                        disabled>
-                            </div>
-                            <div class="mb-3 col-10">
                                 <label for="barcode_scan6">수량</label>
                                 <input type="text" class="form-control" id="barcode_scan6"
                                         disabled>
@@ -450,11 +445,11 @@
 
     function handleUdiInput(event) {
         if (event.target.value.length === 11) {
-            var barcode = event.target.value;
+            var udiQr = event.target.value;
             var row = event.target.parentNode.parentNode;
             var resultInput = row.querySelector('input[id^="result-packing-"]');
             var rowIndex = row.rowIndex;
-            checkBarcode(barcode, resultInput, rowIndex);
+            checkBarcode(udiQr, resultInput, rowIndex);
             moveToNextInput(event);
         }
     }
@@ -465,20 +460,19 @@
         }
     }
 
-    function checkBarcode(barcode, resultInput, rowIndex) {
+    function checkBarcode(udiQr, resultInput, rowIndex) {
         fetch('/product/check_barcode/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ barcode: barcode })
+            body: JSON.stringify({ barcode: udiQr })
         })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
                 resultInput.value = 'PASS';
-
-
+                updateBarcodeScan5(udiQr);
             } else {
                 resultInput.value = 'FAIL';
                 showErrorModal(rowIndex);
@@ -488,6 +482,13 @@
             console.error('Error:', error);
             showErrorModal(rowIndex);
         });
+    }
+
+    function updateBarcodeScan5(udiQr) {
+        var barcodeScan5 = document.getElementById('barcode_scan5').value;
+        var partOfUdiQr = udiQr.substring(14, 19);
+        barcodeScan5 += partOfUdiQr + '\n';
+        document.getElementById('barcode_scan5').value = barcodeScan5;
     }
 
     function showErrorModal(rowIndex) {
@@ -607,7 +608,7 @@
         });
     }
 
-     document.getElementById('printLabelButton').addEventListener('click', function() {
+    document.getElementById('printLabelButton').addEventListener('click', function() {
         var packingOrderNo = document.getElementById('packing_order_no').value;
         var masterBoxNo = document.getElementById('barcode_scan4').value;
         var lotNo = document.getElementById('barcode_scan5').value;
@@ -642,6 +643,8 @@
         });
     });
 </script>
+
+
 
 
 
