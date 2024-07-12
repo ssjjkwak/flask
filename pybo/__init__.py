@@ -1,10 +1,12 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
-
+from sqlalchemy.exc import IntegrityError, ProgrammingError, InvalidRequestError, PendingRollbackError, DataError, \
+    ResourceClosedError, StatementError, DisconnectionError, OperationalError
 import config
+
 
 # Naming convention for SQLAlchemy
 naming_convention = {
@@ -41,7 +43,7 @@ def create_app():
     from .views import (
         main_views, auth_views,
         dashboard_views, product_views, delivery_views,
-        basic_views, download_views
+        basic_views, download_views, sales_views
     )
     app.register_blueprint(main_views.bp)
     app.register_blueprint(auth_views.bp)
@@ -50,12 +52,29 @@ def create_app():
     app.register_blueprint(delivery_views.bp)
     app.register_blueprint(basic_views.bp)
     app.register_blueprint(download_views.bp)
+    app.register_blueprint(sales_views.bp)
+    # app.register_blueprint(inventory_views.bp)
+    # app.register_blueprint(masterdata_views.bp)
 
-    # Register filters
+
     from .filter import format_datetime
     app.jinja_env.filters['datetime'] = format_datetime
     app.jinja_env.filters['none_to_dash'] = none_to_dash
 
+    # @app.errorhandler(Exception)
+    # def handle_exception(e):
+    #     # If the exception is related to SQLAlchemy, rollback the session
+    #     if isinstance(e, (
+    #             IntegrityError, PendingRollbackError, OperationalError,
+    #             ProgrammingError, DataError, TimeoutError, DisconnectionError,
+    #             InvalidRequestError, ResourceClosedError, StatementError
+    #     )):
+    #         db.session.rollback()
+    #
+    #     # 전달할 오류 메시지를 설정합니다.
+    #     error_message = str(e)
+    #     # 오류 페이지를 렌더링합니다.
+    #     return render_template('error.html', error_message=error_message), 500
 
     return app
 
@@ -70,6 +89,7 @@ def none_to_dash(value):
 # Ensure the app is created and shell context is set correctly
 app = create_app()
 app.shell_context_processor(make_shell_context)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8001)

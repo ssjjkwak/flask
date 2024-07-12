@@ -29,42 +29,14 @@ def signup():
             db.session.add(user)
             db.session.commit()
 
-            # role_id = form.role_name.data  # 폼에서 선택된 권한 ID
-            # user_role = Users_Roles(users_id=user.users_id, roles_id=role_id)
-            # db.session.add(user_role)
-            # db.session.commit()
+
 
             return redirect(url_for('main.index'))
         else:
             flash('이미 존재하는 사용자입니다.')
     return render_template('auth/signup.html', form=form, show_navigation_bar=True)
 
-# @bp.route('/login/', methods=('GET', 'POST'))
-# def login():
-#     form = UserLoginForm()
-#     if request.method == 'POST' and form.validate_on_submit():
-#         error = None
-#         user = User.query.filter_by(USR_ID=form.USR_ID.data).first()
-#         if not user:
-#             error = "존재하지 않는 사용자입니다."
-#         elif not check_password_hash(user.USR_PW, form.USR_PW.data):
-#             error = "비밀번호가 올바르지 않습니다."
-#         if error is None:
-#             session.clear()
-#             session['USR_ID'] = user.USR_ID
-#
-#             # 사용자의 roles_id를 세션에 저장
-#             # user_role = Users_Roles.query.filter_by(users_id=user.users_id).first()
-#             # if user_role:
-#             #     session['roles_id'] = user_role.roles_id
-#             #
-#             # _next = request.args.get('next', '')
-#             # if _next:
-#             #     return redirect(_next)
-#             # else:
-#             #     return redirect(url_for('main.index'))
-#         flash(error)
-#     return render_template('auth/login.html', form=form, show_navigation_bar=False)
+
 
 
 @bp.route('/login/', methods=('GET', 'POST'))

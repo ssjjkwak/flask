@@ -12,7 +12,9 @@ def hello_pybo():
 @bp.route('/')
 def index():
     if 'logged_in' in session and session['logged_in']:
+
         return redirect(url_for('dashboard.dashboard'))
+
     else:
         return redirect(url_for('auth.login'))
 
