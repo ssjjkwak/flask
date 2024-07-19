@@ -58,14 +58,18 @@ def login():
 
     return render_template('auth/login.html', form=form, show_navigation_bar=False)
 
+def has_role(user, role_id):
+    return any(user_role.role.ROLE_ID == role_id for user_role in user.user_roles)
 
 @bp.before_app_request
 def load_logged_in_user():
-    users_id = session.get('USR_ID')
-    if users_id is None:
+    user_id = session.get('USR_ID')
+    if user_id is None:
         g.user = None
+        g.user_has_mesauth = False
     else:
-        g.user = User.query.get(users_id)
+        g.user = User.query.get(user_id)
+        g.user_has_mesauth = has_role(g.user, 'MESAUTH')
 
 @bp.route('/logout/')
 def logout():

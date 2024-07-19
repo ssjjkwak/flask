@@ -72,10 +72,12 @@
                 </div>
                 <div class="d-flex">
                     {% if g.user %}
-                    <a href="{{ url_for('auth.user_manage') }}" class="mx-2"
-                       style="text-decoration-line: none; color: black; font-weight: bold;">
-                        사용자관리
-                    </a>
+                        {% if g.user_has_mesauth %}
+                            <a href="{{ url_for('auth.user_manage') }}" class="mx-2"
+                               style="text-decoration-line: none; color: black; font-weight: bold;">
+                                사용자관리
+                            </a>
+                        {% endif %}
 
 
                     <!-- 사용자 이름과 드롭다운 트리거 설정 -->
@@ -92,12 +94,7 @@
                     님 환영합니다.
                     {% endif %}
                     {% if not g.user %}
-                    <!--                    <a href="{{ url_for('auth.login') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">-->
-                    <!--                        로그인-->
-                    <!--                    </a>-->
-                    <!--                    <a href="{{ url_for('auth.signup') }}" class="d-none d-sm-inline-block btn btn-sm btn-outline-dark shadow-sm mx-1">-->
-                    <!--                        회원가입-->
-                    <!--                    </a>-->
+
                     {% endif %}
                 </div>
             </div>
@@ -123,8 +120,8 @@
                             <a class="dropdown-item"
                                href="{{ url_for('product.product_register_packing') }}">Packing등록</a>
                             <a class="dropdown-item" href="{{ url_for('product.product_register_result') }}">제조실적조회</a>
-                            <a class="dropdown-item" href="">외주발주조회</a>
-                            <a class="dropdown-item" href="">외주진행조회 및 실적처리</a>
+                            <a class="dropdown-item" href="{{ url_for('product.product_register_sterilizating') }}">외주발주조회</a>
+                            <a class="dropdown-item" href="">외주실적등록</a>
 
                         </div>
                     </li>
@@ -203,9 +200,7 @@
                             <!-- 에러 메시지가 여기 들어감 -->
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal">
-                                닫기
-                            </button>
+
                         </div>
                     </div>
                 </div>
@@ -224,9 +219,6 @@
                             <!-- 완료 메시지가 여기 들어감 -->
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal">
-                                닫기
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -260,6 +252,7 @@
 <script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>
 
 
+
 <!-- 메뉴 자체를 눌러도 해당 최상위 메뉴로 이동시키기 위한 script -->
 <script>
     document.getElementById('navbarDropdown7').addEventListener('click', function() {
@@ -274,6 +267,7 @@
     document.getElementById('navbarDropdown5').addEventListener('click', function() {
         window.location.href = "{{ url_for('delivery.delivery_select') }}"; // 원하는 URL로 변경
     });
+
 
 
 </script>

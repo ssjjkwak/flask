@@ -212,7 +212,12 @@
         {% else %}
         {% if form_submitted %}
         <script>
-            alert("데이터 없음");
+            // 기존 alert 대체
+            document.addEventListener('DOMContentLoaded', function () {
+                document.getElementById('errorModalBody').innerText = "데이터 없음";
+                var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                errorModal.show();
+            });
         </script>
         {% endif %}
         {% endif %}
@@ -241,28 +246,28 @@
                             <div class="mb-3 col-10">
                                 <label for="barcode_scan3">Packing 제조일자</label>
                                 <input type="text" class="form-control" id="barcode_scan3"
-                                        disabled>
+                                       disabled>
                             </div>
                             <div class="mb-3 col-10">
                                 <label for="barcode_scan4">Master Box No.</label>
                                 <input type="text" class="form-control" id="barcode_scan4"
-                                        disabled>
+                                       disabled>
                             </div>
                             <div class="mb-3 col-10">
                                 <label for="barcode_scan5">Lot No.</label>
                                 <input type="text" class="form-control" id="barcode_scan5"
-                                        disabled>
+                                       disabled>
                             </div>
                             <div class="mb-3 col-10">
                                 <label for="barcode_scan6">수량</label>
                                 <input type="text" class="form-control" id="barcode_scan6"
-                                        disabled>
+                                       disabled>
                             </div>
 
                             <div class="mb-3 col-10">
                                 <label for="barcode_scan7">유효기간</label>
                                 <input type="text" class="form-control" id="barcode_scan7"
-                                        disabled>
+                                       disabled>
                             </div>
 
                             <div class="mb-1 col-10 text-center">
@@ -311,11 +316,14 @@
 </div>
 
 <!-- 실패 메시지 모달 -->
-<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 400px; left: 10%; position: absolute;">
+<div class="modal fade" id="errorModalpacking" tabindex="-1" role="dialog" aria-labelledby="errorModalLabelpacking"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+         style="max-width: 400px; left: 10%; position: absolute;">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="errorModalLabel"> <i class="bi bi-exclamation-octagon-fill"></i> Error</h5>
+                <h5 class="modal-title" id="errorModalLabelpacking"><i class="bi bi-exclamation-octagon-fill"></i> Error
+                </h5>
             </div>
             <div class="modal-body">
                 문제가 발생했습니다.<br>
@@ -323,31 +331,38 @@
                 <span style="color: red; font-weight: bold;">문제 발생 데이터 번호: <span id="errorRowNumber"></span></span>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal" id="closeErrorModalButton">닫기</button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal"
+                        id="closeErrorModalButton">닫기
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- 성공 메시지 모달 -->
-<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+<div class="modal fade" id="successModalpacking" tabindex="-1" role="dialog" aria-labelledby="successModalLabelpacking"
+     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 400px;">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="successModalLabel"><i class="bi bi-check-circle-fill"></i> Success</h5>
+                <h5 class="modal-title" id="successModalLabelpacking"><i class="bi bi-check-circle-fill"></i> Success
+                </h5>
             </div>
             <div class="modal-body">
                 데이터가 성공적으로 저장되었습니다.<br>
                 라벨을 인쇄하시겠습니까?
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal" id="closeSuccessModalButton">닫기</button>
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="printLabelButton"><i class="bi bi-printer"></i> Label 인쇄</button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal"
+                        id="closeSuccessModalButton">닫기
+                </button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="printLabelButton"><i
+                        class="bi bi-printer"></i> Label 인쇄
+                </button>
             </div>
         </div>
     </div>
 </div>
-
 
 
 <script>
@@ -380,7 +395,9 @@
                 document.querySelector('#modalTableBody input').focus();
             }, 500);
         } else {
-            alert('등록할 제조오더를 선택해주세요.');
+            document.getElementById('errorModalBody').innerText = "등록할 제조오더를 선택해주세요.";
+            var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
         }
     });
 
@@ -493,7 +510,7 @@
 
     function showErrorModal(rowIndex) {
         document.getElementById('errorRowNumber').textContent = rowIndex;
-        $('#errorModal').modal('show');
+        $('#errorModalpacking').modal('show');
     }
 
     function moveToNextInput(event) {
@@ -643,9 +660,6 @@
         });
     });
 </script>
-
-
-
 
 
 {% endblock %}

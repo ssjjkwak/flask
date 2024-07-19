@@ -87,6 +87,9 @@
     th, td {
         min-width: 100px;
     }
+    .flash {
+        display: none;
+    }
 </style>
 
 
@@ -130,17 +133,18 @@
             </button>
         </div>
     </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <div class="flash">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
 
     <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -283,7 +287,9 @@
     function handleSubmit() {
         var checkboxes = document.querySelectorAll('input[name="chkRow"]:checked');
         if (checkboxes.length === 0) {
-            alert('실적 처리할 데이터를 선택해 주세요.');
+           document.getElementById('errorModalBody').innerText = "실적 등록할 데이터를 선택해주세요.";
+        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
         } else {
             showLoadingModal2();
             document.getElementById('registerForm').submit();
@@ -315,5 +321,6 @@
         {% endif %}
     {% endwith %}
 });
+
 </script>
 {% endblock %}

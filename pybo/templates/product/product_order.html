@@ -263,7 +263,12 @@
         {% else %}
         {% if form_submitted %}
         <script>
-            alert("데이터 없음");
+             // 기존 alert 대체
+            document.addEventListener('DOMContentLoaded', function () {
+                document.getElementById('errorModalBody').innerText = "데이터 없음";
+                var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                errorModal.show();
+            });
         </script>
         {% endif %}
         {% endif %}
@@ -296,7 +301,9 @@
             document.getElementById('modal_item_cd').value = selectedItemCd;
             fetchModalData(selectedOrderNo, selectedItemCd);
         } else {
-            alert('조회할 제조오더를 선택해주세요.');
+            document.getElementById('errorModalBody').innerText = "조회할 제조오더를 선택해주세요.";
+            var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
         }
     });
 

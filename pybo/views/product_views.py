@@ -140,14 +140,20 @@ def upload_excel():
         return redirect(url_for('product.product_register'))
     file = request.files['excelFile']
     if file.filename == '':
-        flash('No selected file', 'error')
+        flash('엑셀 파일을 선택해 주세요.', 'error')
         return redirect(url_for('product.product_register'))
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        process_excel(filepath)
-        flash('Excel 파일 업로드 완료.', 'success')
+        duplicate_count = process_excel(filepath)
+
+        if isinstance(duplicate_count, int) and duplicate_count > 0:
+            # 중복 데이터에 대한 경고 메시지 표시
+            flash(f'{duplicate_count}건의 중복데이터가 인식되었습니다. 중복데이터를 제외한 데이터만 업로드됩니다.', 'error')
+        else:
+            flash('Excel 파일 업로드 완료.', 'success')
+
         return redirect(url_for('product.product_register'))
     else:
         flash('Allowed file types are xls, xlsx', 'error')
@@ -169,6 +175,7 @@ def process_excel(filepath):
     df = pd.read_excel(filepath)
     new_records = []
     update_records = []
+    duplicate_count = 0
 
     for index, row in df.iterrows():
         barcode = row.get('barcode')
@@ -177,6 +184,7 @@ def process_excel(filepath):
             continue
 
         existing_record = Production_Alpha.query.filter_by(barcode=barcode).first()
+
         record_data = {
             'LOT': convert_value(row.get('LOT')),
             'product': convert_value(row.get('product')),
@@ -223,8 +231,12 @@ def process_excel(filepath):
                 for key, value in record_data.items():
                     setattr(existing_record, key, value)
                 update_records.append(existing_record)
+            else:
+
+                duplicate_count += 1
         else:
             new_records.append(record_data)
+
 
     if new_records:
         db.session.bulk_insert_mappings(Production_Alpha, new_records)
@@ -232,6 +244,8 @@ def process_excel(filepath):
         db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in update_records])
 
     db.session.commit()
+
+    return duplicate_count  # 중복 데이터 개수를 반환
 
 
 # 여기에 조회조건 걸어서 register 화면에 데이터 렌더링
@@ -695,6 +709,8 @@ def save_packing_data():
     return jsonify({"status": "success"})
 
 
+# --------------------------------------------------------
+
 @bp.route('/print_label/', methods=['POST'])
 def print_label():
     data = request.json
@@ -731,9 +747,13 @@ def print_label():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# --------------------------------------------------------
 
 
+@bp.route('/register_result_sterilizating/', methods=['GET', 'POST'])
+def product_register_sterilizating():
 
+    return render_template('product/product_register_sterilizating.html')
 
 
 
