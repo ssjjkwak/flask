@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Tree View{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-treeview/1.2.0/bootstrap-treeview.min.css">
+{% endblock %}
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-treeview/1.2.0/bootstrap-treeview.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var treeData = [
+            {
+                text: "Project",
+                nodes: [
+                    {
+                        text: "src",
+                        nodes: [
+                            { text: "main.py" },
+                            { text: "utils.py" }
+                        ]
+                    },
+                    {
+                        text: "tests",
+                        nodes: [
+                            { text: "test_main.py" }
+                        ]
+                    },
+                    { text: "README.md" },
+                    { text: "requirements.txt" }
+                ]
+            }
+        ];
+
+        $('#tree').treeview({
+            data: treeData,
+            expandIcon: 'glyphicon glyphicon-plus',
+            collapseIcon: 'glyphicon glyphicon-minus',
+            nodeIcon: 'glyphicon glyphicon-folder-close',
+            selectedIcon: 'glyphicon glyphicon-folder-open'
+        });
+    });
+</script>
+<div class="container">
+    <h1>IDE Style Folder Tree View</h1>
+    <div id="tree"></div>
+</div>
+{% endblock %}

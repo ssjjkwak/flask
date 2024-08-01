@@ -749,13 +749,17 @@ def print_label():
 
 # --------------------------------------------------------
 
-
+#외주발주조회
 @bp.route('/register_result_sterilizating/', methods=['GET', 'POST'])
 def product_register_sterilizating():
 
     return render_template('product/product_register_sterilizating.html')
 
+#외주실적등록
+@bp.route('/register_result_sterilizating_result/', methods=['GET', 'POST'])
+def product_register_sterilizating_result():
 
+    return render_template('product/product_register_sterilizating_result.html')
 
 
 

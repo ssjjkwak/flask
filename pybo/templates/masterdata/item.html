@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .selected-row {
+        background-color: #D6EAF8 !important;
+    }
+
+    .completed-order {
+        background-color: #e0ffff !important;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+
+    .table-wrapper {
+        overflow: auto;
+        height: calc(100vh - 300px); /* 화면 높이에 따라 조절 */
+        width: 100%;
+
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        min-width: 50px;
+    }
+</style>
+
+<!-- 조회조건 -->
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
+        <h7 class="m-0 font-weight-bold text-primary mb-3">기준정보 > 품목정보조회</h7>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-toggle="modal"
+                    data-target=".bd-example-modal-lg" id="openModalButton"><i class="bi bi-card-checklist"></i>
+                표준코드 등록
+            </button>
+            <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
+                <i class="bi bi-search"></i> 조회
+            </button>
+        </div>
+        <!--모달자리-->
+    </div>
+
+    <form method="POST" action="{{ url_for('product.product_order') }}" class="px-4" id="searchForm">
+        <input type="hidden" name="form_submitted" value="{{ form_submitted }}">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="plant_code" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;&emsp;공장
+                    </label>
+                    <select class="form-select form-select-sm" id="plant_code" name="plant_code">
+                        <option value="">-</option>
+                        {% for plant in plants %}
+                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
+                            {{ plant.PLANT_CD }} {{ plant.PLANT_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;&emsp;품목
+                    </label>
+                    <select class="form-select form-select-sm" id="item_cd" name="item_cd">
+                        <option value="">-</option>
+                        {% for item in items %}
+                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
+                            {{ item.ITEM_CD }} {{ item.ITEM_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;알파코드
+                    </label>
+                    <select class="form-select form-select-sm" id="item_cd123" name="item_cd">
+                        <option value="">-</option>
+                        {% for item in items %}
+                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
+                            {{ item.ITEM_CD }} {{ item.ITEM_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="wc_cd" class="form-label me-3" style="min-width: 110px;">제품명</label>
+                    <select class="form-select form-select-sm" id="wc_cd" name="wc_cd">
+                        <option value="">-</option>
+                        {% for work_center in work_centers %}
+                        <option value="{{ work_center.WC_CD }}" {% if work_center.WC_CD== WC_CD %}selected{% endif %}>
+                            {{ work_center.WC_CD }} {{ work_center.WC_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="prodt_order_no" class="form-label me-3" style="min-width: 110px;">품목계정</label>
+                    <input type="text" class="form-control form-control-sm flex-grow-1" id="prodt_order_no"
+                           name="prodt_order_no"
+                           value="{{ PRODT_ORDER_NO }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="start_date" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;표준코드
+                    </label>
+                    <input type="text" class="form-control form-control-sm flex-grow-1" id="prodt_order_no123"
+                           name="prodt_order_no"
+                           value="{{ PRODT_ORDER_NO }}">
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="order_status" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;품목그룹
+                    </label>
+                    <div class="form-group">
+                        <select class="form-select form-select-sm" id="order_status" name="order_status">
+                            <option value="" {% if ORDER_STATUS=='' %}selected{% endif %}>-</option>
+                            <option value="CL" {% if ORDER_STATUS=='CL' %}selected{% endif %}>CL</option>
+                            <option value="RL" {% if ORDER_STATUS=='RL' %}selected{% endif %}>RL</option>
+                        </select>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">
+                    <label for="start_date" class="form-label me-3" style="min-width: 110px;">
+                        알파플랜 코드
+                    </label>
+                    <div class="d-flex">
+                        <input type="text" class="form-control form-control-sm flex-grow-1" id="prodt_order_no2123"
+                           name="prodt_order_no"
+                           value="{{ PRODT_ORDER_NO }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+<div class="gap" style="margin-top: 20px;"></div>
+
+<div>
+    <!--데이터 테이블-->
+    <div>
+        {% if orders_with_items and orders_with_wcs %}
+        <div class="table-wrapper">
+            <table class="table table-sm table-hover"
+                   style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+                <thead class="table-light">
+                <tr>
+                    <th class="sticky"></th>
+                    <th class="sticky">제조오더번호</th>
+                    <th class="sticky">Seq</th>
+                    <th class="sticky">공장</th>
+                    <th class="sticky">작업공정</th>
+                    <th class="sticky">공정명</th>
+                    <th class="sticky">품목</th>
+                    <th class="sticky">품목명</th>
+                    <th class="sticky">품목규격</th>
+                    <th class="sticky">단위</th>
+                    <th class="sticky">계획지시일</th>
+                    <th class="sticky">계획수량</th>
+                    <th class="sticky">실적수량</th>
+                    <th class="sticky">불량수량</th>
+                    <th class="sticky">계획시작일자</th>
+                    <th class="sticky">계획완료일자</th>
+                    <th class="sticky">오더상태</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for (order_item, item), (order_wc, wc) in zip(orders_with_items, orders_with_wcs) %}
+                <tr data-order-no="{{ order_item.PRODT_ORDER_NO }}" data-item-cd="{{ order_item.ITEM_CD }}"
+                    class="{% if order_item.ORDER_STATUS == 'CL' %}completed-order{% endif %}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ order_item.PRODT_ORDER_NO }}</td>
+                    <td>{{ order_item.OPR_NO }}</td>
+                    <td>{{ order_item.PLANT_CD }}</td>
+                    <td>{{ order_item.WC_CD }}</td>
+                    <td style="text-align: left;">{{ wc.WC_NM }}</td>
+                    <td>{{ order_item.ITEM_CD }}</td>
+                    <td style="text-align: left;">{{ item.ITEM_NM }}</td>
+                    <td>{{ item.SPEC }}</td>
+                    <td>{{ order_item.PRODT_ORDER_UNIT }}</td>
+                    <td>{{ order_item.RELEASE_DT.strftime('%Y-%m-%d') }}</td>
+                    <td style="text-align: right;">{{ order_item.PRODT_ORDER_QTY | int }}</td>
+                    <td style="text-align: right;">{{ order_item.PROD_QTY_IN_ORDER_UNIT | int }}</td>
+                    <td style="text-align: right; color: red;">{{ order_item.BAD_QTY_IN_ORDER_UNIT | int }}</td>
+                    <td>{{ order_item.PLANT_START_DT.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ order_item.PLANT_COMPT_DT.strftime('%Y-%m-%d') }}</td>
+                    <td style="font-weight: bold;">{{ order_item.ORDER_STATUS }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        {% if form_submitted %}
+        <script>
+             // 기존 alert 대체
+            document.addEventListener('DOMContentLoaded', function () {
+                document.getElementById('errorModalBody').innerText = "데이터 없음";
+                var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                errorModal.show();
+            });
+        </script>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<script>
+
+    var selectedOrderNo = '';
+    var selectedItemCd = '';
+
+    document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+        row.addEventListener('click', function() {
+            // 모든 행에서 selected-row 클래스 제거
+            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+                row.classList.remove('selected-row');
+            });
+
+            // 클릭된 행에 selected-row 클래스 추가
+            this.classList.add('selected-row');
+
+            // 선택된 제조오더 번호와 품목 코드 저장
+            selectedOrderNo = this.getAttribute('data-order-no');
+            selectedItemCd = this.getAttribute('data-item-cd');
+        });
+    });
+
+    document.getElementById('openModalButton').addEventListener('click', function() {
+        if (selectedOrderNo && selectedItemCd) {
+            document.getElementById('modal_order_no').value = selectedOrderNo;
+            document.getElementById('modal_item_cd').value = selectedItemCd;
+            fetchModalData(selectedOrderNo, selectedItemCd);
+        } else {
+            document.getElementById('errorModalBody').innerText = "조회할 제조오더를 선택해주세요.";
+            var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
+        }
+    });
+
+    function fetchModalData(orderNo, itemCd) {
+        fetch(`/product/get_bom_data?order_no=${orderNo}&item_cd=${itemCd}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('modalTableBody');
+                tbody.innerHTML = '';
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.child_item_cd}</td>
+                        <td>${row.child_item_nm}</td>
+                        <td>${row.spec}</td>
+                        <td>${row.child_item_unit}</td>
+                        <td>${row.child_item_qty}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(error => console.error('Error fetching BOM data:', error));
+    }
+</script>
+{% endblock %}

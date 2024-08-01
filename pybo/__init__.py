@@ -43,7 +43,7 @@ def create_app():
     from .views import (
         main_views, auth_views,
         dashboard_views, product_views, delivery_views,
-        basic_views, download_views, sales_views
+        basic_views, download_views, sales_views, inventory_views, masterdata_views
     )
     app.register_blueprint(main_views.bp)
     app.register_blueprint(auth_views.bp)
@@ -53,8 +53,8 @@ def create_app():
     app.register_blueprint(basic_views.bp)
     app.register_blueprint(download_views.bp)
     app.register_blueprint(sales_views.bp)
-    # app.register_blueprint(inventory_views.bp)
-    # app.register_blueprint(masterdata_views.bp)
+    app.register_blueprint(inventory_views.bp)
+    app.register_blueprint(masterdata_views.bp)
 
 
     from .filter import format_datetime
