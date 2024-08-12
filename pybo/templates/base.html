@@ -49,6 +49,59 @@
             background: #d4f4fa;
         }
 
+        .tree{
+          margin-top: 5px;
+        }
+    .tree, .tree ul{
+          list-style: none; /* 기본 리스트 스타일 제거 */
+          padding-left:10px;
+        }
+    .tree *:before{
+          width:15px;
+          height:15px;
+          display:inline-block;
+        }
+    .tree label{
+      cursor: pointer;
+      font-family: NotoSansKrMedium, sans-serif !important;
+      font-size: 14px;
+      color: #0055CC;
+    }
+    .tree label:hover{
+      color: #00AACC;
+    }
+    .tree label:before{
+      content: '+'
+    }
+    .tree label.lastTree:before{
+      content:'o';
+    }
+    .tree label:hover:before{
+      content: '+'
+    }
+    .tree label.lastTree:hover:before{
+      content:'o';
+    }
+    .tree input[type="checkbox"] {
+      display: none;
+    }
+    .tree input[type="checkbox"]:checked~ul {
+      display: none;
+    }
+    .tree input[type="checkbox"]:checked+label:before{
+      content: '-'
+    }
+    .tree input[type="checkbox"]:checked+label:hover:before{
+      content: '-'
+    }
+
+    .tree input[type="checkbox"]:checked+label.lastTree:before{
+      content: 'o';
+    }
+    .tree input[type="checkbox"]:checked+label.lastTree:hover:before{
+      content: 'o';
+    }
+
     </style>
 </head>
 
@@ -248,30 +301,28 @@
 <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
-<script src="{{ url_for('static', filename='vendor/chart.js/Chart.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
-<script src="{{ url_for('static', filename='js/demo/chart-pie-demo.js') }}"></script>
+
 
 
 
 <!-- 메뉴 자체를 눌러도 해당 최상위 메뉴로 이동시키기 위한 script -->
-<script>
-    document.getElementById('navbarDropdown7').addEventListener('click', function() {
-        window.location.href = "{{ url_for('auth.user_manage') }}"; // 원하는 URL로 변경
-    });
-    document.getElementById('navbarDropdown3').addEventListener('click', function() {
-        window.location.href = "{{ url_for('basic.basic_product') }}"; // 원하는 URL로 변경
-    });
-    document.getElementById('navbarDropdown4').addEventListener('click', function() {
-        window.location.href = "{{ url_for('product.product_order') }}"; // 원하는 URL로 변경
-    });
-    document.getElementById('navbarDropdown5').addEventListener('click', function() {
-        window.location.href = "{{ url_for('delivery.delivery_select') }}"; // 원하는 URL로 변경
-    });
+<!--<script>-->
+<!--    document.getElementById('navbarDropdown7').addEventListener('click', function() {-->
+<!--        window.location.href = "{{ url_for('auth.user_manage') }}"; // 원하는 URL로 변경-->
+<!--    });-->
+<!--    document.getElementById('navbarDropdown3').addEventListener('click', function() {-->
+<!--        window.location.href = "{{ url_for('basic.basic_product') }}"; // 원하는 URL로 변경-->
+<!--    });-->
+<!--    document.getElementById('navbarDropdown4').addEventListener('click', function() {-->
+<!--        window.location.href = "{{ url_for('product.product_order') }}"; // 원하는 URL로 변경-->
+<!--    });-->
+<!--    document.getElementById('navbarDropdown5').addEventListener('click', function() {-->
+<!--        window.location.href = "{{ url_for('delivery.delivery_select') }}"; // 원하는 URL로 변경-->
+<!--    });-->
 
 
 
-</script>
+<!--</script>-->
 
 
 

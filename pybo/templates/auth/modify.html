@@ -1,48 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-    body, html {
-    height: 100%;
-    margin: 0;
-    background-color: #f8f9fc;
-}
+    .form-control-user {
+        font-size: 1.25rem; /* 글자 크기 키우기 */
+        padding: 0.75rem; /* 입력 필드 크기 키우기 */
+    }
+    .btn-user {
+        font-size: 1.25rem; /* 버튼 글자 크기 키우기 */
+        padding: 0.75rem 1.5rem; /* 버튼 크기 키우기 */
+    }
+    .h4 {
+        font-size: 2rem; /* 제목 글자 크기 키우기 */
+    }
+
     .custom-rounded {
         border-radius: 25px;
     }
-
-
 </style>
+
 <div class="container">
-    <h5 class="my-3 border-bottom pb-2">비밀번호 변경</h5>
-    <form method="post">
-        {{ form.csrf_token }}
-        {% include "form_errors.html" %}
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-8">
+            <div class="card o-hidden border-0 shadow-lg my-5 custom-rounded">
+                <div class="card-body p-5 d-flex justify-content-center">
+                    <div class="text-center w-100">
+                        <div class="text-center">
+                            <h1 class="h4 text-gray-900 mb-4">비밀번호 변경</h1>
+                        </div>
+                        <form class="UserModifyForm" method="post">
+                            {{ form.csrf_token }}
+                            {% include "form_errors.html" %}
 
-        <div class="mb-3">
-            <label for="old_USR_PW">현재 비밀번호</label>
-            <input type="password" class="form-control" name="old_USR_PW" id="old_USR_PW"
-                   value="{{ form.old_USR_PW.data or '' }}">
+                            <div class="form-group mb-2">
+                                <input type="password" class="form-control" name="old_USR_PW" id="old_USR_PW"
+                                       placeholder="현재 비밀번호" value="{{ form.old_USR_PW.data or '' }}">
+                            </div>
+                            <div class="form-group mb-2">
+                                <input type="password" class="form-control" name="new_USR_PW1" id="new_USR_PW1"
+                                       placeholder="변경할 비밀번호" value="{{ form.new_USR_PW1.data or '' }}">
+                            </div>
+                            <div class="form-group mb-2">
+                                <input type="password" class="form-control" name="new_USR_PW2" id="new_USR_PW2"
+                                       placeholder="변경할 비밀번호 확인" value="{{ form.new_USR_PW2.data or '' }}">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-user btn-block"
+                                    onclick="showAlertAndRedirect()">
+                                비밀번호 변경
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label for="new_USR_PW1">새 비밀번호</label>
-            <input type="password" class="form-control" name="new_USR_PW1" id="new_USR_PW1"
-                   value="{{ form.new_USR_PW1.data or '' }}">
-        </div>
-        <div class="mb-3">
-            <label for="new_USR_PW2">새 비밀번호 확인</label>
-            <input type="password" class="form-control" name="new_USR_PW2" id="new_USR_PW2"
-                   value="{{ form.new_USR_PW2.data or '' }}">
-        </div>
-
-        <button type="submit" class="btn btn-primary" onclick="showAlertAndRedirect()">비밀번호 변경</button>
-
-    </form>
+    </div>
 </div>
-<script>
-function showAlertAndRedirect() {
-    alert('비밀번호 변경 처리 중입니다. 정상 변경 완료 시 기존 페이지로 이동합니다.');
 
-}
+
+<script>
+    function showAlertAndRedirect() {
+        alert('비밀번호 변경 처리 중입니다. 정상 변경 완료 시 기존 페이지로 이동합니다.');
+
+    }
 </script>
 {% endblock %}

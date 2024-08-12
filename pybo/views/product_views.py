@@ -10,12 +10,13 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl
+    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Master
 from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
 
 ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
+
 
 @bp.route('/product_order/', methods=('GET', 'POST'))
 def product_order():
@@ -29,6 +30,7 @@ def product_order():
     PLANT_START_DT = None
     PLANT_COMPT_DT = None
     PRODT_ORDER_NO = ''
+    ALPHA_CODE = ''  # ALPHA_CODE 추가
 
     plants = db.session.query(Plant).all()
 
@@ -41,6 +43,7 @@ def product_order():
         PLANT_START_DT = request.form.get('start_date', '')
         PLANT_COMPT_DT = request.form.get('end_date', '')
         PRODT_ORDER_NO = request.form.get('prodt_order_no', '')
+        ALPHA_CODE = request.form.get('alpha_code', '')  # ALPHA_CODE 가져오기
 
         if PLANT_START_DT:
             PLANT_START_DT = datetime.strptime(PLANT_START_DT, '%Y-%m-%d')
@@ -55,8 +58,11 @@ def product_order():
     if not PLANT_COMPT_DT:
         PLANT_COMPT_DT = datetime.today() + timedelta(days=30)
 
+    # 아이템과 관련된 쿼리
     query_item = db.session.query(Production_Order, Item).join(
         Item, Production_Order.ITEM_CD == Item.ITEM_CD
+    ).join(
+        Item_Master, Item.ALPHA_CODE == Item_Master.ALPHA_CODE
     )
 
     if PLANT_CD:
@@ -73,11 +79,18 @@ def product_order():
         query_item = query_item.filter(Production_Order.PLANT_COMPT_DT <= PLANT_COMPT_DT)
     if PRODT_ORDER_NO:
         query_item = query_item.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
+    if ALPHA_CODE:  # ALPHA_CODE 필터링 추가
+        query_item = query_item.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
 
     orders_with_items = query_item.all()
 
+    # 작업 센터와 관련된 쿼리
     query_wc = db.session.query(Production_Order, Work_Center).join(
         Work_Center, Production_Order.WC_CD == Work_Center.WC_CD
+    ).join(
+        Item, Production_Order.ITEM_CD == Item.ITEM_CD
+    ).join(
+        Item_Master, Item.ALPHA_CODE == Item_Master.ALPHA_CODE
     )
 
     if PLANT_CD:
@@ -94,11 +107,14 @@ def product_order():
         query_wc = query_wc.filter(Production_Order.PLANT_COMPT_DT <= PLANT_COMPT_DT)
     if PRODT_ORDER_NO:
         query_wc = query_wc.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
+    if ALPHA_CODE:  # ALPHA_CODE 필터링 추가
+        query_wc = query_wc.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
 
     orders_with_wcs = query_wc.all()
 
     work_centers = db.session.query(Work_Center).all()
     items = db.session.query(Item).all()
+    alpha_codes = db.session.query(Item_Master.ALPHA_CODE).distinct().all()  # ALPHA_CODE 목록 가져오기
 
     return render_template('product/product_order.html',
                            orders_with_items=orders_with_items,
@@ -106,9 +122,13 @@ def product_order():
                            plants=plants,
                            work_centers=work_centers,
                            items=items,
+                           alpha_codes=alpha_codes,  # 템플릿에 ALPHA_CODE 목록 전달
                            PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS, PLANT_START_DT=PLANT_START_DT,
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
+                           ALPHA_CODE=ALPHA_CODE,  # 템플릿에 선택된 ALPHA_CODE 전달
                            form_submitted=form_submitted)
+
+
 
 @bp.route('/get_bom_data')
 def get_bom_data():

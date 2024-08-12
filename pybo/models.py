@@ -1,3 +1,5 @@
+from sqlalchemy.orm import relationship, backref, foreign
+
 from pybo import db
 from datetime import datetime
 from sqlalchemy import Column, Integer, Numeric, Index
@@ -74,6 +76,13 @@ class Item(db.Model):
     IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
     UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
     UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+
+class Item_Master(db.Model):
+    __tablename__ = 'B_ITEM_MASTER'
+    __table_args__ = {'schema': 'dbo'}
+
+    ALPHA_CODE = db.Column(db.NVARCHAR(50), primary_key=True)
+    DESCRIPTION = db.Column(db.NVARCHAR(50), nullable=True)
 
 class Item_Group(db.Model):
     __tablename__ = 'B_ITEM_GROUP'
@@ -307,7 +316,8 @@ class Bom(db.Model):
     __tablename__ = 'P_BOM'
     __table_args__ = {'schema': 'dbo'}
 
-    PRNT_ITEM_CD = db.Column(db.NVARCHAR(50), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    PRNT_ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
     PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
     CHILD_ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
     CHILD_ITEM_UNIT = db.Column(db.NVARCHAR(3), nullable=True)
@@ -317,6 +327,9 @@ class Bom(db.Model):
     VALID_DT_TO = db.Column(db.DateTime, nullable=True)
     IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
     IF_UPDT_DT = db.Column(db.DateTime, default=kst_now)
+
+    # Relationship to Item
+    child_item = relationship('Item', primaryjoin=foreign(CHILD_ITEM_CD) == Item.ITEM_CD, backref=backref('boms', lazy=True))
 
 # 작업장
 class Work_Center(db.Model):

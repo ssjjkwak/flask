@@ -22,10 +22,27 @@ def item():
     return render_template('masterdata/item.html', show_navigation_bar=True)
 
 #BOM정보조회
-@bp.route('/bom/', methods=['GET', 'POST'])
+@bp.route('/bom/', methods=['GET'])
 def bom():
+    # 데이터베이스에서 BOM 데이터 조회
+    bom_items = db.session.query(Bom).all()
 
-    return render_template('masterdata/bom.html', show_navigation_bar=True)
+    # 데이터 계층화
+    tree_data = {}
+    for item in bom_items:
+        parent_id = item.PRNT_ITEM_CD or 'root'
+        item_name = item.child_item.ITEM_NM if item.child_item else f"Unknown {item.CHILD_ITEM_CD}"
+
+        if parent_id not in tree_data:
+            tree_data[parent_id] = []
+        tree_data[parent_id].append({
+            "id": item.CHILD_ITEM_CD,
+            "text": item_name
+        })
+
+    return render_template('masterdata/bom.html', tree_data=tree_data)
+
+
 
 #거래처정보조회
 @bp.route('/vendor/', methods=['GET', 'POST'])

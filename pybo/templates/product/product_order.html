@@ -198,6 +198,32 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">
+                    <label for="start_date" class="form-label me-3" style="min-width: 110px;">
+                        emptlabel
+                    </label>
+                    <div class="d-flex">
+                        <input type="text" class="form-control form-control-sm flex-grow-1" id="prodt_order_no2123"
+                               name="prodt_order_no"
+                               value="{{ PRODT_ORDER_NO }}">
+                    </div>
+                </div>
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="alpha_code" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;&emsp;제품
+                    </label>
+                    <select class="form-select form-select-sm" id="alpha_code" name="alpha_code">
+                        <option value="">-</option>
+                        {% for alpha_code in alpha_codes %}
+                        <option value="{{ alpha_code.ALPHA_CODE }}" {% if alpha_code.ALPHA_CODE== ALPHA_CODE
+                                %}selected{% endif %}>
+                            {{ alpha_code.ALPHA_CODE }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
         </div>
     </form>
 </div>
@@ -263,12 +289,12 @@
         {% else %}
         {% if form_submitted %}
         <script>
-             // 기존 alert 대체
-            document.addEventListener('DOMContentLoaded', function () {
-                document.getElementById('errorModalBody').innerText = "데이터 없음";
-                var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-                errorModal.show();
-            });
+            // 기존 alert 대체
+           document.addEventListener('DOMContentLoaded', function () {
+               document.getElementById('errorModalBody').innerText = "데이터 없음";
+               var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+               errorModal.show();
+           });
         </script>
         {% endif %}
         {% endif %}

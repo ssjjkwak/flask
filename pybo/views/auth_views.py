@@ -94,9 +94,9 @@ def modify():
         user = g.user
 
         # 현재 비밀번호가 맞는지 확인
-        if user and check_password_hash(user.password, form.old_password.data):
+        if user and check_password_hash(user.password, form.old_USR_PW.data):
             # 새 비밀번호로 업데이트
-            user.password = generate_password_hash(form.new_password1.data)
+            user.password = generate_password_hash(form.new_USR_PW1.data)
             db.session.commit()
             flash('비밀번호가 변경되었습니다.')
             return redirect(url_for('main.index'))  # 비밀번호 변경 후 리다이렉트 할 위치

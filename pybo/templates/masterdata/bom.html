@@ -1,46 +1,32 @@
 {% extends "base.html" %}
-{% block title %}Tree View{% endblock %}
-{% block head %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-treeview/1.2.0/bootstrap-treeview.min.css">
-{% endblock %}
-{% block content %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-treeview/1.2.0/bootstrap-treeview.min.js"></script>
-<script>
-    $(document).ready(function() {
-        var treeData = [
-            {
-                text: "Project",
-                nodes: [
-                    {
-                        text: "src",
-                        nodes: [
-                            { text: "main.py" },
-                            { text: "utils.py" }
-                        ]
-                    },
-                    {
-                        text: "tests",
-                        nodes: [
-                            { text: "test_main.py" }
-                        ]
-                    },
-                    { text: "README.md" },
-                    { text: "requirements.txt" }
-                ]
-            }
-        ];
 
-        $('#tree').treeview({
-            data: treeData,
-            expandIcon: 'glyphicon glyphicon-plus',
-            collapseIcon: 'glyphicon glyphicon-minus',
-            nodeIcon: 'glyphicon glyphicon-folder-close',
-            selectedIcon: 'glyphicon glyphicon-folder-open'
-        });
-    });
-</script>
-<div class="container">
-    <h1>IDE Style Folder Tree View</h1>
-    <div id="tree"></div>
+{% block title %}Tree View{% endblock %}
+
+{% block content %}
+<h1>BOM Information</h1>
+
+<div id="tree">
+    <ul class="tree">
+        <!-- 루트 노드부터 시작 -->
+        {% for child in tree_data['root'] %}
+            {{ loop(child.id) }}
+        {% endfor %}
+    </ul>
 </div>
 {% endblock %}
+
+{% macro loop(node_id) %}
+    {% set children = tree_data.get(node_id, []) %}
+    <li>
+        <span>{{ children[0].text }}</span>
+        {% if children %}
+            <ul>
+                {% for child in children %}
+                    {{ loop(child.id) }}
+                {% endfor %}
+            </ul>
+        {% else %}
+            <ul><li>No children available for {{ node_id }}</li></ul>
+        {% endif %}
+    </li>
+{% endmacro %}
