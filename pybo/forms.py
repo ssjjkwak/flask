@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, PasswordField, EmailField
 from wtforms.fields.choices import SelectField
 from wtforms.fields.simple import SubmitField
-from wtforms.validators import DataRequired, Length, EqualTo, Email
+from wtforms.validators import DataRequired, Length, EqualTo, Email, Regexp
 
 class QuestionForm(FlaskForm):
     code = StringField('코드', validators=[DataRequired('코드는 필수입력 항목입니다.')])
@@ -22,11 +22,22 @@ class QuestionForm(FlaskForm):
 class AnswerForm(FlaskForm):
     content = TextAreaField('내용', validators=[DataRequired('내용은 필수입력 항목입니다.')])
 
+
 class UserCreateForm(FlaskForm):
     USR_ID = StringField('사용자이름', validators=[DataRequired('아이디는 필수입력 항목입니다.'), Length(min=3, max=25)])
+
     USR_PW1 = PasswordField('비밀번호', validators=[
-        DataRequired('비밀번호는 필수입력 항목입니다.'), EqualTo('USR_PW2', '비밀번호가 일치하지 않습니다')])
+        DataRequired('비밀번호는 필수입력 항목입니다.'),
+        Length(min=8, message='비밀번호는 최소 8자 이상이어야 합니다.'),
+        Regexp(
+            regex=r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).+$',
+            message='비밀번호는 영문, 숫자, 특수기호를 모두 포함해야 합니다.'
+        ),
+        EqualTo('USR_PW2', '비밀번호가 일치하지 않습니다')
+    ])
+
     USR_PW2 = PasswordField('비밀번호확인', validators=[DataRequired('비밀번호 확인은 필수입력 항목입니다.')])
+
     USR_EMAIL = EmailField('이메일', validators=[DataRequired('이메일은 필수입력 항목입니다.'), Email()])
     USR_NM = StringField('이름', validators=[DataRequired()])
     USR_JOB = StringField('직책/직위', validators=[DataRequired()])
@@ -38,12 +49,21 @@ class UserLoginForm(FlaskForm):
     USR_ID = StringField('사용자이름', validators=[DataRequired(), Length(min=3, max=25)])
     USR_PW = PasswordField('비밀번호', validators=[DataRequired()])
 
-class UserModifyForm(FlaskForm):
 
+class UserModifyForm(FlaskForm):
     old_USR_PW = PasswordField('기존비밀번호', validators=[
         DataRequired('기존 비밀번호는 필수입력 항목입니다.')])
+
     new_USR_PW1 = PasswordField('새 비밀번호', validators=[
-        DataRequired('비밀번호는 필수입력 항목입니다.'), EqualTo('new_password2', '비밀번호가 일치하지 않습니다')])
+        DataRequired('비밀번호는 필수입력 항목입니다.'),
+        Length(min=8, message='비밀번호는 최소 8자 이상이어야 합니다.'),
+        Regexp(
+            regex=r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).+$',
+            message='비밀번호는 영문, 숫자, 특수기호를 모두 포함해야 합니다.'
+        ),
+        EqualTo('new_USR_PW2', '비밀번호가 일치하지 않습니다')
+    ])
+
     new_USR_PW2 = PasswordField('새 비밀번호확인', validators=[
         DataRequired('비밀번호 확인은 필수입력 항목입니다.')])
 
