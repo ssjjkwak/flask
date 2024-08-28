@@ -11,6 +11,7 @@ from pybo.forms import UserCreateForm, UserLoginForm, UserModifyForm, UserUpdate
 from pybo.models import User, Role, UserRole
 import functools
 
+from datetime import datetime, timedelta
 from pybo.views.download_views import convert_to_excel
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -120,7 +121,8 @@ def user_manage():
             'USR_PHONE': user.USR_PHONE,
             'ROLES': [{'ROLE_ID': user_role.ROLE_ID, 'ROLE_NM': roles[user_role.ROLE_ID]} for user_role in user.user_roles],
             'INSRT_DT': user.INSRT_DT.strftime('%Y-%m-%d'),
-            'UPDT_DT': user.UPDT_DT.strftime('%Y-%m-%d'),
+            'UPDT_DT': user.UPDT_DT.strftime('%Y-%m-%d') if user.UPDT_DT else None,
+            'DAYS_REMAINING': calculate_days_remaining(user.UPDT_DT)
         }
         for user in users
     ]
@@ -258,6 +260,13 @@ def delete_user_roles():
 
     return redirect(url_for('auth.user_manage'))
 
+# 비밀번호 만기날짜 계산
+def calculate_days_remaining(update_date):
+    if update_date is None:
+        return "N/A"  # 업데이트 날짜가 없으면 표시할 값
+    target_date = update_date + timedelta(days=90)
+    days_remaining = (target_date - datetime.now()).days
+    return days_remaining
 
 
 

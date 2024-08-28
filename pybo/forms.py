@@ -71,7 +71,11 @@ class UserUpdateForm(FlaskForm):
     USR_ID = StringField('사용자ID', validators=[DataRequired(), Length(min=2, max=20)])
     USR_NM = StringField('성명', validators=[DataRequired(), Length(min=2, max=50)])
     USR_EMAIL = StringField('이메일', validators=[DataRequired(), Email()])
-    USR_PW1 = PasswordField('비밀번호', validators=[DataRequired('비밀번호를 입력하세요'), EqualTo('USR_PW2', '비밀번호가 일치하지 않습니다')])
+    USR_PW1 = PasswordField('비밀번호', validators=[DataRequired('비밀번호를 입력하세요'), Length(min=8, message='비밀번호는 최소 8자 이상이어야 합니다.'),
+        Regexp(
+            regex=r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).+$',
+            message='비밀번호는 영문, 숫자, 특수기호를 모두 포함해야 합니다.'
+        ), EqualTo('USR_PW2', '비밀번호가 일치하지 않습니다')])
     USR_PW2 = PasswordField('비밀번호확인', validators=[DataRequired('비밀번호 확인을 입력하세요')])
     USR_DEPT = StringField('부서', validators=[DataRequired()])
     USR_JOB = StringField('직위/직책', validators=[DataRequired()])

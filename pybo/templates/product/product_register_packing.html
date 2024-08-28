@@ -369,10 +369,12 @@
     var selectedOrderNo = '';
 
     document.getElementById('closeModalButton').addEventListener('click', function() {
+        console.log('Close button clicked. Hiding modal.');
         $('#packingModal').modal('hide');
     });
 
     document.getElementById('closeErrorModalButton').addEventListener('click', function() {
+        console.log('Close error modal button clicked.');
         clearInputs();
     });
 
@@ -383,18 +385,22 @@
             });
             this.classList.add('selected-row');
             selectedOrderNo = this.getAttribute('data-order-no');
+            console.log('Selected order no:', selectedOrderNo);
         });
     });
 
     document.getElementById('openModalButton').addEventListener('click', function() {
         if (selectedOrderNo) {
+            console.log('Opening modal with order no:', selectedOrderNo);
             document.getElementById('packing_order_no').value = selectedOrderNo;
             $('#packingModal').modal('show');
 
             setTimeout(function() {
+                console.log('Focusing on first input in modal.');
                 document.querySelector('#modalTableBody input').focus();
             }, 500);
         } else {
+            console.log('No order selected. Showing error modal.');
             document.getElementById('errorModalBody').innerText = "등록할 제조오더를 선택해주세요.";
             var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
             errorModal.show();
@@ -402,6 +408,7 @@
     });
 
     document.getElementById('saveChangesButton').addEventListener('click', function() {
+        console.log('Save changes button clicked. Saving packing data.');
         savePackingData();
     });
 
@@ -417,6 +424,7 @@
         if (month < 10) month = '0' + month;
         var todayString = year + '-' + month + '-' + day;
 
+        console.log('Setting today\'s date:', todayString);
         document.getElementById('barcode_scan3').value = todayString;
 
         for (var i = 1; i <= rows; i++) {
@@ -463,6 +471,7 @@
     function handleUdiInput(event) {
         if (event.target.value.length === 11) {
             var udiQr = event.target.value;
+            console.log('UDI QR input detected:', udiQr);
             var row = event.target.parentNode.parentNode;
             var resultInput = row.querySelector('input[id^="result-packing-"]');
             var rowIndex = row.rowIndex;
@@ -473,11 +482,13 @@
 
     function handleBarcodeInput(event) {
         if (event.target.value.length === 31) {
+            console.log('Barcode input detected:', event.target.value);
             moveToNextInput(event);
         }
     }
 
     function checkBarcode(udiQr, resultInput, rowIndex) {
+        console.log('Checking barcode for UDI QR:', udiQr);
         fetch('/product/check_barcode/', {
             method: 'POST',
             headers: {
@@ -487,6 +498,7 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Barcode check response:', data);
             if (data.status === 'success') {
                 resultInput.value = 'PASS';
                 updateBarcodeScan5(udiQr);
@@ -496,12 +508,13 @@
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error checking barcode:', error);
             showErrorModal(rowIndex);
         });
     }
 
     function updateBarcodeScan5(udiQr) {
+        console.log('Updating barcode_scan5 with part of UDI QR:', udiQr.substring(14, 19));
         var barcodeScan5 = document.getElementById('barcode_scan5').value;
         var partOfUdiQr = udiQr.substring(14, 19);
         barcodeScan5 += partOfUdiQr + '\n';
@@ -509,11 +522,13 @@
     }
 
     function showErrorModal(rowIndex) {
+        console.log('Showing error modal for row index:', rowIndex);
         document.getElementById('errorRowNumber').textContent = rowIndex;
         $('#errorModalpacking').modal('show');
     }
 
     function moveToNextInput(event) {
+        console.log('Moving to next input.');
         var inputs = document.querySelectorAll('#modalTableBody input');
         for (var i = 0; i < inputs.length; i++) {
             if (inputs[i] === event.target) {
@@ -537,6 +552,7 @@
     }
 
     function clearInputs() {
+        console.log('Clearing all inputs.');
         var inputs = document.querySelectorAll('#modalTableBody input');
         inputs.forEach(input => {
             input.value = '';
@@ -548,6 +564,8 @@
     function savePackingData() {
         var packingOrderNo = document.getElementById('packing_order_no').value;
         var packingDate = document.getElementById('barcode_scan3').value;
+        console.log('Saving packing data for order no:', packingOrderNo);
+        console.log('Packing date:', packingDate);
         var tableBody = document.getElementById('modalTableBody');
         var rows = tableBody.getElementsByTagName('tr');
 
@@ -557,6 +575,9 @@
         var expiryDate = new Date(packingDate);
         expiryDate.setFullYear(expiryDate.getFullYear() + 3);
         expiryDate = expiryDate.toISOString().split('T')[0];
+
+        console.log('Generated serial no:', serialNoBase);
+        console.log('Generated expiry date:', expiryDate);
 
         var packingData = {
             prodt_order_no: packingOrderNo,
@@ -570,6 +591,7 @@
         for (var i = 0; i < rows.length; i++) {
             var udiQr = rows[i].querySelector('input[id^="udi-qr-"]').value;
             var barcode = rows[i].querySelector('input[id^="barcode-di-"]').value;
+            console.log('Row', i + 1, 'UDI QR:', udiQr, 'Barcode:', barcode);
             packingData.rows.push({
                 udi_qr: udiQr,
                 barcode: barcode
@@ -584,6 +606,7 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Received next master box no:', data.next_master_box_no);
             if (data.status === 'success') {
                 packingData.master_box_no = data.next_master_box_no;
 
@@ -596,31 +619,51 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Save packing data response:', data);
                     if (data.status === 'success') {
                         alert('데이터가 성공적으로 저장되었습니다.');
 
-                        document.getElementById('barcode_scan4').value = packingData.master_box_no;
-                        document.getElementById('barcode_scan5').value = packingData.lot_no;
-                        document.getElementById('barcode_scan8').value = packingData.serial_no;
-                        document.getElementById('barcode_scan6').value = packingData.quantity;
-                        document.getElementById('barcode_scan7').value = packingData.expiry_date;
+                        if (document.getElementById('barcode_scan4')) {
+                                document.getElementById('barcode_scan4').value = packingData.master_box_no;
+                            } else {
+                                console.error("Element with ID 'barcode_scan4' not found");
+                            }
 
-                        $('#successModal').modal('show');
+                            if (document.getElementById('barcode_scan5')) {
+                                document.getElementById('barcode_scan5').value = packingData.lot_no;
+                            } else {
+                                console.error("Element with ID 'barcode_scan5' not found");
+                            }
+
+                            if (document.getElementById('barcode_scan6')) {
+                                document.getElementById('barcode_scan6').value = packingData.quantity;
+                            } else {
+                                console.error("Element with ID 'barcode_scan6' not found");
+                            }
+
+                            if (document.getElementById('barcode_scan7')) {
+                                document.getElementById('barcode_scan7').value = packingData.expiry_date;
+                            } else {
+                                console.error("Element with ID 'barcode_scan7' not found");
+                            }
+
+
+                        $('#successModalpacking').modal('show');
 
                     } else {
-                        alert('데이터 저장 중 오류가 발생했습니다.');
+                        alert('데이터 저장 중 오류가 발생했습니다.111');
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('데이터 저장 중 오류가 발생했습니다.');
+                    console.error('Error saving packing data:', error);
+                    alert('데이터 저장 중 오류가 발생했습니다.222');
                 });
             } else {
                 alert('마스터 박스 번호 생성 중 오류가 발생했습니다.');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error fetching next master box no:', error);
             alert('마스터 박스 번호 생성 중 오류가 발생했습니다.');
         });
     }
@@ -629,7 +672,6 @@
         var packingOrderNo = document.getElementById('packing_order_no').value;
         var masterBoxNo = document.getElementById('barcode_scan4').value;
         var lotNo = document.getElementById('barcode_scan5').value;
-        var serialNo = document.getElementById('barcode_scan8').value;
         var quantity = document.getElementById('barcode_scan6').value;
         var expiryDate = document.getElementById('barcode_scan7').value;
 
@@ -637,10 +679,11 @@
             packing_order_no: packingOrderNo,
             master_box_no: masterBoxNo,
             lot_no: lotNo,
-            serial_no: serialNo,
             quantity: quantity,
             expiry_date: expiryDate
         };
+
+        console.log('Printing label:', printData);
 
         fetch('/product/print_label/', {
             method: 'POST',
@@ -649,17 +692,22 @@
             },
             body: JSON.stringify(printData)
         })
-        .then(response => response.text())
+        .then(response => {
+            console.log('Print label response:', response);
+            return response.text();
+        })
         .then(data => {
+            console.log('Print label response data:', data);
             alert(data);
             $('#successModal').modal('hide');
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error printing label:', error);
             alert('라벨 인쇄 중 오류가 발생했습니다.');
         });
     });
 </script>
+
 
 
 {% endblock %}

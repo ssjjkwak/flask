@@ -38,6 +38,7 @@
                 <th style="font-weight: normal;">이메일</th>
                 <th style="font-weight: normal;">생성날짜</th>
                 <th style="font-weight: normal;">업데이트날짜</th>
+                <th style="font-weight: normal;">암호만료일자</th>
                 <th style="font-weight: normal;">정보수정</th>
                 <th style="font-weight: normal;">권한조회</th>
             </tr>
@@ -53,6 +54,7 @@
                 <td>{{ user.USR_EMAIL }}</td>
                 <td>{{ user.INSRT_DT }}</td>
                 <td>{{ user.UPDT_DT }}</td>
+                <td style="font-weight: bold;">D-{{ user.DAYS_REMAINING }}</td>
                 <td>
                     <a href="{{ url_for('auth.user_update', USR_ID=user.USR_ID) }}" class="btn btn-light btn-sm shadow-sm">
                         수정

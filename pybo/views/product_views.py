@@ -693,7 +693,6 @@ def save_packing_data():
     prodt_order_no = data['prodt_order_no']
     master_box_no = data['master_box_no']
     lot_no = data['lot_no']
-    serial_no = data['serial_no']
     quantity = data['quantity']
     expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d')
     rows = data['rows']
@@ -739,32 +738,39 @@ def print_label():
     lot_no = data.get('lot_no')
     serial_no = data.get('serial_no')
     quantity = data.get('quantity')
+    packing_dt = data.get('packing_dt')
     expiry_date = data.get('expiry_date')
-    qr_code_data = f"{master_box_no};{serial_no};{lot_no};{expiry_date}"
+    qr_code_data = f"{master_box_no};{lot_no};{packing_dt};{expiry_date}"
 
     try:
-        # CODESOFT 애플리케이션 객체 생성
+        logging.info("Creating CODESOFT application object...")
         codesoft = win32com.client.Dispatch("Lppx2.Application")
+        logging.info("CODESOFT application object created successfully.")
 
+        logging.info("Opening label document...")
         label_document = codesoft.Documents.Open(r'C:\\Users\\Desktop\\Desktop\\flask-master\\pybo\\static\\lbl')
-
+        logging.info("Label document opened successfully.")
 
         # 라벨 문서 객체 가져오기
-
+        logging.info("Setting label variables...")
         label_document.Variables.Item("UDI-DI").Value = master_box_no
         label_document.Variables.Item("LOT_NO").Value = lot_no
-        label_document.Variables.Item("UDI-SERIAL").Value = serial_no
         label_document.Variables.Item("QTY").Value = quantity
         label_document.Variables.Item("EXP_DATE").Value = expiry_date
         label_document.Variables.Item("BARCODE").Value = qr_code_data
+        logging.info("Label variables set successfully.")
 
         # 라벨 프린터 설정 및 출력
+        logging.info("Printing document...")
         label_document.PrintDocument(1)
+        logging.info("Document printed successfully.")
 
         label_document.Close(False)
+        logging.info("Label document closed.")
 
         return jsonify({'message': 'CodeSoft executed successfully.'})
     except Exception as e:
+        logging.error(f"Error occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # --------------------------------------------------------
