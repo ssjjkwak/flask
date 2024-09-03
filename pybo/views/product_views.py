@@ -123,11 +123,11 @@ def product_order():
                            work_centers=work_centers,
                            items=items,
                            alpha_codes=alpha_codes,  # 템플릿에 ALPHA_CODE 목록 전달
-                           PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS, PLANT_START_DT=PLANT_START_DT,
+                           PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS,
+                           PLANT_START_DT=PLANT_START_DT,
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            ALPHA_CODE=ALPHA_CODE,  # 템플릿에 선택된 ALPHA_CODE 전달
                            form_submitted=form_submitted)
-
 
 
 @bp.route('/get_bom_data')
@@ -150,8 +150,10 @@ def get_bom_data():
 
     return jsonify(results)
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @bp.route('/upload_excel', methods=['POST'])
 def upload_excel():
@@ -178,6 +180,7 @@ def upload_excel():
     else:
         flash('Allowed file types are xls, xlsx', 'error')
         return redirect(url_for('product.product_register'))
+
 
 def convert_value(value):
     if pd.isna(value):
@@ -257,7 +260,6 @@ def process_excel(filepath):
         else:
             new_records.append(record_data)
 
-
     if new_records:
         db.session.bulk_insert_mappings(Production_Alpha, new_records)
     if update_records:
@@ -273,6 +275,7 @@ def process_excel(filepath):
 def product_register():
     alpha_data = Production_Alpha.query.filter_by(REPORT_FLAG='N').all()
     return render_template('product/product_register.html', data=alpha_data)
+
 
 @bp.route('/register_result/', methods=['GET', 'POST'])
 def product_register_result():
@@ -343,11 +346,13 @@ def product_register_result():
                            BARCODE_NO_END=BARCODE_NO_END,
                            form_submitted=form_submitted)
 
+
 def remove_microseconds(dt):
     """Remove microseconds from a datetime object."""
     if dt:
         return dt.replace(microsecond=0)
     return dt
+
 
 def parse_datetime(datetime_str):
     """Parse datetime string with various formats including milliseconds."""
@@ -473,8 +478,9 @@ def register():
 
     assign_production_orders()
 
-    flash('실적처리 완료.','success')
+    flash('실적처리 완료.', 'success')
     return redirect(url_for('product.product_register'))
+
 
 def assign_production_orders():
     barcodes = Production_Barcode_Assign.query.filter(Production_Barcode_Assign.PRODT_ORDER_NO == None).all()
@@ -515,6 +521,7 @@ def assign_production_orders():
     db.session.commit()
 
     insert_production_results(orders)
+
 
 def insert_production_results(orders):
     result_records = []
@@ -585,6 +592,7 @@ def assign_orders_route():
     assign_production_orders()
     return '<script>alert("생산 오더가 할당되었습니다."); window.location.href="/product/assign/";</script>'
 
+
 @bp.route('/register_result_packing/', methods=['GET', 'POST'])
 def product_register_packing():
     form_submitted = False
@@ -598,7 +606,6 @@ def product_register_packing():
 
     plants = db.session.query(Production_Order.PLANT_CD).distinct().all()
     items = db.session.query(Item.ITEM_CD).distinct().all()
-
 
     if request.method == 'POST':
         form_submitted = True
@@ -652,11 +659,13 @@ def product_register_packing():
                            plants=plants,
                            work_centers=work_centers,
                            items=items,
-                           PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS, PLANT_START_DT=PLANT_START_DT,
+                           PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS,
+                           PLANT_START_DT=PLANT_START_DT,
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            form_submitted=form_submitted)
 
-#바코드 스캔 데이터 검증 로직
+
+# 바코드 스캔 데이터 검증 로직
 @bp.route('/check_barcode/', methods=['POST'])
 def check_barcode():
     barcode = request.json.get('barcode')
@@ -674,10 +683,12 @@ def check_barcode():
     else:
         return jsonify({"status": "fail", "message": "FAIL"})
 
-#box 번호 자동으로 넘어가는 로직
+
+# box 번호 자동으로 넘어가는 로직
 @bp.route('/get_next_master_box_no/', methods=['GET'])
 def get_next_master_box_no():
-    last_master_box_no = db.session.query(func.max(Packing_Hdr.m_box_no)).filter(Packing_Hdr.m_box_no.like('0880%')).scalar()
+    last_master_box_no = db.session.query(func.max(Packing_Hdr.m_box_no)).filter(
+        Packing_Hdr.m_box_no.like('0880%')).scalar()
     if last_master_box_no:
         next_master_box_no = int(last_master_box_no[4:]) + 1
         next_master_box_no = '0880' + str(next_master_box_no).zfill(8)
@@ -685,107 +696,151 @@ def get_next_master_box_no():
         next_master_box_no = '088000000001'
     return jsonify({"status": "success", "next_master_box_no": next_master_box_no})
 
-#데이터 db에 insert
+
+# 데이터 db에 insert
 @bp.route('/save_packing_data/', methods=['POST'])
 def save_packing_data():
-    data = request.json
+    try:
+        data = request.json
+        logging.info(f"Received data: {data}")
 
-    prodt_order_no = data['prodt_order_no']
-    master_box_no = data['master_box_no']
-    lot_no = data['lot_no']
-    quantity = data['quantity']
-    expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d')
-    rows = data['rows']
+        prodt_order_no = data['prodt_order_no']
+        master_box_no = data['master_box_no']
+        lot_no = data['lot_no']
+        quantity = data['quantity']
+        packing_dt = datetime.now()  # 현재 서버 시간을 사용하여 packing_dt 설정
+        expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d')
+        rows = data['rows']
 
-    # P_PACKING_HDR 테이블 업데이트
-    hdr = db.session.query(Packing_Hdr).filter_by(prodt_order_no=prodt_order_no).first()
-    if hdr:
-        hdr.m_box_no = master_box_no
-    else:
-        hdr = Packing_Hdr(
-            prodt_order_no=prodt_order_no,
-            m_box_no=master_box_no,
-            plant_start_dt=datetime.now(),
-            prod_qty_in_order_unit=quantity,
-            order_status='RL'
-        )
-        db.session.add(hdr)
+        logging.info(f"Processing order: {prodt_order_no} with box no: {master_box_no}")
 
-    # P_PACKING_DTL 테이블 삽입
-    for row in rows:
-        dtl = Packing_Dtl(
-            m_box_no=master_box_no,
-            lot_no=lot_no,
-            udi_code=row['barcode'],
-            barcode=row['udi_qr'],
-            packing_dt=datetime.now(),
-            exp_date=expiry_date
-        )
-        db.session.add(dtl)
+        # 하드코딩된 값
+        cs_model = "SFFH-120R"
+        cs_qty = "24"
+        cs_lot_no = "123456789"
+        cs_prod_date = '2024-08-30'
+        cs_exp_date = '2027-08-30'
+        cs_udi_di = master_box_no
+        cs_udi_lotno = "1013456"
+        cs_udi_prod = "PROD123456"
+        cs_udi_serial = "SERIAL123456"
 
-    db.session.commit()
+        # P_PACKING_HDR 테이블 업데이트
+        hdr = db.session.query(Packing_Hdr).filter_by(prodt_order_no=prodt_order_no).first()
+        if hdr:
+            logging.info(f"Existing HDR found: {hdr}")
+            hdr.m_box_no = master_box_no
+            hdr.cs_model = cs_model
+            hdr.cs_qty = cs_qty
+            hdr.cs_lot_no = cs_lot_no
+            hdr.cs_prod_date = cs_prod_date
+            hdr.cs_exp_date = cs_exp_date
+            hdr.cs_udi_di = cs_udi_di
+            hdr.cs_udi_lotno = cs_udi_lotno
+            hdr.cs_udi_prod = cs_udi_prod
+            hdr.cs_udi_serial = cs_udi_serial
+        else:
+            logging.info(f"Creating new HDR entry for order: {prodt_order_no}")
+            hdr = Packing_Hdr(
+                prodt_order_no=prodt_order_no,
+                m_box_no=master_box_no,
+                plant_start_dt=packing_dt,  # 현재 서버 시간 사용
+                prod_qty_in_order_unit=quantity,
+                order_status='RL',
+                cs_model=cs_model,
+                cs_qty=cs_qty,
+                cs_lot_no=cs_lot_no,
+                cs_prod_date=cs_prod_date,
+                cs_exp_date=cs_exp_date,
+                cs_udi_di=cs_udi_di,
+                cs_udi_lotno=cs_udi_lotno,
+                cs_udi_prod=cs_udi_prod,
+                cs_udi_serial=cs_udi_serial
+            )
+            db.session.add(hdr)
+            logging.info(f"New HDR added: {hdr}")
 
-    return jsonify({"status": "success"})
+        # P_PACKING_DTL 테이블 삽입
+        for row in rows:
+            dtl = Packing_Dtl(
+                m_box_no=master_box_no,
+                lot_no=lot_no,
+                udi_code=row['barcode'],
+                barcode=row['udi_qr'],
+                packing_dt=packing_dt,  # 현재 서버 시간 사용
+                exp_date=expiry_date
+            )
+            db.session.add(dtl)
+            logging.info(f"Added DTL: {dtl}")
+
+        db.session.commit()
+        logging.info("Transaction committed successfully")
+        return jsonify({"status": "success"})
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error occurred: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 
 
 # --------------------------------------------------------
 
 @bp.route('/print_label/', methods=['POST'])
 def print_label():
-    data = request.json
-
-    master_box_no = data.get('master_box_no')
-    lot_no = data.get('lot_no')
-    serial_no = data.get('serial_no')
-    quantity = data.get('quantity')
-    packing_dt = data.get('packing_dt')
-    expiry_date = data.get('expiry_date')
-    qr_code_data = f"{master_box_no};{lot_no};{packing_dt};{expiry_date}"
-
     try:
         logging.info("Creating CODESOFT application object...")
         codesoft = win32com.client.Dispatch("Lppx2.Application")
+        if codesoft is None:
+            raise Exception("Failed to create CodeSoft COM object.")
         logging.info("CODESOFT application object created successfully.")
 
-        logging.info("Opening label document...")
-        label_document = codesoft.Documents.Open(r'C:\\Users\\Desktop\\Desktop\\flask-master\\pybo\\static\\lbl')
-        logging.info("Label document opened successfully.")
+        # Set the application to be visible
+        codesoft.Visible = True
 
-        # 라벨 문서 객체 가져오기
-        logging.info("Setting label variables...")
-        label_document.Variables.Item("UDI-DI").Value = master_box_no
-        label_document.Variables.Item("LOT_NO").Value = lot_no
-        label_document.Variables.Item("QTY").Value = quantity
-        label_document.Variables.Item("EXP_DATE").Value = expiry_date
-        label_document.Variables.Item("BARCODE").Value = qr_code_data
-        logging.info("Label variables set successfully.")
+        # 라벨 파일 경로 설정
+        label_path = r'C:\\Users\\user\\Desktop\\디지털정보화팀\\flask-master\\pybo\\static\\lbl\\boxno.lab'
+        logging.info(f"Label document path: {label_path}")
+
+        # 파일 존재 여부 확인
+        if not os.path.exists(label_path):
+            error_msg = f"Label file does not exist at {label_path}"
+            logging.error(error_msg)
+            return jsonify({'error': error_msg}), 500
+
+        # 라벨 파일 열기
+        logging.info("Opening label document...")
+        label_document = codesoft.Documents.Open(label_path, True)
+        if label_document is None:
+            raise Exception("Failed to open the label document.")
+        logging.info("Label document opened successfully.")
 
         # 라벨 프린터 설정 및 출력
         logging.info("Printing document...")
-        label_document.PrintDocument(1)
+        label_document.PrintDocument(1)  # 1 장 인쇄
         logging.info("Document printed successfully.")
 
         label_document.Close(False)
         logging.info("Label document closed.")
 
-        return jsonify({'message': 'CodeSoft executed successfully.'})
+        return jsonify({'message': 'Label document opened and printed successfully.'})
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 # --------------------------------------------------------
 
-#외주발주조회
+# 외주발주조회
 @bp.route('/register_result_sterilizating/', methods=['GET', 'POST'])
 def product_register_sterilizating():
 
+
+
     return render_template('product/product_register_sterilizating.html')
 
-#외주실적등록
+
+# 외주실적등록
 @bp.route('/register_result_sterilizating_result/', methods=['GET', 'POST'])
 def product_register_sterilizating_result():
-
     return render_template('product/product_register_sterilizating_result.html')
-
-
-

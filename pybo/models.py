@@ -350,6 +350,15 @@ class Packing_Hdr(db.Model):
     prodt_order_qty = db.Column(db.Numeric(18, 6), nullable=True)
     prod_qty_in_order_unit = db.Column(db.Numeric(18, 6), nullable=True)
     order_status = db.Column(db.String(4), nullable=True)
+    cs_model = db.Column(db.String(18), nullable=True)
+    cs_qty = db.Column(db.String(18), nullable=True)
+    cs_lot_no = db.Column(db.String(18), nullable=True)
+    cs_prod_date = db.Column(db.String(18), nullable=True)
+    cs_exp_date = db.Column(db.String(18), nullable=True)
+    cs_udi_di = db.Column(db.String(18), nullable=True)
+    cs_udi_lotno = db.Column(db.String(18), nullable=True)
+    cs_udi_prod = db.Column(db.String(18), nullable=True)
+    cs_udi_serial = db.Column(db.String(18), nullable=True)
 
 class Packing_Dtl(db.Model):
     __tablename__ = 'P_PACKING_DTL'
@@ -363,4 +372,21 @@ class Packing_Dtl(db.Model):
     packing_dt = db.Column(db.DateTime, nullable=True)
     exp_date = db.Column(db.DateTime, nullable=True)
 
+class Biz_Partner(db.Model):
+    __tablename__ = 'B_BIZ_PARTNER'
+    __table_args__ = {'schema': 'dbo'}
 
+    bp_cd = Column(db.String(8), primary_key=True)
+    bp_nm = Column(db.String(20), nullable=True)
+    bp_rgst_no = Column(db.String(20), nullable=True)
+    nids_cd = Column(db.String(20), nullable=True)
+    repre_nm = Column(db.String(20), nullable=True)
+    phone_num = Column(db.String(20), nullable=True)
+    zip_cd = Column(db.String(20), nullable=True)
+    addr1 = Column(db.String(40), nullable=True)
+    addr2 = Column(db.String(40), nullable=True)
+    usage_flag = Column(db.String(2), nullable=True)
+    insrt_dt = Column(db.DateTime, nullable=True)
+    insrt_usr = Column(db.String(13), nullable=True)
+    updt_dt = Column(db.DateTime, nullable=True)
+    updt_usr = Column(db.String(13), nullable=True)
