@@ -68,9 +68,21 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
         g.user_has_mesauth = False
+        g.user_has_mesmid = False
+        g.user_has_b_ivmang = False
+        g.user_has_b_mdmmang = False
+        g.user_has_b_ppmang = False
+        g.user_has_b_sdmang = False
     else:
         g.user = User.query.get(user_id)
         g.user_has_mesauth = has_role(g.user, 'MESAUTH')
+        g.user_has_mesmid = has_role(g.user, 'MESMID')
+        g.user_has_b_ivmang = has_role(g.user, 'B_IVMANG')
+        g.user_has_b_mdmmang = has_role(g.user, 'B_MDMMANG')
+        g.user_has_b_ppmang = has_role(g.user, 'B_PPMANG')
+        g.user_has_b_sdmang = has_role(g.user, 'B_SDMANG')
+
+
 
 @bp.route('/logout/')
 def logout():

@@ -38,8 +38,13 @@
     .form-check-label {
         line-height: 1.5; /* 라벨의 라인 높이를 조정하여 수평 정렬 */
     }
+
     .form-check-input {
         margin-top: 2; /* 라디오 버튼의 마진을 조정 */
+    }
+
+    .selected-row {
+        background-color: #D6EAF8 !important; /* 선택된 행의 스타일 */
     }
 </style>
 
@@ -49,7 +54,7 @@
 
         <div style="display: flex; gap: 10px; align-items: center;">
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button type="submit" form="registerForm" class="btn btn-light btn-sm shadow-sm ms-3">
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton" disabled>
                     <i class="bi bi-boxes"></i> 외주반출 등록
                 </button>
             </div>
@@ -59,25 +64,41 @@
         </div>
     </div>
     <div class="pd-3">
-        <form method="POST" action="{{ url_for('product.product_register_result') }}" class="px-4 pd-6" id="searchForm">
+        <form method="POST" action="{{ url_for('product.product_register_sterilizating') }}" class="px-4 pd-6"
+              id="searchForm">
             <div class="row">
                 <div class="col-md-4">
                     <div class="mb-1 col-8 d-flex align-items-center">
                         <label for="plant_code" class="form-label me-3" style="min-width: 110px;">공장</label>
                         <select class="form-select form-select-sm" id="plant_code" name="plant_code">
-                            <option value="">p710 인공신장기공장</option>
+                            <option value="">-</option>
+                            {% for plant in plants %}
+                            <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
+                                {{ plant.PLANT_CD }}
+                            </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-1 col-6 d-flex align-items-center">
                         <label for="bp_cd" class="form-label me-3" style="min-width: 110px;">외주업체</label>
-                        <select class="form-select form-select-sm" id="bp_cd" name="plant_code">
-                            <option value="">멸균업체</option>
+                        <select class="form-select form-select-sm" id="bp_cd" name="bp_cd">
+                            <option value="">-</option>
+                            {% for vendor in vendors %}
+                            <option value="{{ vendor.bp_cd }}" {% if vendor.bp_cd== BP_CD %}selected{% endif %}>
+                                {{ vendor.bp_nm }}
+                            </option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-1 col-8 d-flex align-items-center">
                         <label for="item_cd" class="form-label me-3" style="min-width: 110px;">품목</label>
-                        <select class="form-select form-select-sm" id="item_cd" name="plant_code">
-                            <option value="">CHF70-120LR</option>
+                        <select class="form-select form-select-sm" id="item_cd" name="item_cd">
+                            <option value="">-</option>
+                            {% for item in items %}
+                            <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
+                                {{ item.ITEM_NM }}
+                            </option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>
@@ -95,66 +116,57 @@
                     </div>
                     <div class="mb-1 col-8 d-flex align-items-center">
                         <label for="barcode_no_start" class="form-label me-3" style="min-width: 110px;">발주번호</label>
-                        <div class="d-flex">
-                            <input type="text" class="form-control form-control-sm me-2" id="barcode_no_start"
-                                   name="barcode_no_start" value="{{ BARCODE_NO_START }}">
-                        </div>
+                        <input type="text" class="form-control form-control-sm me-2" id="barcode_no_start"
+                               name="barcode_no_start" value="{{ BARCODE_NO_START }}">
                     </div>
                     <div class="mb-1 col-8 d-flex align-items-center">
-                        <label for="barcode_no_start" class="form-label me-3" style="min-width: 110px;">발주형태</label>
+                        <label for="po_type" class="form-label me-3" style="min-width: 110px;">발주형태</label>
                         <div class="d-flex">
                             위탁가공
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="mb-1 col-8 d-flex align-items-center">
-                        <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">
-                            <label for="start_date" class="form-label me-3" style="min-width: 110px;">
-                                emptylabel
-                            </label>
-                            <div class="d-flex">
-                                <input type="text" class="form-control form-control-sm flex-grow-1"
-                                       id="prodt_order_no2123"
-                                       name="prodt_order_no"
-                                       value="{{ PRODT_ORDER_NO }}">
-                            </div>
+                    <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">
+                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">EMPTYLABEL</label>
+                        <div class="d-flex">
+
                         </div>
                     </div>
-                    <div class="mb-1 col-8 d-flex align-items-center">
-                        <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">
-                            <label for="start_date" class="form-label me-3" style="min-width: 110px;">
-                                emptylabel
-                            </label>
-                            <div class="d-flex">
-                                <input type="text" class="form-control form-control-sm flex-grow-1"
-                                       id="prodt_order_no21231"
-                                       name="prodt_order_no"
-                                       value="{{ PRODT_ORDER_NO }}">
-                            </div>
+                    <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">
+                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">EMPTYLABEL</label>
+                        <div class="d-flex">
+
                         </div>
                     </div>
                     <div class="mb-1 col-12 d-flex align-items-center">
-                        <label for="barcode_no_start" class="form-label me-3" style="min-width: 80px;">PO상태</label>
+                        <label for="po_status" class="form-label me-3" style="min-width: 80px;">PO상태</label>
                         <div class="d-flex">
+                            <!-- 미등록: PO_STATUS가 None 또는 빈 문자열일 때 선택 -->
                             <div class="form-check me-3">
                                 <input class="form-check-input" type="radio" id="status1" name="po_status"
-                                       value="status1">
+                                       value="none" {% if PO_STATUS== 'none' %}checked{% endif %}>
                                 <label class="form-check-label" for="status1">미등록</label>
                             </div>
+
+                            <!-- 반출 -->
                             <div class="form-check me-3">
                                 <input class="form-check-input" type="radio" id="status2" name="po_status"
-                                       value="status2">
+                                       value="D" {% if PO_STATUS== 'D' %}checked{% endif %}>
                                 <label class="form-check-label" for="status2">반출</label>
                             </div>
+
+                            <!-- 입고완료 -->
                             <div class="form-check me-3">
                                 <input class="form-check-input" type="radio" id="status3" name="po_status"
-                                       value="status3">
+                                       value="R" {% if PO_STATUS== 'R' %}checked{% endif %}>
                                 <label class="form-check-label" for="status3">입고완료</label>
                             </div>
+
+                            <!-- 전체: 모든 상태를 포함 -->
                             <div class="form-check me-3">
                                 <input class="form-check-input" type="radio" id="status4" name="po_status"
-                                       value="status4">
+                                       value="all" {% if PO_STATUS== 'all' or PO_STATUS is none %}checked{% endif %}>
                                 <label class="form-check-label" for="status4">전체</label>
                             </div>
                         </div>
@@ -167,58 +179,202 @@
     <div class="gap" style="margin-top: 20px;"></div> <!-- 간격 추가 -->
 
     <div class="table-wrapper ps-3 pe-3" id="tableWrapper">
-        <table class="table table-sm table-hover" style="table-layout:fixed;">
+        <table class="table table-sm table-hover" style="table-layout:fixed;" id="dataTable">
             <thead class="table-light">
-                <tr>
-                    <th class="sticky" style="width: 50px; font-weight: normal">No</th>
-                    <th class="sticky" style="width: 95px; font-weight: normal">발주번호</th>
-                    <th class="sticky" style="width: 50px; font-weight: normal">SEQ</th>
-                    <th class="sticky" style="width: 50px; font-weight: normal">외주업체</th>
-                    <th class="sticky" style="width: 80px; font-weight: normal">업체명</th>
-                    <th class="sticky" style="width: 90px; font-weight: normal">품목</th>
-                    <th class="sticky" style="width: 90px; font-weight: normal">품목명</th>
-                    <th class="sticky" style="width: 50px; font-weight: normal">품목규격</th>
-                    <th class="sticky" style="width: 50px; font-weight: normal">단위</th>
-                    <th class="sticky" style="width: 82px; font-weight: normal">발주수량(Box)</th>
-                    <th class="sticky" style="width: 82px; font-weight: normal">반출수량(Box)</th>
-                    <th class="sticky" style="width: 82px; font-weight: normal">입고수량(Box)</th>
-                    <th class="sticky" style="width: 60px; font-weight: normal">납기일자</th>
-                    <th class="sticky" style="width: 75px; font-weight: normal">단가</th>
-                    <th class="sticky" style="width: 50px; font-weight: normal">화폐</th>
-                    <th class="sticky" style="width: 50px; font-weight: normal">창고</th>
-                    <th class="sticky" style="width: 60px; font-weight: normal">창고명</th>
-                    <th class="sticky" style="width: 60px; font-weight: normal">상태</th>
-                </tr>
+            <tr>
+                <th class="sticky" style="width: 30px;">No</th>
+                <th class="sticky" style="width: 97px;">발주번호</th>
+                <th class="sticky" style="width: 50px;">SEQ</th>
+                <th class="sticky" style="width: 50px;">외주업체</th>
+                <th class="sticky" style="width: 80px;">업체명</th>
+                <th class="sticky" style="width: 90px;">품목</th>
+                <th class="sticky" style="width: 90px;">품목명</th>
+                <th class="sticky" style="width: 50px;">품목규격</th>
+                <th class="sticky" style="width: 50px;">단위</th>
+                <th class="sticky" style="width: 82px;">발주수량(Box)</th>
+                <th class="sticky" style="width: 82px;">반출수량(Box)</th>
+                <th class="sticky" style="width: 82px;">입고수량(Box)</th>
+                <th class="sticky" style="width: 60px;">납기일자</th>
+                <th class="sticky" style="width: 82px;">단가</th>
+                <th class="sticky" style="width: 50px;">화폐</th>
+                <th class="sticky" style="width: 50px;">창고</th>
+                <th class="sticky" style="width: 60px;">창고명</th>
+                <th class="sticky" style="width: 60px;">상태</th>
+            </tr>
             </thead>
             <tbody>
-
-            <tr>
-                <td>1</td>
-                <td>PO20240528000001</td>
-                <td>1</td>
-                <td>O00034</td>
-                <td>멸균업체</td>
-                <td>CHF70-120LR</td>
-                <td>Packing</td>
-                <td>120LR</td>
-                <td>EA</td>
-                <td>1</td>
-                <td>1</td>
-                <td>1</td>
-                <td>2024-06-03</td>
-                <td>1000</td>
-                <td>KRW</td>
-                <td>SF32</td>
-                <td>반제품창고</td>
-                <td style="font-weight: bold;">미등록</td>
+            {% for order in orders_with_hdr %}
+            <tr data-order-no="{{ order.PO_NO }}" data-item="{{ order.ITEM_NM }}" data-vendor="{{ order.bp_nm }}" data-POQty="{{ order.PO_QTY | int }}">
+                <td>{{ loop.index }}</td>
+                <td>{{ order.PO_NO }}</td>
+                <td>{{ order.PO_SEQ_NO }}</td>
+                <td>{{ order.bp_cd }}</td>
+                <td>{{ order.bp_nm }}</td>
+                <td>{{ order.ITEM_CD }}</td>
+                <td>{{ order.ITEM_NM }}</td>
+                <td>{{ order.SPEC }}</td>
+                <td>{{ order.BASIC_UNIT }}</td>
+                <td>{{ order.PO_QTY | int}}</td>
+                <td>{{ order.OUT_QTY or ''}}</td>
+                <td>{{ order.IN_QTY or ''}}</td>
+                <td>{{ order.DLVY_DT.strftime('%Y-%m-%d') if order.DLVY_DT else '' }}</td>
+                <td>{{ order.PO_PRC | int }}</td>
+                <td>{{ order.PO_CUR }}</td>
+                <td>{{ order.SL_CD }}</td>
+                <td>{{ order.SL_NM }}</td>
+                <td>{{ order.STATUS or ''}}</td>
             </tr>
-
+            {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
 
+<!-- 멸균 외주 등록 modal -->
+<div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel"
+     aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registerModalLabel">외주반출 등록</h5>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm" method="POST" action="/your_register_endpoint">
+                    <!--                        -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-1 col-8 d-flex align-items-center">
+                                <label for="plant_code" class="form-label me-8" style="min-width: 80px;">공장</label>
+                                <!-- 여백을 늘리려면 me-8 사용 -->
+                                <input type="text" class="form-control form-control-sm me-6" id="plant"
+                                       name="end_date" value="p710" readonly>
+                            </div>
+                            <div class="mb-1 col-10 d-flex align-items-center">
+                                <label for="modalOrderNo" class="form-label me-8" style="min-width: 80px;">발주번호</label>
+                                <input type="text" class="form-control form-control-sm me-6" id="modalOrderNo"
+                                       name="end_date" value="" readonly>
+                            </div>
+                            <div class="mb-1 col-8 d-flex align-items-center">
+                                <label for="modalItem" class="form-label me-6" style="min-width: 80px;">품목</label>
+                                <input type="text" class="form-control form-control-sm me-6" id="modalItem"
+                                       name="end_date" value="" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-1 col-8 d-flex align-items-center">
+                                <label for="modalVendor" class="form-label me-8" style="min-width: 100px;">외주업체</label>
+                                <!-- 간격을 늘리려면 me-8 설정 -->
+                                <input type="text" class="form-control form-control-sm me-2" id="modalVendor"
+                                       name="end_date" value="" readonly>
+                            </div>
+                            <div class="mb-1 col-8 d-flex align-items-center">
+                                <label for="modalQty" class="form-label me-8"
+                                       style="min-width: 100px;">발주수량</label>
+                                <input type="text" class="form-control form-control-sm me-2" id="modalQty"
+                                       name="barcode_no_start" value="" readonly>
+                            </div>
+                            <div class="mb-1 col-8 d-flex align-items-center">
+                                <label for="po_type" class="form-label me-8" style="min-width: 100px;">반출수량</label>
+                                <input type="text" class="form-control form-control-sm me-2" id="barcode_no_start112"
+                                       name="barcode_no_start" value="{{ BARCODE_NO_START }}">
+                            </div>
+                            <div class="mb-1 col-8 d-flex align-items-center">
+                                <label for="po_type" class="form-label me-8" style="min-width: 100px;">누적반출수량</label>
+                                <input type="text" class="form-control form-control-sm me-2" id="barcode_no_start11221"
+                                       name="barcode_no_start" value="{{ BARCODE_NO_START }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gap" style="margin-top: 20px;"></div>
+
+
+                    <table class="table table-sm table-bordered table-hover"
+                           style="text-align: center; border-collapse: collapse;" id="dataTable_modal" width="100%"
+                           cellspacing="0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Box No.</th>
+                            <th>Box내 수량</th>
+                            <th>포장일자</th>
+                        </tr>
+                        </thead>
+
+                        <tbody id="modalTableBody">
+                            <tr>
+                                <td><input type="text" class="form-control form-control-sm me-2" id="box_no"
+                                           name="end_date" value=""></td>
+                                <td><input type="text" class="form-control form-control-sm me-2" id="box_in_qty"
+                                           name="end_date" value="" readonly></td>
+                                <td><input type="text" class="form-control form-control-sm me-2" id="prod_date"
+                                           name="end_date" value="" readonly></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-dismiss="modal"
+                        id="closeModalButton">닫기
+                </button>
+                <button type="submit" form="registerForm" class="btn btn-light btn-sm shadow-sm ms-3">등록</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    var selectedOrderNo = '';
+
+
+    document.getElementById('closeModalButton').addEventListener('click', function() {
+            console.log('2번으로 닫힘');
+            $('#registerModal').modal('hide');
+        });
+
+    // 행 클릭 시 선택
+    document.querySelectorAll('#dataTable tbody tr').forEach(function (row) {
+        row.addEventListener('click', function () {
+
+            // 기존 선택된 행 스타일 제거
+            document.querySelectorAll('#dataTable tbody tr').forEach(function (row) {
+                row.classList.remove('selected-row');
+            });
+
+            // 선택된 행 스타일 적용
+            this.classList.add('selected-row');
+
+            // 선택한 데이터 저장
+            selectedOrderNo = this.getAttribute('data-order-no');
+            var selectedItem = this.getAttribute('data-item');
+            var selectedVendor = this.getAttribute('data-vendor');
+            var selectedPOQty = this.getAttribute('data-POQty')
+
+            // 모달에 데이터 반영
+            document.getElementById('modalOrderNo').value = selectedOrderNo;
+            document.getElementById('modalItem').value = selectedItem;
+            document.getElementById('modalVendor').value = selectedVendor;
+            document.getElementById('modalQty').value = selectedPOQty;
+
+            // 외주반출 등록 버튼 활성화
+            document.getElementById('openModalButton').disabled = false;
+        });
+    });
+
+    // 외주반출 등록 버튼 클릭 시 모달 열기
+    document.getElementById('openModalButton').addEventListener('click', function () {
+        if (selectedOrderNo) {
+            var modal = new bootstrap.Modal(document.getElementById('registerModal'), {
+                backdrop: 'static',  // 배경 클릭 막기
+                keyboard: false      // ESC 키 막기
+            });
+            modal.show();
+        }
+    });
+
+
+
     function adjustTableHeight() {
         var tableWrapper = document.getElementById('tableWrapper');
         var headerHeight = document.querySelector('header').offsetHeight; // 헤더 높이
@@ -232,7 +388,7 @@
     window.addEventListener('load', adjustTableHeight);
 
     document.addEventListener('DOMContentLoaded', function () {
-        {% if form_submitted and not grouped_results %}
+        {% if form_submitted and not orders_with_hdr %}
         document.getElementById('errorModalBody').innerText = "데이터 없음";
         var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
         errorModal.show();

@@ -10,7 +10,7 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Master
+    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Master, Biz_Partner, Purchase_Order, Storage_Location
 from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
@@ -834,10 +834,109 @@ def print_label():
 # 외주발주조회
 @bp.route('/register_result_sterilizating/', methods=['GET', 'POST'])
 def product_register_sterilizating():
+    form_submitted = False
+    PLANT_CD = ''
+    BP_CD = ''  # 외주업체
+    ITEM_CD = ''  # 품목 코드
+    INSRT_DT_START = None
+    INSRT_DT_END = None
+    BARCODE_NO_START = ''
+    BARCODE_NO_END = ''
+    PO_STATUS = ''  # 발주 상태
 
+    # 공장 목록, 품목 목록, 외주업체 목록 조회
+    plants = db.session.query(Purchase_Order.PLANT_CD).distinct().all()
+    items = db.session.query(Item.ITEM_CD, Item.ITEM_NM).distinct().all()
+    vendors = db.session.query(Biz_Partner.bp_cd, Biz_Partner.bp_nm).distinct().all()
 
+    if request.method == 'POST':
+        form_submitted = True
+        PLANT_CD = request.form.get('plant_code', '')
+        BP_CD = request.form.get('bp_cd', '')
+        ITEM_CD = request.form.get('item_cd', '')
+        INSRT_DT_START = request.form.get('start_date', '')
+        INSRT_DT_END = request.form.get('end_date', '')
+        BARCODE_NO_START = request.form.get('barcode_no_start', '')
+        BARCODE_NO_END = request.form.get('barcode_no_end', '')
+        PO_STATUS = request.form.get('po_status', '')
 
-    return render_template('product/product_register_sterilizating.html')
+        # 날짜 값이 있는지 확인하고 변환
+        if INSRT_DT_START:
+            INSRT_DT_START = datetime.strptime(INSRT_DT_START, '%Y-%m-%d')
+        if INSRT_DT_END:
+            INSRT_DT_END = datetime.strptime(INSRT_DT_END, '%Y-%m-%d')
+
+    # 기본 날짜 설정
+    if not INSRT_DT_START:
+        INSRT_DT_START = datetime.today()
+    if not INSRT_DT_END:
+        INSRT_DT_END = datetime.today() + timedelta(days=30)
+
+    # 쿼리 작성
+    query = db.session.query(
+        Purchase_Order.PO_NO,
+        Purchase_Order.PO_SEQ_NO,
+        Purchase_Order.ITEM_CD,
+        Purchase_Order.PO_QTY,
+        Purchase_Order.OUT_QTY,
+        Purchase_Order.IN_QTY,
+        Purchase_Order.PO_UNIT,
+        Purchase_Order.PO_PRC,
+        Purchase_Order.PO_CUR,
+        Purchase_Order.DLVY_DT,
+        Purchase_Order.STATUS,
+        Biz_Partner.bp_cd,
+        Biz_Partner.bp_nm,
+        Item.ITEM_NM,
+        Item.SPEC,
+        Item.BASIC_UNIT,
+        Storage_Location.SL_NM,
+        Storage_Location.SL_CD
+    ).join(
+        Biz_Partner, Purchase_Order.BP_CD == Biz_Partner.bp_cd
+    ).join(
+        Item, Purchase_Order.ITEM_CD == Item.ITEM_CD
+    ).join(
+        Storage_Location, Purchase_Order.SL_CD == Storage_Location.SL_CD
+    )
+
+    # 필터링 조건 적용
+    if PLANT_CD:
+        query = query.filter(Purchase_Order.PLANT_CD == PLANT_CD)
+    if BP_CD:
+        query = query.filter(Purchase_Order.BP_CD == BP_CD)
+    if ITEM_CD:
+        query = query.filter(Purchase_Order.ITEM_CD == ITEM_CD)
+    if INSRT_DT_START:
+        query = query.filter(Purchase_Order.IF_INSRT_DT >= INSRT_DT_START)
+    if INSRT_DT_END:
+        query = query.filter(Purchase_Order.IF_INSRT_DT <= INSRT_DT_END)
+
+    # PO_STATUS에 따른 필터링
+    if PO_STATUS == 'none':  # '미등록' 상태일 경우, None 상태만 필터링
+        query = query.filter(Purchase_Order.STATUS.is_(None))
+    elif PO_STATUS in ['D', 'R']:  # 선택된 특정 상태만 필터링
+        query = query.filter(Purchase_Order.STATUS == PO_STATUS)
+    # '전체' 상태는 필터링을 적용하지 않음
+
+    if BARCODE_NO_START and BARCODE_NO_END:
+        query = query.filter(Purchase_Order.PO_NO.between(BARCODE_NO_START, BARCODE_NO_END))
+
+    # 결과 조회
+    orders_with_hdr = query.all()
+
+    return render_template('product/product_register_sterilizating.html',
+                           orders_with_hdr=orders_with_hdr,
+                           plants=plants,
+                           vendors=vendors,
+                           items=items,
+                           form_submitted=form_submitted,
+                           PLANT_CD=PLANT_CD,
+                           BP_CD=BP_CD,
+                           ITEM_CD=ITEM_CD,
+                           INSRT_DT_START=INSRT_DT_START,
+                           INSRT_DT_END=INSRT_DT_END,
+                           PO_STATUS=PO_STATUS)
 
 
 # 외주실적등록

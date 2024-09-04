@@ -328,7 +328,7 @@
             <div class="modal-body">
                 문제가 발생했습니다.<br>
                 바코드 스캔 데이터를 초기화합니다.<br>
-                <span style="color: red; font-weight: bold;">문제 발생 데이터 번호: <span id="errorRowNumber"></span></span>
+                <span style="color: red; font-weight: bold;">(<span id="errorRowNumber"></span>) 실적 데이터 조회 결과 없음 </span>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal"
@@ -469,7 +469,7 @@
     };
 
     function handleUdiInput(event) {
-        if (event.target.value.length === 11) {
+        if (event.target.value.length === 12) {
             var udiQr = event.target.value;
             console.log('UDI QR input detected:', udiQr);
             var row = event.target.parentNode.parentNode;
@@ -480,28 +480,32 @@
         }
     }
 
+
     function handleBarcodeInput(event) {
-        if (event.target.value.length === 31) {
+        if (event.target.value.length === 39) {
             console.log('Barcode input detected:', event.target.value);
             moveToNextInput(event);
         }
     }
 
     function checkBarcode(udiQr, resultInput, rowIndex) {
-        console.log('Checking barcode for UDI QR:', udiQr);
+        // 바코드의 마지막 숫자를 제거하여 11자리만 사용
+        var barcodeWithoutCheckDigit = udiQr.slice(0, -1);
+        console.log('Checking barcode for UDI QR without check digit:', barcodeWithoutCheckDigit);
+
         fetch('/product/check_barcode/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ barcode: udiQr })
+            body: JSON.stringify({ barcode: barcodeWithoutCheckDigit })
         })
         .then(response => response.json())
         .then(data => {
             console.log('Barcode check response:', data);
             if (data.status === 'success') {
                 resultInput.value = 'PASS';
-                updateBarcodeScan5(udiQr);
+                updateBarcodeScan5(barcodeWithoutCheckDigit); // 여기서도 체크 디지트 제외된 바코드를 사용
             } else {
                 resultInput.value = 'FAIL';
                 showErrorModal(rowIndex);
@@ -512,6 +516,7 @@
             showErrorModal(rowIndex);
         });
     }
+
 
     function updateBarcodeScan5(udiQr) {
         console.log('Updating barcode_scan5 with part of UDI QR:', udiQr.substring(14, 19));
@@ -669,43 +674,62 @@
     }
 
     document.getElementById('printLabelButton').addEventListener('click', function() {
-        var packingOrderNo = document.getElementById('packing_order_no').value;
-        var masterBoxNo = document.getElementById('barcode_scan4').value;
-        var lotNo = document.getElementById('barcode_scan5').value;
-        var quantity = document.getElementById('barcode_scan6').value;
-        var expiryDate = document.getElementById('barcode_scan7').value;
+    var packingOrderNo = document.getElementById('packing_order_no').value;
+    var masterBoxNo = document.getElementById('barcode_scan4').value;
+    var lotNo = document.getElementById('barcode_scan5').value;
+    var quantity = document.getElementById('barcode_scan6').value;
+    var expiryDate = document.getElementById('barcode_scan7').value;
+    var packingDate = document.getElementById('barcode_scan3').value;  // 이 부분 추가
 
-        var printData = {
-            packing_order_no: packingOrderNo,
-            master_box_no: masterBoxNo,
-            lot_no: lotNo,
-            quantity: quantity,
-            expiry_date: expiryDate
-        };
+    // 디버깅을 위한 로그 추가
+    console.log('Packing Order No:', packingOrderNo);
+    console.log('Master Box No:', masterBoxNo);
+    console.log('Lot No:', lotNo);
+    console.log('Quantity:', quantity);
+    console.log('Expiry Date:', expiryDate);
+    console.log('Packing Date:', packingDate);  // 이 부분 추가
 
-        console.log('Printing label:', printData);
+    // 비어 있는 필드가 있는지 확인
+    if (!packingOrderNo || !masterBoxNo || !lotNo || !quantity || !expiryDate || !packingDate) {
+        alert('Some fields are empty! Please check your input.');
+        return;
+    }
 
-        fetch('/product/print_label/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(printData)
-        })
-        .then(response => {
-            console.log('Print label response:', response);
-            return response.text();
-        })
-        .then(data => {
+    var printData = {
+        packing_order_no: packingOrderNo,
+        master_box_no: masterBoxNo,
+        lot_no: lotNo,
+        quantity: quantity,
+        expiry_date: expiryDate,
+        packing_dt: packingDate  // 이 부분 추가
+    };
+
+    fetch('/product/print_label/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(printData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error('Print label error:', data.error);
+            alert('Error: ' + data.error);
+        } else {
             console.log('Print label response data:', data);
-            alert(data);
+            alert(data.message);
             $('#successModal').modal('hide');
-        })
-        .catch(error => {
-            console.error('Error printing label:', error);
-            alert('라벨 인쇄 중 오류가 발생했습니다.');
-        });
+        }
+    })
+    .catch(error => {
+        console.error('Error printing label:', error);
+        alert('라벨 인쇄 중 오류가 발생했습니다.');
     });
+});
+
+
+
 </script>
 
 

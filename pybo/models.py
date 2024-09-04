@@ -117,7 +117,7 @@ class Movetype_Configuration(db.Model):
     MOV_TYPE = db.Column(db.NVARCHAR(3), primary_key=True)
     MOV_TYPE_NM = db.Column(db.NVARCHAR(30), nullable=True)
 
-# 수주정보
+# 발주정보
 class Purchase_Order(db.Model):
     __tablename__ = 'M_PUR_ORD'
     __table_args__ = {'schema': 'dbo'}
@@ -129,6 +129,8 @@ class Purchase_Order(db.Model):
     SL_CD = db.Column(db.NVARCHAR(4), nullable=True)
     ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
     PO_QTY = db.Column(db.NUMERIC(18,6), nullable=True)
+    OUT_QTY = db.Column(db.NUMERIC(18,6), nullable=True)
+    IN_QTY = db.Column(db.NUMERIC(18,6), nullable=True)
     PO_UNIT = db.Column(db.NCHAR(3), nullable=True)
     PO_PRC = db.Column(db.NUMERIC(18,6), nullable=True)
     PO_DOC_AMT = db.Column(db.NUMERIC(18,2), nullable=True)
@@ -141,8 +143,9 @@ class Purchase_Order(db.Model):
     RCPT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
     IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
     IF_UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+    STATUS = db.Column(db.NVARCHAR(4), nullable=True)
 
-# 발주정보
+# 수주정보
 class Sales_Order(db.Model):
     __tablename__ = 'S_SO'
     __table_args__ = {'schema': 'dbo'}

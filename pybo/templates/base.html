@@ -126,12 +126,12 @@
                 </div>
                 <div class="d-flex">
                     {% if g.user %}
-                        {% if g.user_has_mesauth %}
-                            <a href="{{ url_for('auth.user_manage') }}" class="mx-2"
-                               style="text-decoration-line: none; color: black; font-weight: bold;">
-                                사용자관리
-                            </a>
-                        {% endif %}
+                    {% if g.user_has_mesauth %}
+                    <a href="{{ url_for('auth.user_manage') }}" class="mx-2"
+                       style="text-decoration-line: none; color: black; font-weight: bold;">
+                        사용자관리
+                    </a>
+                    {% endif %}
 
 
                     <!-- 사용자 이름과 드롭다운 트리거 설정 -->
@@ -161,13 +161,19 @@
                  style="background-color: #192B5B;">
                 <!-- Topbar Navbar -->
                 {% if g.user %}
+
                 <ul class="navbar-nav mr-auto font-weight-bold">
+
+                    <!-- 생산관리 메뉴 -->
+                    {% if g.user_has_mesauth or g.user_has_b_ppmang %}
                     <li class="nav-item dropdown no-arrow mx-2">
+
                         <a class="nav-link" href="#" id="navbarDropdownProduction" role="button" data-toggle="dropdown"
                            aria-haspopup="true" aria-expanded="false"
                            style="color: white; font-weight: bold; font-size: 1.16rem;">
                             생산관리
                         </a>
+
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownProduction">
                             <a class="dropdown-item" href="{{ url_for('product.product_order') }}">제조오더조회</a>
                             <a class="dropdown-item" href="{{ url_for('product.product_register') }}">제조실적등록</a>
@@ -175,10 +181,15 @@
                                href="{{ url_for('product.product_register_packing') }}">Packing등록</a>
                             <a class="dropdown-item" href="{{ url_for('product.product_register_result') }}">제조실적조회</a>
                             <a class="dropdown-item" href="{{ url_for('product.product_register_sterilizating') }}">외주발주조회</a>
-                            <a class="dropdown-item" href="{{ url_for('product.product_register_sterilizating_result') }}">외주실적등록</a>
+                            <a class="dropdown-item"
+                               href="{{ url_for('product.product_register_sterilizating_result') }}">외주실적등록</a>
 
                         </div>
                     </li>
+                    {% endif %}
+
+                    <!-- 영업관리 메뉴 -->
+                    {% if g.user_has_mesauth or g.user_has_b_sdmang %}
                     <li class="nav-item dropdown no-arrow mx-2">
                         <a class="nav-link" href="#" id="navbarDropdownSales" role="button" data-toggle="dropdown"
                            aria-haspopup="true" aria-expanded="false"
@@ -190,7 +201,10 @@
                             <a class="dropdown-item" href="{{ url_for('sales.supply_details') }}">공급내역등록</a>
                         </div>
                     </li>
+                    {% endif %}
 
+                    <!-- 재고관리 메뉴 -->
+                    {% if g.user_has_mesauth or g.user_has_b_ivmang %}
                     <li class="nav-item dropdown no-arrow mx-2">
                         <a class="nav-link" href="#" id="navbarDropdownInventory" role="button" data-toggle="dropdown"
                            aria-haspopup="true" aria-expanded="false"
@@ -201,6 +215,10 @@
                             <a class="dropdown-item" href="{{ url_for('inventory.inventory') }}">재고조회</a>
                         </div>
                     </li>
+                    {% endif %}
+
+                    <!-- 기준정보관리 메뉴 -->
+                    {% if g.user_has_mesauth or g.user_has_b_mdmmang %}
                     <li class="nav-item dropdown no-arrow mx-2">
                         <a class="nav-link" href="#" id="navbarDropdownMasterData" role="button" data-toggle="dropdown"
                            aria-haspopup="true" aria-expanded="false"
@@ -214,7 +232,10 @@
 
                         </div>
                     </li>
+                    {% endif %}
+
                 </ul>
+
                 {% endif %}
 
                 <ul class="navbar-nav ml-auto">
@@ -303,8 +324,6 @@
 <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
 
 
-
-
 <!-- 메뉴 자체를 눌러도 해당 최상위 메뉴로 이동시키기 위한 script -->
 <!--<script>-->
 <!--    document.getElementById('navbarDropdown7').addEventListener('click', function() {-->
@@ -321,9 +340,7 @@
 <!--    });-->
 
 
-
 <!--</script>-->
-
 
 
 </html>
