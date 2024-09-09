@@ -716,7 +716,7 @@ def save_packing_data():
 
         # 하드코딩된 값
         cs_model = "SFFH-120R"
-        cs_qty = "24"
+        cs_qty = "24"  # 텍스트 형태로 유지
         cs_lot_no = "123456789"
         cs_prod_date = '2024-08-30'
         cs_exp_date = '2027-08-30'
@@ -773,6 +773,19 @@ def save_packing_data():
             db.session.add(dtl)
             logging.info(f"Added DTL: {dtl}")
 
+        # Production_Order 모델의 실적 수량 업데이트 로직
+        update_qty = int(cs_qty)  # cs_qty를 문자열에서 숫자로 변환
+
+        # Production_Order에서 PRODT_ORDER_NO에 해당하는 데이터를 찾아서 업데이트
+        prod_order = db.session.query(Production_Order).filter_by(PRODT_ORDER_NO=prodt_order_no).first()
+
+        if prod_order:
+            logging.info(f"Updating Production Order {prodt_order_no}, current quantity: {prod_order.PROD_QTY_IN_ORDER_UNIT}")
+            prod_order.PROD_QTY_IN_ORDER_UNIT += update_qty  # 24만큼 실적 수량 증가
+            logging.info(f"Updated Production Order quantity: {prod_order.PROD_QTY_IN_ORDER_UNIT}")
+        else:
+            logging.warning(f"Production Order not found for order: {prodt_order_no}")
+
         db.session.commit()
         logging.info("Transaction committed successfully")
         return jsonify({"status": "success"})
@@ -781,6 +794,8 @@ def save_packing_data():
         db.session.rollback()
         logging.error(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
 
 
 

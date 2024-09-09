@@ -182,7 +182,6 @@
                     <th class="sticky">품목명</th>
                     <th class="sticky">계획지시일</th>
                     <th class="sticky">계획수량</th>
-                    <th class="sticky">실적수량</th>
                     <th class="sticky">Master Box no.</th>
                     <th class="sticky">오더상태</th>
                     <th class="sticky" style="width: 630px; font-weight: normal"></th>
@@ -200,7 +199,6 @@
                     <td>Packing</td>
                     <td>{{ order.plant_start_dt.strftime('%Y-%m-%d') if order.plant_start_dt else '' }}</td>
                     <td>{{ order.prodt_order_qty | int }}</td>
-                    <td>0</td> <!-- 실적수량 -->
                     <td>{{ order.m_box_no or '' }}</td> <!-- Master Box no. -->
                     <td>{{ order.order_status }}</td>
                     <td></td>

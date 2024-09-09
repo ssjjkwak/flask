@@ -180,7 +180,7 @@
             <thead class="table-light">
             <tr>
                 <th class="fixed" style="z-index: 100;"></th>
-                <th class="fixed-2" style="z-index: 100;"><input type="checkbox" name="" id="chkRowAll"></th>
+                <th class="fixed-2" style="z-index: 100;"><input type="checkbox" name="" id="chkRowAll" checked></th>
                 <th class="fixed-3" style="z-index: 100;">LOT</th>
                 <th class="fixed-4" style="z-index: 100;">product</th>
                 <th class="fixed-5" style="background-color: #e0ffff; z-index: 100;">barcode</th>
@@ -223,7 +223,7 @@
             {% if row.REPORT_FLAG == 'N' %}
             <tr>
                 <td class="fixed">{{ loop.index }}</td>
-                <td class="fixed-2"><input type="checkbox" name="chkRow" value="{{ row.barcode }}|{{ row.modified }}"></td>
+                <td class="fixed-2"><input type="checkbox" name="chkRow" value="{{ row.barcode }}|{{ row.modified }}" checked></td>
                 <td class="fixed-3">{{ row.LOT }}</td>
                 <td class="fixed-4">{{ row.product }}</td>
                 <td class="fixed-5" style="background-color: #e0ffff;">{{ row.barcode }}</td>
@@ -302,6 +302,7 @@
         for (var checkbox of checkboxes) {
             checkbox.checked = this.checked;
         }
+        // document.getElementById('chkRowAll').checked = true;
     });
 
     document.addEventListener('DOMContentLoaded', function () {
