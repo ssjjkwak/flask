@@ -69,18 +69,49 @@ def load_logged_in_user():
         g.user = None
         g.user_has_mesauth = False
         g.user_has_mesmid = False
+
         g.user_has_b_ivmang = False
+        g.user_has_b_ivmang_a = False
+
         g.user_has_b_mdmmang = False
-        g.user_has_b_ppmang = False
+        g.user_has_b_mdmmang_a = False
+        g.user_has_b_mdmmang_b = False
+        g.user_has_b_mdmmang_c = False
+
         g.user_has_b_sdmang = False
+        g.user_has_b_sdmang_a = False
+        g.user_has_b_sdmang_b = False
+
+        g.user_has_b_ppmang = False
+        g.user_has_b_ppmang_a = False
+        g.user_has_b_ppmang_b = False
+        g.user_has_b_ppmang_c = False
+        g.user_has_b_ppmang_d = False
+        g.user_has_b_ppmang_e = False
+
     else:
         g.user = User.query.get(user_id)
         g.user_has_mesauth = has_role(g.user, 'MESAUTH')
         g.user_has_mesmid = has_role(g.user, 'MESMID')
+
         g.user_has_b_ivmang = has_role(g.user, 'B_IVMANG')
+        g.user_has_b_ivmang_a = has_role(g.user, 'B_IVMANG_A')
+
         g.user_has_b_mdmmang = has_role(g.user, 'B_MDMMANG')
+        g.user_has_b_mdmmang_a = has_role(g.user, 'B_MDMMANG_A')
+        g.user_has_b_mdmmang_b = has_role(g.user, 'B_MDMMANG_B')
+        g.user_has_b_mdmmang_c = has_role(g.user, 'B_MDMMANG_C')
+
         g.user_has_b_ppmang = has_role(g.user, 'B_PPMANG')
+        g.user_has_b_ppmang_a = has_role(g.user, 'B_PPMANG_A')
+        g.user_has_b_ppmang_b = has_role(g.user, 'B_PPMANG_B')
+        g.user_has_b_ppmang_c = has_role(g.user, 'B_PPMANG_C')
+        g.user_has_b_ppmang_d = has_role(g.user, 'B_PPMANG_D')
+        g.user_has_b_ppmang_e = has_role(g.user, 'B_PPMANG_E')
+
         g.user_has_b_sdmang = has_role(g.user, 'B_SDMANG')
+        g.user_has_b_sdmang_a = has_role(g.user, 'B_SDMANG_A')
+        g.user_has_b_sdmang_b = has_role(g.user, 'B_SDMANG_B')
 
 
 

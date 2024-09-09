@@ -165,7 +165,7 @@
                 <ul class="navbar-nav mr-auto font-weight-bold">
 
                     <!-- 생산관리 메뉴 -->
-                    {% if g.user_has_mesauth or g.user_has_b_ppmang %}
+                    {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_a or g.user_has_b_ppmang_b or g.user_has_b_ppmang_c or g.user_has_b_ppmang_d or g.user_has_b_ppmang_e %}
                     <li class="nav-item dropdown no-arrow mx-2">
 
                         <a class="nav-link" href="#" id="navbarDropdownProduction" role="button" data-toggle="dropdown"
@@ -175,21 +175,31 @@
                         </a>
 
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownProduction">
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_a %}
                             <a class="dropdown-item" href="{{ url_for('product.product_order') }}">제조오더조회</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_b %}
                             <a class="dropdown-item" href="{{ url_for('product.product_register') }}">제조실적등록</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_c %}
                             <a class="dropdown-item"
                                href="{{ url_for('product.product_register_packing') }}">Packing등록</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_d %}
                             <a class="dropdown-item" href="{{ url_for('product.product_register_result') }}">제조실적조회</a>
-                            <a class="dropdown-item" href="{{ url_for('product.product_register_sterilizating') }}">외주발주조회</a>
-                            <a class="dropdown-item"
-                               href="{{ url_for('product.product_register_sterilizating_result') }}">외주실적등록</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_e %}
+                            <a class="dropdown-item" href="{{ url_for('product.product_register_sterilizating') }}">멸균입반출조회</a>
+                            {% endif %}
+<!--                            <a class="dropdown-item"-->
+<!--                               href="{{ url_for('product.product_register_sterilizating_result') }}">외주실적등록</a>-->
 
                         </div>
                     </li>
                     {% endif %}
 
                     <!-- 영업관리 메뉴 -->
-                    {% if g.user_has_mesauth or g.user_has_b_sdmang %}
+                    {% if g.user_has_mesauth or g.user_has_b_sdmang or g.user_has_b_sdmang_a or g.user_has_b_sdmang_b %}
                     <li class="nav-item dropdown no-arrow mx-2">
                         <a class="nav-link" href="#" id="navbarDropdownSales" role="button" data-toggle="dropdown"
                            aria-haspopup="true" aria-expanded="false"
@@ -197,14 +207,18 @@
                             영업관리
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownSales">
+                            {% if g.user_has_mesauth or g.user_has_b_sdmang or g.user_has_b_sdmang_a %}
                             <a class="dropdown-item" href="{{ url_for('sales.sales_order') }}">수주정보조회</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_sdmang or g.user_has_b_sdmang_b %}
                             <a class="dropdown-item" href="{{ url_for('sales.supply_details') }}">공급내역등록</a>
+                            {% endif %}
                         </div>
                     </li>
                     {% endif %}
 
                     <!-- 재고관리 메뉴 -->
-                    {% if g.user_has_mesauth or g.user_has_b_ivmang %}
+                    {% if g.user_has_mesauth or g.user_has_b_ivmang or g.user_has_b_ivmang_a %}
                     <li class="nav-item dropdown no-arrow mx-2">
                         <a class="nav-link" href="#" id="navbarDropdownInventory" role="button" data-toggle="dropdown"
                            aria-haspopup="true" aria-expanded="false"
@@ -212,13 +226,15 @@
                             재고관리
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownInventory">
+                            {% if g.user_has_mesauth or g.user_has_b_ivmang or g.user_has_b_ivmang_a %}
                             <a class="dropdown-item" href="{{ url_for('inventory.inventory') }}">재고조회</a>
+                            {% endif %}
                         </div>
                     </li>
                     {% endif %}
 
                     <!-- 기준정보관리 메뉴 -->
-                    {% if g.user_has_mesauth or g.user_has_b_mdmmang %}
+                    {% if g.user_has_mesauth or g.user_has_b_mdmmang or g.user_has_b_mdmmang_a or g.user_has_b_mdmmang_b or g.user_has_b_mdmmang_c %}
                     <li class="nav-item dropdown no-arrow mx-2">
                         <a class="nav-link" href="#" id="navbarDropdownMasterData" role="button" data-toggle="dropdown"
                            aria-haspopup="true" aria-expanded="false"
@@ -226,9 +242,15 @@
                             기준정보
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownMasterData">
+                            {% if g.user_has_mesauth or g.user_has_b_mdmmang or g.user_has_b_mdmmang_a %}
                             <a class="dropdown-item" href="{{ url_for('masterdata.item') }}">품목정보조회</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_mdmmang or g.user_has_b_mdmmang_b %}
                             <a class="dropdown-item" href="{{ url_for('masterdata.bom') }}">BOM정보조회</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_mdmmang or g.user_has_b_mdmmang_c %}
                             <a class="dropdown-item" href="{{ url_for('masterdata.vendor') }}">거래처정보조회</a>
+                            {% endif %}
 
                         </div>
                     </li>
