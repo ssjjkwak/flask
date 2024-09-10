@@ -39,16 +39,16 @@
     }
 
     .modal-input {
-        width: 300px;
+        width: 305px;
         height: 20px;
-        font-size: 17px;
+        font-size: 14px;
         border-style: hidden;
     }
 
     .modal-input2 {
         width: 120px;
         height: 20px;
-        font-size: 17px;
+        font-size: 14px;
         text-align: center;
         border-style: hidden;
     }
@@ -182,9 +182,10 @@
                     <th class="sticky">품목명</th>
                     <th class="sticky">계획지시일</th>
                     <th class="sticky">계획수량</th>
-                    <th class="sticky">Master Box no.</th>
+                    <!--<th class="sticky">Master Box no.</th>-->
                     <th class="sticky">오더상태</th>
-                    <th class="sticky" style="width: 630px; font-weight: normal"></th>
+                    <th class="sticky">스캔데이터</th>
+                    <th class="sticky" style="width: 880px; font-weight: normal"></th>
                 </tr>
                 </thead>
 
@@ -199,8 +200,9 @@
                     <td>Packing</td>
                     <td>{{ order.plant_start_dt.strftime('%Y-%m-%d') if order.plant_start_dt else '' }}</td>
                     <td>{{ order.prodt_order_qty | int }}</td>
-                    <td>{{ order.m_box_no or '' }}</td> <!-- Master Box no. -->
+                    <!--<td>{{ order.m_box_no or '' }}</td> Master Box no. -->
                     <td>{{ order.order_status }}</td>
+                    <td>배지들어올자리</td>
                     <td></td>
                 </tr>
                 {% endfor %}
@@ -301,14 +303,23 @@
             </div>
 
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-dismiss="modal"
-                        id="closeModalButton">닫기
-                </button>
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="saveChangesButton">
-                    <i class="bi bi-printer"></i> 등록 및 label 인쇄
-                </button>
+            <div class="modal-footer d-flex justify-content-between">
+                <div class="d-flex">
+                    <input type="text" id="udiInputFooter" class="form-control" placeholder="UDI 스캔"
+                           style="width: 370px; margin-right: 10px; border: none;">
+                    <input type="text" id="barcodeInputFooter" class="form-control" placeholder="바코드 스캔"
+                           style="width: 155px; border: none;">
+                </div>
+                <div>
+                    <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-dismiss="modal"
+                            id="closeModalButton">닫기
+                    </button>
+                    <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="saveChangesButton">
+                        <i class="bi bi-printer"></i> 등록 및 label 인쇄
+                    </button>
+                </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -727,9 +738,7 @@
 });
 
 
-
 </script>
-
 
 
 {% endblock %}

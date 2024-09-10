@@ -375,6 +375,25 @@ class Packing_Dtl(db.Model):
     packing_dt = db.Column(db.DateTime, nullable=True)
     exp_date = db.Column(db.DateTime, nullable=True)
 
+class Packing_Cs(db.Model):
+    __tablename__ = 'P_PACKING_CS'
+    __table_args__ = {'schema': 'dbo'}
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
+    prodt_order_no = db.Column(db.String(18), nullable=True)
+    m_box_no = db.Column(db.String(18), nullable=True)
+    cs_model = db.Column(db.String(18), nullable=True)
+    cs_qty = db.Column(db.String(18), nullable=True)
+    cs_lot_no = db.Column(db.String(18), nullable=True)
+    cs_prod_date = db.Column(db.String(18), nullable=True)
+    cs_exp_date = db.Column(db.String(18), nullable=True)
+    cs_udi_di = db.Column(db.String(18), nullable=True)
+    cs_udi_lotno = db.Column(db.String(18), nullable=True)
+    cs_udi_prod = db.Column(db.String(18), nullable=True)
+    cs_udi_serial = db.Column(db.String(18), nullable=True)
+    cs_udi_qr = db.Column(db.String(42), nullable=True)
+    print_flag = db.Column(db.String(3), nullable=True)
+
 class Biz_Partner(db.Model):
     __tablename__ = 'B_BIZ_PARTNER'
     __table_args__ = {'schema': 'dbo'}

@@ -10,7 +10,7 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Master, Biz_Partner, Purchase_Order, Storage_Location
+    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Master, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs
 from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
@@ -304,7 +304,7 @@ def product_register_result():
         if INSRT_DT_START:
             INSRT_DT_START = datetime.strptime(INSRT_DT_START, '%Y-%m-%d')
         if INSRT_DT_END:
-            INSRT_DT_END = datetime.strptime(INSRT_DT_END, '%Y-%m-%d')
+            INSRT_DT_END = datetime.strptime(INSRT_DT_END, '%Y-%m-%d') + timedelta(days=1, seconds=-1)
 
     if not INSRT_DT_START:
         INSRT_DT_START = datetime.today()
@@ -701,9 +701,11 @@ def get_next_master_box_no():
 @bp.route('/save_packing_data/', methods=['POST'])
 def save_packing_data():
     try:
+        # 요청 데이터 수신
         data = request.json
         logging.info(f"Received data: {data}")
 
+        # 변수 할당
         prodt_order_no = data['prodt_order_no']
         master_box_no = data['master_box_no']
         lot_no = data['lot_no']
@@ -718,49 +720,16 @@ def save_packing_data():
         cs_model = "SFFH-120R"
         cs_qty = "24"  # 텍스트 형태로 유지
         cs_lot_no = "123456789"
-        cs_prod_date = '2024-08-30'
-        cs_exp_date = '2027-08-30'
+        cs_prod_date = '20240830'
+        cs_exp_date = '20270830'
         cs_udi_di = master_box_no
         cs_udi_lotno = "1013456"
-        cs_udi_prod = "PROD123456"
-        cs_udi_serial = "SERIAL123456"
+        cs_udi_prod = '20240910'
+        cs_udi_serial = "SERIAL123456"  # 채번 로직 구현 예정
+        cs_udi_qr = f"{cs_udi_di}{cs_udi_lotno}{cs_udi_prod}{cs_exp_date}"  # QR 코드 생성 예시
+        print_flag = "N"  # 기본 프린트 상태
 
-        # P_PACKING_HDR 테이블 업데이트
-        hdr = db.session.query(Packing_Hdr).filter_by(prodt_order_no=prodt_order_no).first()
-        if hdr:
-            logging.info(f"Existing HDR found: {hdr}")
-            hdr.m_box_no = master_box_no
-            hdr.cs_model = cs_model
-            hdr.cs_qty = cs_qty
-            hdr.cs_lot_no = cs_lot_no
-            hdr.cs_prod_date = cs_prod_date
-            hdr.cs_exp_date = cs_exp_date
-            hdr.cs_udi_di = cs_udi_di
-            hdr.cs_udi_lotno = cs_udi_lotno
-            hdr.cs_udi_prod = cs_udi_prod
-            hdr.cs_udi_serial = cs_udi_serial
-        else:
-            logging.info(f"Creating new HDR entry for order: {prodt_order_no}")
-            hdr = Packing_Hdr(
-                prodt_order_no=prodt_order_no,
-                m_box_no=master_box_no,
-                plant_start_dt=packing_dt,  # 현재 서버 시간 사용
-                prod_qty_in_order_unit=quantity,
-                order_status='RL',
-                cs_model=cs_model,
-                cs_qty=cs_qty,
-                cs_lot_no=cs_lot_no,
-                cs_prod_date=cs_prod_date,
-                cs_exp_date=cs_exp_date,
-                cs_udi_di=cs_udi_di,
-                cs_udi_lotno=cs_udi_lotno,
-                cs_udi_prod=cs_udi_prod,
-                cs_udi_serial=cs_udi_serial
-            )
-            db.session.add(hdr)
-            logging.info(f"New HDR added: {hdr}")
-
-        # P_PACKING_DTL 테이블 삽입
+        # P_PACKING_DTL 테이블에 삽입 (기존 로직 유지)
         for row in rows:
             dtl = Packing_Dtl(
                 m_box_no=master_box_no,
@@ -773,19 +742,26 @@ def save_packing_data():
             db.session.add(dtl)
             logging.info(f"Added DTL: {dtl}")
 
-        # Production_Order 모델의 실적 수량 업데이트 로직
-        update_qty = int(cs_qty)  # cs_qty를 문자열에서 숫자로 변환
+        # P_PACKING_CS 테이블에 데이터 삽입
+        packing_cs = Packing_Cs(
+            prodt_order_no=prodt_order_no,
+            m_box_no=master_box_no,
+            cs_model=cs_model,
+            cs_qty=cs_qty,
+            cs_lot_no=cs_lot_no,
+            cs_prod_date=cs_prod_date,
+            cs_exp_date=cs_exp_date,
+            cs_udi_di=cs_udi_di,
+            cs_udi_lotno=cs_udi_lotno,
+            cs_udi_prod=cs_udi_prod,
+            cs_udi_serial=cs_udi_serial,
+            cs_udi_qr=cs_udi_qr,
+            print_flag=print_flag  # 초기값 'N'
+        )
+        db.session.add(packing_cs)
+        logging.info(f"Added Packing CS: {packing_cs}")
 
-        # Production_Order에서 PRODT_ORDER_NO에 해당하는 데이터를 찾아서 업데이트
-        prod_order = db.session.query(Production_Order).filter_by(PRODT_ORDER_NO=prodt_order_no).first()
-
-        if prod_order:
-            logging.info(f"Updating Production Order {prodt_order_no}, current quantity: {prod_order.PROD_QTY_IN_ORDER_UNIT}")
-            prod_order.PROD_QTY_IN_ORDER_UNIT += update_qty  # 24만큼 실적 수량 증가
-            logging.info(f"Updated Production Order quantity: {prod_order.PROD_QTY_IN_ORDER_UNIT}")
-        else:
-            logging.warning(f"Production Order not found for order: {prodt_order_no}")
-
+        # 트랜잭션 커밋
         db.session.commit()
         logging.info("Transaction committed successfully")
         return jsonify({"status": "success"})
@@ -794,10 +770,6 @@ def save_packing_data():
         db.session.rollback()
         logging.error(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-
-
-
 
 # --------------------------------------------------------
 
