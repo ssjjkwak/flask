@@ -628,12 +628,14 @@ def product_register_packing():
         if plants:
             PLANT_CD = plants[0][0]  # 첫 번째 공장을 기본값으로 설정
 
+    # Packing_Hdr와 Production_Order, Item을 조인하여 주문 정보 조회
     query = db.session.query(Packing_Hdr).join(
         Production_Order, Packing_Hdr.prodt_order_no == Production_Order.PRODT_ORDER_NO
     ).join(
         Item, Production_Order.ITEM_CD == Item.ITEM_CD
     )
 
+    # 필터링 조건 추가
     if PLANT_CD:
         query = query.filter(Production_Order.PLANT_CD == PLANT_CD)
     if WC_CD:
@@ -651,6 +653,14 @@ def product_register_packing():
 
     orders_with_hdr = query.all()
 
+    # Packing_Cs 모델에서 제조오더번호별로 MasterBoxNo를 조회
+    packing_cs_data = db.session.query(Packing_Cs.prodt_order_no, Packing_Cs.m_box_no).all()
+
+    # 제조오더번호별로 MasterBoxNo를 그룹화
+    master_box_grouped = defaultdict(list)
+    for order_no, m_box_no in packing_cs_data:
+        master_box_grouped[order_no].append(m_box_no)
+
     work_centers = db.session.query(Work_Center).all()
     items = db.session.query(Item).all()
 
@@ -659,10 +669,13 @@ def product_register_packing():
                            plants=plants,
                            work_centers=work_centers,
                            items=items,
+                           master_box_grouped=master_box_grouped,  # MasterBoxNo 데이터를 템플릿에 전달
                            PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS,
                            PLANT_START_DT=PLANT_START_DT,
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            form_submitted=form_submitted)
+
+
 
 
 # 바코드 스캔 데이터 검증 로직
@@ -687,13 +700,14 @@ def check_barcode():
 # box 번호 자동으로 넘어가는 로직
 @bp.route('/get_next_master_box_no/', methods=['GET'])
 def get_next_master_box_no():
-    last_master_box_no = db.session.query(func.max(Packing_Hdr.m_box_no)).filter(
-        Packing_Hdr.m_box_no.like('0880%')).scalar()
+    last_master_box_no = db.session.query(func.max(Packing_Cs.m_box_no)).filter(
+        Packing_Cs.m_box_no.like('0880%')).scalar()
     if last_master_box_no:
         next_master_box_no = int(last_master_box_no[4:]) + 1
         next_master_box_no = '0880' + str(next_master_box_no).zfill(8)
     else:
         next_master_box_no = '088000000001'
+
     return jsonify({"status": "success", "next_master_box_no": next_master_box_no})
 
 
@@ -720,13 +734,13 @@ def save_packing_data():
         cs_model = "SFFH-120R"
         cs_qty = "24"  # 텍스트 형태로 유지
         cs_lot_no = "123456789"
-        cs_prod_date = '20240830'
-        cs_exp_date = '20270830'
+        cs_prod_date = '20240910'
+        cs_exp_date = '20270910'
         cs_udi_di = master_box_no
         cs_udi_lotno = "1013456"
         cs_udi_prod = '20240910'
         cs_udi_serial = "SERIAL123456"  # 채번 로직 구현 예정
-        cs_udi_qr = f"{cs_udi_di}{cs_udi_lotno}{cs_udi_prod}{cs_exp_date}"  # QR 코드 생성 예시
+        cs_udi_qr = f"01{cs_udi_di}10{cs_udi_lotno}11{cs_udi_prod}17{cs_exp_date}"  # QR 코드 생성 예시
         print_flag = "N"  # 기본 프린트 상태
 
         # P_PACKING_DTL 테이블에 삽입 (기존 로직 유지)
