@@ -459,9 +459,9 @@
         }
     }
 
+    // Barcode 검증 및 pass가 뜨면 수량과 만기 날짜 설정
     function checkBarcode(udiQr, resultInput, rowIndex) {
-        // 바코드의 마지막 숫자를 제거하여 11자리만 사용
-        var barcodeWithoutCheckDigit = udiQr.slice(0, -1);
+        var barcodeWithoutCheckDigit = udiQr.slice(0, -1);  // 마지막 숫자 제거
         console.log('Checking barcode for UDI QR without check digit:', barcodeWithoutCheckDigit);
 
         fetch('/product/check_barcode/', {
@@ -476,7 +476,16 @@
             console.log('Barcode check response:', data);
             if (data.status === 'success') {
                 resultInput.value = 'PASS';
-                updateBarcodeScan5(barcodeWithoutCheckDigit); // 여기서도 체크 디지트 제외된 바코드를 사용
+
+                // 수량 증가 및 만기 날짜 설정
+                updateQuantityAndExpiryDate(); // 수량과 만기 날짜 업데이트
+
+                // LOT 값 설정
+                if (data.lot) {
+                    var lotNo = data.lot;
+                    document.getElementById('barcode_scan5').value = lotNo;  // LOT 번호 UI 업데이트
+                    console.log('LOT 번호 설정됨:', lotNo);
+                }
             } else {
                 resultInput.value = 'FAIL';
                 showErrorModal(rowIndex);
@@ -487,6 +496,38 @@
             showErrorModal(rowIndex);
         });
     }
+
+    // 수량 증가 및 만기 날짜 업데이트 함수
+    function updateQuantityAndExpiryDate() {
+        var tableBody = document.getElementById('modalTableBody');
+        var rows = tableBody.getElementsByTagName('tr');
+        var quantity = 0; // 수량 초기화
+
+        // 각 행의 UDI QR 입력을 처리하면서 유효한 값이 있을 때만 수량 증가
+        for (var i = 0; i < rows.length; i++) {
+            var udiQr = rows[i].querySelector('input[id^="udi-qr-"]').value;
+            if (udiQr) {
+                quantity++; // UDI QR 값이 있으면 수량 증가
+            }
+        }
+
+        // 수량을 barcode_scan6에 업데이트
+        var quantityField = document.getElementById('barcode_scan6');
+        quantityField.value = quantity; // 동적으로 수량 표시
+
+        // 만기 날짜 설정 (이미 설정되어 있으면 변경하지 않음)
+        var expiryDateField = document.getElementById('barcode_scan7');
+        if (!expiryDateField.value && quantity > 0) { // 만기 날짜가 설정되지 않고 수량이 1 이상일 때만 설정
+            var packingDate = document.getElementById('barcode_scan3').value;
+            var expiryDate = new Date(packingDate);
+            expiryDate.setFullYear(expiryDate.getFullYear() + 3); // 제조일자에서 3년 추가
+            expiryDateField.value = expiryDate.toISOString().split('T')[0]; // 날짜 형식으로 설정
+        } else if (quantity === 0) {
+            // 모든 UDI QR 입력이 비어있으면 만기 날짜도 초기화
+            expiryDateField.value = '';
+        }
+    }
+
 
 
     function updateBarcodeScan5(udiQr) {
@@ -547,28 +588,35 @@
         var packingDate = document.getElementById('barcode_scan3').value;
         console.log('Saving packing data for order no:', packingOrderNo);
         console.log('Packing date:', packingDate);
+
         var tableBody = document.getElementById('modalTableBody');
         var rows = tableBody.getElementsByTagName('tr');
 
-        var lotNo = 10001;
+        // 여기서 lotNo 값을 동적으로 할당
+        var lotNo = document.getElementById('barcode_scan5').value; // 검색된 LOT 번호가 할당된 barcode_scan5에서 가져옴
+        if (!lotNo) {
+            alert('LOT 번호가 지정되지 않았습니다.');
+            return;
+        }
+
         var serialNoBase = packingDate.replace(/-/g, '') + '001';
-        var quantity = rows.length;
-        var expiryDate = new Date(packingDate);
-        expiryDate.setFullYear(expiryDate.getFullYear() + 3);
-        expiryDate = expiryDate.toISOString().split('T')[0];
+        var quantity = document.getElementById('barcode_scan6').value || 0;  // 수량은 barcode_scan6에서 가져옴
+        var expiryDate = document.getElementById('barcode_scan7').value || '';  // 만기 날짜는 barcode_scan7에서 가져옴
 
         console.log('Generated serial no:', serialNoBase);
-        console.log('Generated expiry date:', expiryDate);
+        console.log('Expiry date:', expiryDate);
 
+        // packingData 객체 생성
         var packingData = {
             prodt_order_no: packingOrderNo,
-            lot_no: lotNo,
+            lot_no: lotNo,  // 동적으로 할당된 lotNo 사용
             serial_no: serialNoBase,
             quantity: quantity,
             expiry_date: expiryDate,
             rows: []
         };
 
+        // 각 행의 데이터를 수집하여 packingData.rows에 추가
         for (var i = 0; i < rows.length; i++) {
             var udiQr = rows[i].querySelector('input[id^="udi-qr-"]').value;
             var barcode = rows[i].querySelector('input[id^="barcode-di-"]').value;
@@ -579,6 +627,7 @@
             });
         }
 
+        // 마스터 박스 번호 생성 요청
         fetch('/product/get_next_master_box_no/', {
             method: 'GET',
             headers: {
@@ -591,63 +640,51 @@
             if (data.status === 'success') {
                 packingData.master_box_no = data.next_master_box_no;
 
-                fetch('/product/save_packing_data/', {
+                // 서버로 packingData 저장 요청
+                return fetch('/product/save_packing_data/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(packingData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Save packing data response:', data);
-                    if (data.status === 'success') {
-                        alert('데이터가 성공적으로 저장되었습니다.');
-
-                        if (document.getElementById('barcode_scan4')) {
-                                document.getElementById('barcode_scan4').value = packingData.master_box_no;
-                            } else {
-                                console.error("Element with ID 'barcode_scan4' not found");
-                            }
-
-                            if (document.getElementById('barcode_scan5')) {
-                                document.getElementById('barcode_scan5').value = packingData.lot_no;
-                            } else {
-                                console.error("Element with ID 'barcode_scan5' not found");
-                            }
-
-                            if (document.getElementById('barcode_scan6')) {
-                                document.getElementById('barcode_scan6').value = packingData.quantity;
-                            } else {
-                                console.error("Element with ID 'barcode_scan6' not found");
-                            }
-
-                            if (document.getElementById('barcode_scan7')) {
-                                document.getElementById('barcode_scan7').value = packingData.expiry_date;
-                            } else {
-                                console.error("Element with ID 'barcode_scan7' not found");
-                            }
-
-
-                        $('#successModalpacking').modal('show');
-
-                    } else {
-                        alert('데이터 저장 중 오류가 발생했습니다.111');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving packing data:', error);
-                    alert('데이터 저장 중 오류가 발생했습니다.222');
                 });
             } else {
-                alert('마스터 박스 번호 생성 중 오류가 발생했습니다.');
+                throw new Error('마스터 박스 번호 생성 중 오류가 발생했습니다.');
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Save packing data response:', data);
+            if (data.status === 'success') {
+                alert('데이터가 성공적으로 저장되었습니다.');
+
+                // UI 업데이트
+                if (document.getElementById('barcode_scan4')) {
+                    document.getElementById('barcode_scan4').value = packingData.master_box_no;
+                } else {
+                    console.error("Element with ID 'barcode_scan4' not found");
+                }
+
+                if (document.getElementById('barcode_scan5')) {
+                    document.getElementById('barcode_scan5').value = packingData.lot_no;
+                } else {
+                    console.error("Element with ID 'barcode_scan5' not found");
+                }
+
+                $('#successModalpacking').modal('show');
+            } else {
+                throw new Error('데이터 저장 중 오류가 발생했습니다.');
             }
         })
         .catch(error => {
-            console.error('Error fetching next master box no:', error);
-            alert('마스터 박스 번호 생성 중 오류가 발생했습니다.');
+            console.error('Error saving packing data:', error);
+            alert(error.message || '데이터 저장 중 오류가 발생했습니다.');
         });
     }
+
+
+
+
 
     document.getElementById('printLabelButton').addEventListener('click', function() {
     var packingOrderNo = document.getElementById('packing_order_no').value;

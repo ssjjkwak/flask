@@ -391,7 +391,7 @@ class Packing_Cs(db.Model):
     cs_udi_lotno = db.Column(db.String(18), nullable=True)
     cs_udi_prod = db.Column(db.String(18), nullable=True)
     cs_udi_serial = db.Column(db.String(18), nullable=True)
-    cs_udi_qr = db.Column(db.String(42), nullable=True)
+    cs_udi_qr = db.Column(db.String(50), nullable=True)
     print_flag = db.Column(db.String(3), nullable=True)
 
 class Biz_Partner(db.Model):

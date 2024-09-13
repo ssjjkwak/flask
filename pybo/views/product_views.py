@@ -685,6 +685,7 @@ def check_barcode():
     if not barcode:
         return jsonify({"status": "error", "message": "Barcode is required"}), 400
 
+    # 기존 Production_Barcode_Assign 검증 로직 유지
     barcode_data = db.session.query(Production_Barcode_Assign).filter(
         Production_Barcode_Assign.barcode == barcode,
         Production_Barcode_Assign.WC_CD == 'WSF60',
@@ -692,9 +693,18 @@ def check_barcode():
     ).first()
 
     if barcode_data:
-        return jsonify({"status": "success", "message": "PASS"})
+        # 바코드가 유효한 경우, Product_Alpha에서 LOT 값을 조회
+        product_alpha = db.session.query(Production_Alpha).filter_by(barcode=barcode).first()
+
+        if product_alpha:
+            lot_no = product_alpha.LOT  # LOT 값을 가져옴
+            return jsonify({"status": "success", "message": "PASS", "lot": lot_no})
+        else:
+            return jsonify({"status": "success", "message": "PASS", "lot": None})
     else:
         return jsonify({"status": "fail", "message": "FAIL"})
+
+
 
 
 # box 번호 자동으로 넘어가는 로직
@@ -711,79 +721,140 @@ def get_next_master_box_no():
     return jsonify({"status": "success", "next_master_box_no": next_master_box_no})
 
 
+def date_to_hex(date_obj):
+    year = date_obj.year % 100  # 마지막 두 자리만 사용
+    month = date_obj.month
+    day = date_obj.day
+    return f"{year:02X}{month:02X}{day:02X}"  # 16진수로 변환
+
+def generate_new_serial(date_obj):
+    # 날짜를 16진수로 변환 (예: '7E912')
+    date_hex = date_to_hex(date_obj)
+
+    # 오늘 날짜에 해당하는 시리얼 번호 중 가장 큰 값 조회 (예: 7E9120001 형태)
+    max_serial = db.session.query(func.max(Packing_Cs.cs_udi_serial)).filter(
+        Packing_Cs.cs_udi_serial.like(f"{date_hex}%")
+    ).scalar()
+
+    if max_serial:
+        # 16진수 날짜 뒤의 숫자 부분 추출, 숫자로 변환 후 1 증가
+        last_sequence = int(max_serial[-3:])  # 마지막 3자리 숫자
+        new_sequence = last_sequence + 1
+    else:
+        # 처음 생성되는 시리얼 번호
+        new_sequence = 1
+
+    # 새로운 시리얼 번호 생성 (예: '7E912001')
+    new_serial = f"{date_hex}{new_sequence:03}"
+    return new_serial
+
 # 데이터 db에 insert
 @bp.route('/save_packing_data/', methods=['POST'])
 def save_packing_data():
     try:
-        # 요청 데이터 수신
+        # 클라이언트에서 전송된 JSON 데이터 수신
         data = request.json
-        logging.info(f"Received data: {data}")
+        logging.info(f"Received packing data: {data}")
 
-        # 변수 할당
+        # 데이터 할당
         prodt_order_no = data['prodt_order_no']
         master_box_no = data['master_box_no']
         lot_no = data['lot_no']
         quantity = data['quantity']
-        packing_dt = datetime.now()  # 현재 서버 시간을 사용하여 packing_dt 설정
+        prod_qty = int(data['quantity'])
+        packing_dt = datetime.now()  # 현재 시간을 사용하여 패킹일자 설정
         expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d')
-        rows = data['rows']
+        rows = data['rows']  # UDI QR 및 Barcode 데이터가 포함된 리스트
+        cs_udi_serial = generate_new_serial(packing_dt)
 
-        logging.info(f"Processing order: {prodt_order_no} with box no: {master_box_no}")
+        # Production_Order 모델에서 prodt_order_no로 ITEM_CD 조회
+        production_order = db.session.query(Production_Order).filter_by(PRODT_ORDER_NO=prodt_order_no).first()
+        if not production_order:
+            raise Exception(f"Production order {prodt_order_no} not found")
 
-        # 하드코딩된 값
-        cs_model = "SFFH-120R"
-        cs_qty = "24"  # 텍스트 형태로 유지
-        cs_lot_no = "123456789"
-        cs_prod_date = '20240910'
-        cs_exp_date = '20270910'
-        cs_udi_di = master_box_no
-        cs_udi_lotno = "1013456"
-        cs_udi_prod = '20240910'
-        cs_udi_serial = "SERIAL123456"  # 채번 로직 구현 예정
-        cs_udi_qr = f"01{cs_udi_di}10{cs_udi_lotno}11{cs_udi_prod}17{cs_exp_date}"  # QR 코드 생성 예시
-        print_flag = "N"  # 기본 프린트 상태
+        item_cd = production_order.ITEM_CD  # 조회된 ITEM_CD
 
-        # P_PACKING_DTL 테이블에 삽입 (기존 로직 유지)
+        # Item 모델에서 해당 ITEM_CD로 alpha_code 조회
+        item = db.session.query(Item).filter_by(ITEM_CD=item_cd).first()
+        if not item:
+            raise Exception(f"Item with ITEM_CD {item_cd} not found")
+
+        alpha_code = item.ALPHA_CODE  # 조회된 alpha_code
+
+        # Item 모델에서 alpha_code로 ITEM_ACC가 '10'인 데이터의 ITEM_CD 조회
+        cs_model_item = db.session.query(Item).filter_by(ALPHA_CODE=alpha_code, ITEM_ACCT='10').first()
+        if not cs_model_item:
+            raise Exception(f"Item with ALPHA_CODE {alpha_code} and ITEM_ACCT '10' not found")
+
+        cs_model = cs_model_item.ITEM_NM  # 최종적으로 조회된 ITEM_NM가 cs_model
+
+        logging.info(f"Processing order: {prodt_order_no} with master box no: {master_box_no} and cs_model: {cs_model}")
+
+        # P_PACKING_DTL 테이블에 각 행 데이터를 삽입
         for row in rows:
+            # barcode의 마지막 1자리 제거
+            modified_barcode = row['udi_qr'][:-1]  # 마지막 한 자리를 제거
+
             dtl = Packing_Dtl(
                 m_box_no=master_box_no,
                 lot_no=lot_no,
-                udi_code=row['barcode'],
-                barcode=row['udi_qr'],
-                packing_dt=packing_dt,  # 현재 서버 시간 사용
-                exp_date=expiry_date
+                barcode=modified_barcode,  # 수정된 바코드
+                udi_code=row['barcode'],  # 각 행의 바코드
+                packing_dt=packing_dt,  # 패킹일자
+                exp_date=expiry_date  # 만기일자
             )
-            db.session.add(dtl)
-            logging.info(f"Added DTL: {dtl}")
+            db.session.add(dtl)  # 데이터베이스에 삽입 대기
+            logging.info(f"Added Packing Detail: {dtl}")
 
-        # P_PACKING_CS 테이블에 데이터 삽입
+            # P_PRODUCTION_BARCODE_ASSN 테이블에 barcode로 데이터 삽입
+            barcode_assn = Production_Barcode_Assign(
+                barcode=modified_barcode,  # 수정된 바코드 사용
+                PRODT_ORDER_NO=prodt_order_no,
+                BOX_NUM=master_box_no,
+                OPR_NO='10',  # 고정 값
+                WC_CD='WSF70',  # 고정 값
+                REPORT_TYPE='G',  # 고정 값
+                INSRT_USR=g.user.USR_ID,  # 유저 정보가 있다면 사용
+                UPDT_USR=g.user.USR_ID
+            )
+            db.session.add(barcode_assn)  # 데이터베이스에 삽입 대기
+            logging.info(f"Added Barcode Assignment: {barcode_assn}")
+
+        # P_PACKING_CS 테이블에 마스터 박스 정보 저장
         packing_cs = Packing_Cs(
             prodt_order_no=prodt_order_no,
+            cs_model=cs_model,  # 조회된 cs_model 사용
             m_box_no=master_box_no,
-            cs_model=cs_model,
-            cs_qty=cs_qty,
-            cs_lot_no=cs_lot_no,
-            cs_prod_date=cs_prod_date,
-            cs_exp_date=cs_exp_date,
-            cs_udi_di=cs_udi_di,
-            cs_udi_lotno=cs_udi_lotno,
-            cs_udi_prod=cs_udi_prod,
+            cs_qty=quantity,  # 수량 저장
+            cs_lot_no=lot_no,
+            cs_udi_di='08809931850003',  # 실제 SynoFlux120L 1개 짜리 DI
+            cs_udi_lotno=lot_no,
+            cs_udi_prod=packing_dt.strftime('%Y%m%d'),
+            cs_prod_date=packing_dt.strftime('%Y%m%d'),  # 패킹일자
+            cs_exp_date=expiry_date.strftime('%Y%m%d'),  # 만기일자
             cs_udi_serial=cs_udi_serial,
-            cs_udi_qr=cs_udi_qr,
-            print_flag=print_flag  # 초기값 'N'
+            cs_udi_qr=f"01{master_box_no}10{lot_no}11{packing_dt.strftime('%Y%m%d')}17{expiry_date.strftime('%Y%m%d')}",
+            print_flag="N"  # 기본 프린트 상태
         )
-        db.session.add(packing_cs)
-        logging.info(f"Added Packing CS: {packing_cs}")
 
-        # 트랜잭션 커밋
+        db.session.add(packing_cs)  # 데이터베이스에 삽입 대기
+        logging.info(f"Added Packing Master: {packing_cs}")
+
+        production_order.PROD_QTY_IN_ORDER_UNIT = production_order.PROD_QTY_IN_ORDER_UNIT + prod_qty
+        logging.info(f"Updated Production Order: {prodt_order_no}, new PROD_QTY_IN_ORDER_UNIT: {production_order.PROD_QTY_IN_ORDER_UNIT}")
+
+        # 트랜잭션 커밋 (모든 작업 완료 후 DB에 반영)
         db.session.commit()
         logging.info("Transaction committed successfully")
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success"})  # 성공 응답 전송
 
     except Exception as e:
-        db.session.rollback()
+        db.session.rollback()  # 오류 발생 시 트랜잭션 롤백
         logging.error(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
+
 
 # --------------------------------------------------------
 

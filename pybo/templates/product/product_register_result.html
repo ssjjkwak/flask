@@ -133,7 +133,7 @@
                         <td>{{ row[0].OPR_NO }}</td>
                         <td>{{ row[0].WC_CD }}</td>
                         <td>{{ row[0].REPORT_TYPE }}</td>
-                        <td>{{ row[0].BOX_NUM | none_to_dash }}</td>
+                        <td><span class="badge bg-primary">{{ row[0].BOX_NUM | none_to_dash }}</span></td>
                         <td></td>
                     </tr>
                 {% endfor %}
