@@ -691,6 +691,7 @@ def check_barcode():
         Production_Barcode_Assign.WC_CD == 'WSF60',
         Production_Barcode_Assign.REPORT_TYPE == 'G'
     ).first()
+    print(f"Received barcode: {barcode}")
 
     if barcode_data:
         # 바코드가 유효한 경우, Product_Alpha에서 LOT 값을 조회
