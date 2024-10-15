@@ -384,6 +384,8 @@
         }
     });
 
+    //
+
     window.onload = function() {
         var today = new Date();
         var day = today.getDate();
@@ -523,6 +525,7 @@
             expiryDate.setFullYear(expiryDate.getFullYear() + 3); // 제조일자에서 3년 추가
             expiryDateField.value = expiryDate.toISOString().split('T')[0]; // 날짜 형식으로 설정
         } else if (quantity === 0) {
+
             // 모든 UDI QR 입력이 비어있으면 만기 날짜도 초기화
             expiryDateField.value = '';
         }
