@@ -9,12 +9,12 @@
             <div>전체 유저 수 : <span style="font-weight: bold; color: blue;">{{ total_users }}</span></div>
             <form class="shadow-sm" style="display: flex;">
                 <div class="input-group">
-                    <input type="text" class="form-control bg-light border-0 small" placeholder="검색" aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
+                    <!--<input type="text" class="form-control bg-light border-0 small" placeholder="검색" aria-label="Search" id="search_kw" aria-describedby="basic-addon2" value="{{ kw or '' }}">
                     <div class="input-group-append">
                         <button class="btn btn-light btn shadow-sm" type="button">
                             검색
                         </button>
-                    </div>
+                    </div>-->
                 </div>
             </form>
             <a href="{{ url_for('auth.signup') }}" class="btn btn-light btn-sm shadow-sm ms-3">사용자 계정 생성</a>

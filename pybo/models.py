@@ -60,7 +60,7 @@ class Item(db.Model):
     PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
     ITEM_CD = db.Column(db.NVARCHAR(50), primary_key=True)
     ITEM_NM = db.Column(db.NVARCHAR(100), nullable=True)
-    SPEC = db.Column(db.NVARCHAR(20), nullable=True)
+    SPEC = db.Column(db.NVARCHAR(40), nullable=True)
     ITEM_ACCT = db.Column(db.NCHAR(2), nullable=True)
     BASIC_UNIT = db.Column(db.NVARCHAR(3), nullable=True)
     ITEM_GROUP_CD = db.Column(db.NVARCHAR(50), nullable=True)
@@ -353,15 +353,7 @@ class Packing_Hdr(db.Model):
     prodt_order_qty = db.Column(db.Numeric(18, 6), nullable=True)
     prod_qty_in_order_unit = db.Column(db.Numeric(18, 6), nullable=True)
     order_status = db.Column(db.String(4), nullable=True)
-    cs_model = db.Column(db.String(18), nullable=True)
-    cs_qty = db.Column(db.String(18), nullable=True)
-    cs_lot_no = db.Column(db.String(18), nullable=True)
-    cs_prod_date = db.Column(db.String(18), nullable=True)
-    cs_exp_date = db.Column(db.String(18), nullable=True)
-    cs_udi_di = db.Column(db.String(18), nullable=True)
-    cs_udi_lotno = db.Column(db.String(18), nullable=True)
-    cs_udi_prod = db.Column(db.String(18), nullable=True)
-    cs_udi_serial = db.Column(db.String(18), nullable=True)
+
 
 class Packing_Dtl(db.Model):
     __tablename__ = 'P_PACKING_DTL'

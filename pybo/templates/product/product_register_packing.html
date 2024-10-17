@@ -80,6 +80,17 @@
         max-width: 100%;
     }
 
+    .badge-container .badge {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .badge-container .badge:hover {
+        background-color: #5a9; /* 호버 시 배경색 변경 */
+        color: white;           /* 호버 시 글자 색 변경 */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 약간의 그림자 효과 */
+        transform: scale(1.05); /* 살짝 확대 */
+    }
 
 
 </style>
@@ -190,17 +201,19 @@
                     <td>{{ order.plant_start_dt.strftime('%Y-%m-%d') if order.plant_start_dt else '' }}</td>
                     <td>{{ order.prodt_order_qty | int }}</td>
                     <td>{{ order.order_status }}</td>
+                    <!-- 기존 박스 번호에 클릭 이벤트 추가 -->
                     <td>
                         <div class="badge-container">
                             {% if master_box_grouped[order.prodt_order_no] %}
                                 {% for m_box_no in master_box_grouped[order.prodt_order_no] %}
-                                    <span class="badge bg-primary">{{ m_box_no }}</span>
+                                    <span class="badge bg-primary master-box" data-box-no="{{ m_box_no }}">{{ m_box_no }}</span>
                                 {% endfor %}
                             {% else %}
                                 <span class="badge bg-secondary">No Master Box</span>
                             {% endif %}
                         </div>
                     </td>
+
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -237,7 +250,7 @@
                                 <input type="text" class="form-control" id="packing_order_no" disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan3">Packing 제조일자</label>
+                                <label for="barcode_scan3">Packing일자</label>
                                 <input type="text" class="form-control" id="barcode_scan3" disabled>
                             </div>
                             <div class="mb-3 col-10">
@@ -332,12 +345,63 @@
     </div>
 </div>
 
+<!-- Master Box Details Modal -->
+<div class="modal fade" id="masterBoxDetailsModal" tabindex="-1" role="dialog" aria-labelledby="masterBoxDetailsModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="masterBoxDetailsModalLabel">바코드 상세조회</h5>
+            </div>
+            <div class="modal-body">
+                <!-- 추가된 상단 테이블 (Packing_Cs 데이터) -->
+                <table class="table table-sm table-bordered" style="text-align: center; margin-bottom: 20px;">
+                    <thead>
+                        <tr>
+                            <th>모델명</th>
+                            <th>생산일자</th>
+                            <th>유효일자</th>
+                            <th>S/N</th>
+                            <th>Box Label QR 코드</th>
+                        </tr>
+                    </thead>
+                    <tbody id="csDetailsBody">
+                        <!-- 여기서 서버에서 가져온 cs_data 데이터를 채울 예정 -->
+                    </tbody>
+                </table>
+
+                <!-- 기존 하단 테이블 (Packing_Dtl 데이터) -->
+                <table class="table table-sm table-bordered" style="text-align: center;">
+                    <thead>
+                        <tr>
+                            <th>Lot No</th>
+                            <th>제품 UDI QR</th>
+                            <th>Barcode</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterBoxDetailsBody">
+                        <!-- 여기서 서버에서 가져온 데이터를 채울 예정 -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="closeModalButton2">닫기</button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="printMasterBoxButton"><i class="bi bi-printer"></i> label 재인쇄</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <script>
     var selectedOrderNo = '';
 
     document.getElementById('closeModalButton').addEventListener('click', function () {
         $('#packingModal').modal('hide');
+    });
+
+    document.getElementById('closeModalButton2').addEventListener('click', function () {
+        $('#masterBoxDetailsModal').modal('hide');
     });
 
     document.querySelectorAll('#dataTable tbody tr').forEach(row => {
@@ -406,12 +470,30 @@
             }
 
             if (printLabelButton) {
-                printLabelButton.addEventListener('click', function() {
-                    // 여기에 인쇄 버튼 클릭 시 처리 로직 추가
-                    // 공사중
-                    console.log('Save Changes Button Clicked 333');
+            printLabelButton.addEventListener('click', function() {
+                var boxNo = document.querySelector('.master-box').getAttribute('data-box-no');  // 박스 번호 가져오기
+
+                console.log('버튼클릭 성공');
+                // 서버로 박스 번호를 전송 (POST 요청)
+                fetch('/print_label/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ box_no: boxNo })  // 박스 번호 전송
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert('라벨이 성공적으로 프린트되었습니다!');
+                    } else {
+                        alert('프린트 중 오류 발생: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('프린트 중 오류 발생:', error);
                 });
-            }
+            });
         });
 
         // 나머지 초기화 코드...
@@ -463,6 +545,69 @@
 
             tableBody.appendChild(row);
         }
+
+        // 박스 번호를 클릭했을 때 이벤트 처리
+        document.querySelectorAll('.master-box').forEach(box => {
+            box.addEventListener('click', function() {
+                var boxNo = this.getAttribute('data-box-no');
+                console.log('Clicked Box No:', boxNo);
+
+                // 해당 박스 번호의 데이터를 서버에서 불러옴
+                fetch(`/product/get_box_details/${boxNo}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // 상단 cs_data 데이터를 모달에 출력
+                        var csModalBody = document.getElementById('csDetailsBody');
+                        csModalBody.innerHTML = '';  // 기존 데이터를 클리어
+                        if (data.cs_details) {
+                            var tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${data.cs_details.cs_model}</td>
+                                <td>${data.cs_details.cs_prod_date}</td>
+                                <td>${data.cs_details.cs_exp_date}</td>
+                                <td>${data.cs_details.cs_udi_serial}</td>
+                                <td>${data.cs_details.cs_udi_qr}</td>
+                            `;
+                            csModalBody.appendChild(tr);
+                        }
+
+                        // 하단 Packing_Dtl 데이터를 모달에 출력
+                        var modalBody = document.getElementById('masterBoxDetailsBody');
+                        modalBody.innerHTML = '';  // 기존 데이터를 클리어
+
+                        data.rows.forEach(row => {
+                            var tr = document.createElement('tr');
+
+                            var lotNoTd = document.createElement('td');
+                            lotNoTd.textContent = row.lot_no;
+                            tr.appendChild(lotNoTd);
+
+                            var udiQrTd = document.createElement('td');
+                            udiQrTd.textContent = row.udi_code;
+                            tr.appendChild(udiQrTd);
+
+                            var barcodeTd = document.createElement('td');
+                            barcodeTd.textContent = row.barcode;
+                            tr.appendChild(barcodeTd);
+
+                            modalBody.appendChild(tr);
+                        });
+
+                        // 모달을 띄움
+                        var masterBoxDetailsModal = new bootstrap.Modal(document.getElementById('masterBoxDetailsModal'));
+                        masterBoxDetailsModal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching box details:', error);
+                    });
+            });
+        });
+
+        // Print 버튼 클릭 시 이벤트 처리
+        document.getElementById('printMasterBoxButton').addEventListener('click', function() {
+            // 인쇄 로직 추가
+            window.print();  // 간단하게 페이지 전체 인쇄
+        });
     };
 
 
@@ -633,6 +778,9 @@
             input.value = '';
         });
     }
+
+
+
 </script>
 
 {% endblock %}

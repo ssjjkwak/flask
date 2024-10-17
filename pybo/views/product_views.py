@@ -834,7 +834,7 @@ def save_packing_data():
             cs_prod_date=packing_dt.strftime('%Y%m%d'),  # 패킹일자
             cs_exp_date=expiry_date.strftime('%Y%m%d'),  # 만기일자
             cs_udi_serial=cs_udi_serial,
-            cs_udi_qr=f"01{master_box_no}10{lot_no}11{packing_dt.strftime('%Y%m%d')}17{expiry_date.strftime('%Y%m%d')}",
+            cs_udi_qr=f"010880993185000310{lot_no}11{packing_dt.strftime('%Y%m%d')}17{expiry_date.strftime('%Y%m%d')}",
             print_flag="N"  # 기본 프린트 상태
         )
 
@@ -855,13 +855,21 @@ def save_packing_data():
         return jsonify({"error": str(e)}), 500
 
 
-
-
 # --------------------------------------------------------
 
 @bp.route('/print_label/', methods=['POST'])
 def print_label():
     try:
+        # 클라이언트에서 박스 번호를 받음
+        box_no = request.json.get('box_no')
+        if not box_no:
+            return jsonify({'error': '박스 번호가 제공되지 않았습니다.'}), 400
+
+        # 박스 번호에 해당하는 레코드를 찾음
+        print_data = db.session.query(Print_Cs).filter_by(m_box_no=box_no).first()
+        if not print_data:
+            return jsonify({'error': '해당 박스 번호에 대한 데이터를 찾을 수 없습니다.'}), 404
+
         logging.info("Creating CODESOFT application object...")
         codesoft = win32com.client.Dispatch("Lppx2.Application")
         if codesoft is None:
@@ -893,6 +901,10 @@ def print_label():
         label_document.PrintDocument(1)  # 1 장 인쇄
         logging.info("Document printed successfully.")
 
+        # print_flag를 'Y'로 업데이트
+        print_data.print_flag = 'Y'
+        db.session.commit()  # 변경 사항 저장
+
         label_document.Close(False)
         logging.info("Label document closed.")
 
@@ -902,7 +914,52 @@ def print_label():
         return jsonify({'error': str(e)}), 500
 
 
+
 # --------------------------------------------------------
+# 재프린트 로직 Y를 다시 N으로 바꿔서 프린트로직 똑같이 태우고 프린트 완료되면 다시 Y로 바꾸는 방식
+@bp.route('/reprint_label/<box_no>', methods=['POST'])
+def reprint_label(box_no):
+    try:
+        # Step 1: Print_Cs 테이블에서 해당 박스 번호로 print_flag 확인
+        print_data = db.session.query(Print_Cs).filter_by(m_box_no=box_no).first()
+
+        if not print_data:
+            return jsonify({'error': '해당 박스를 찾을 수 없습니다.'}), 404
+
+        # Step 2: print_flag가 Y일 경우 N으로 설정하여 재프린트를 허용
+        if print_data.print_flag == 'Y':
+            print_data.print_flag = 'N'
+            db.session.commit()
+
+        # Step 3: CodeSoft로 라벨 파일 열고 프린트
+        codesoft = win32com.client.Dispatch("Lppx2.Application")
+        codesoft.Visible = True
+
+        # 라벨 파일 경로
+        label_path = r'C:\\Users\\user\\Desktop\\디지털정보화팀\\flask-master\\pybo\\static\\lbl\\boxno.lab'
+        if not os.path.exists(label_path):
+            return jsonify({'error': '라벨 파일을 찾을 수 없습니다.'}), 500
+
+        # 라벨 파일을 열고 1장을 출력
+        label_document = codesoft.Documents.Open(label_path, True)
+        label_document.PrintDocument(1)
+
+        # 라벨 파일 닫기
+        label_document.Close(False)
+
+        # Step 4: 프린트 완료 후 print_flag를 다시 Y로 변경
+        print_data.print_flag = 'Y'
+        db.session.commit()
+
+        return jsonify({'message': '라벨이 성공적으로 재프린트되었습니다.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
+
 
 # 외주발주조회
 @bp.route('/register_result_sterilizating/', methods=['GET', 'POST'])
@@ -1010,6 +1067,34 @@ def product_register_sterilizating():
                            INSRT_DT_START=INSRT_DT_START,
                            INSRT_DT_END=INSRT_DT_END,
                            PO_STATUS=PO_STATUS)
+
+
+@bp.route('/get_box_details/<box_no>', methods=['GET'])
+def get_box_details(box_no):
+    # 박스 번호로 해당 데이터를 DB에서 가져옴 (Packing_Dtl)
+    box_data = db.session.query(Packing_Dtl).filter_by(m_box_no=box_no).all()
+
+    # Packing_Cs에서 추가 데이터를 조회
+    cs_data = db.session.query(Packing_Cs).filter_by(m_box_no=box_no).first()
+
+    rows = []
+    for item in box_data:
+        rows.append({
+            'lot_no': item.lot_no,
+            'udi_code': item.udi_code,
+            'barcode': item.barcode
+        })
+
+    # 추가로 cs_data의 정보를 같이 반환
+    cs_details = {
+        'cs_model': cs_data.cs_model,
+        'cs_prod_date': cs_data.cs_prod_date,
+        'cs_exp_date': cs_data.cs_exp_date,
+        'cs_udi_serial': cs_data.cs_udi_serial,
+        'cs_udi_qr': cs_data.cs_udi_qr
+    } if cs_data else {}
+
+    return jsonify({'rows': rows, 'cs_details': cs_details})
 
 
 # 외주실적등록
