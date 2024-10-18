@@ -448,28 +448,29 @@
             } else {
                 console.error("UDI or Barcode input footer not found.");
             }
+        });
 
-            // closeErrorModalButton과 printLabelButton에 이벤트 리스너를 추가
-            var closeErrorModalButton = document.getElementById('closeErrorModalButton');
-            var printLabelButton = document.getElementById('printLabelButton');
-            var saveChangesButton = document.getElementById('saveChangesButton');
+        // closeErrorModalButton과 printLabelButton에 이벤트 리스너를 추가
+        var closeErrorModalButton = document.getElementById('closeErrorModalButton');
+        var printLabelButton = document.getElementById('printLabelButton');
+        var saveChangesButton = document.getElementById('saveChangesButton');
 
-            if (closeErrorModalButton) {
-                closeErrorModalButton.addEventListener('click', function() {
-                    clearInputs();
-                });
-            }
+        if (closeErrorModalButton) {
+            closeErrorModalButton.addEventListener('click', function() {
+                clearInputs();
+            });
+        }
 
-            if (saveChangesButton) {
-                saveChangesButton.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    console.log('Save Changes Button Clicked');
-                    savePackingData();  // savePackingData 함수 호출
-                    console.log('Save Changes Button Clicked 222');
-                });
-            }
+        if (saveChangesButton) {
+            saveChangesButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                console.log('Save Changes Button Clicked');
+                savePackingData();  // savePackingData 함수 호출
+                console.log('Save Changes Button Clicked 222');
+            });
+        }
 
-            if (printLabelButton) {
+        if (printLabelButton) {
             printLabelButton.addEventListener('click', function() {
                 var boxNo = document.querySelector('.master-box').getAttribute('data-box-no');  // 박스 번호 가져오기
 
@@ -494,7 +495,7 @@
                     console.error('프린트 중 오류 발생:', error);
                 });
             });
-        });
+        }
 
         // 나머지 초기화 코드...
         var today = new Date();

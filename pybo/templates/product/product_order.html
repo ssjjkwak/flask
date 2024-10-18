@@ -182,14 +182,14 @@
             <div class="col-md-3">
                 <div class="mb-1 col-8 d-flex align-items-center">
                     <label for="start_date" class="form-label me-3" style="min-width: 110px;">
-                        &emsp;&emsp;계획일자
+                        계획지시일자
                     </label>
                     <div class="d-flex">
                         <input type="date" class="form-control form-control-sm me-2" id="start_date" name="start_date"
-                               value="{{ PLANT_START_DT.strftime('%Y-%m-%d') if PLANT_START_DT else '' }}">
+                               value="{{ RELEASE_START_DT.strftime('%Y-%m-%d') if RELEASE_START_DT else '' }}">
                         <span class="mx-2">~</span>
                         <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
-                               value="{{ PLANT_COMPT_DT.strftime('%Y-%m-%d') if PLANT_COMPT_DT else '' }}">
+                               value="{{ RELEASE_END_DT.strftime('%Y-%m-%d') if RELEASE_END_DT else '' }}">
                     </div>
                 </div>
                 <div class="mb-1 col-8 d-flex align-items-center">
@@ -207,15 +207,18 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">
-                    <label for="start_date" class="form-label me-3" style="min-width: 110px;">
-                        emptylabel
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="sl_cd" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;&emsp;창고
                     </label>
-                    <div class="d-flex">
-                        <input type="text" class="form-control form-control-sm flex-grow-1" id="prodt_order_no2123"
-                               name="prodt_order_no"
-                               value="{{ PRODT_ORDER_NO }}">
-                    </div>
+                    <select class="form-select form-select-sm" id="sl_cd" name="sl_cd">
+                        <option value="">-</option>
+                        {% for storage_location in storage_locations %}
+                        <option value="{{ storage_location.SL_CD }}" {% if storage_location.SL_CD == SL_CD %}selected{% endif %}>
+                            {{ storage_location.SL_CD }} {{ storage_location.SL_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="mb-1 col-8 d-flex align-items-center">
                     <label for="alpha_code" class="form-label me-3" style="min-width: 110px;">
@@ -252,12 +255,13 @@
                     <th class="sticky">제조오더번호</th>
                     <th class="sticky">Seq</th>
                     <th class="sticky">공장</th>
-                    <th class="sticky">작업공정</th>
-                    <th class="sticky">공정명</th>
                     <th class="sticky">품목</th>
                     <th class="sticky">품목명</th>
                     <th class="sticky">품목규격</th>
                     <th class="sticky">단위</th>
+                    <th class="sticky">작업공정</th>
+                    <th class="sticky">공정명</th>
+                    <th class="sticky">창고</th>
                     <th class="sticky">계획지시일</th>
                     <th class="sticky">계획수량</th>
                     <th class="sticky">실적수량</th>
@@ -269,19 +273,20 @@
                 </thead>
 
                 <tbody>
-                {% for (order_item, item), (order_wc, wc) in zip(orders_with_items, orders_with_wcs) %}
+                {% for (order_item, item, storage_location), (order_wc, wc, storage_location_wc) in zip(orders_with_items, orders_with_wcs) %}
                 <tr data-order-no="{{ order_item.PRODT_ORDER_NO }}" data-item-cd="{{ order_item.ITEM_CD }}"
                     class="{% if order_item.ORDER_STATUS == 'CL' %}completed-order{% endif %}">
                     <td>{{ loop.index }}</td>
                     <td>{{ order_item.PRODT_ORDER_NO }}</td>
                     <td>{{ order_item.OPR_NO }}</td>
                     <td>{{ order_item.PLANT_CD }}</td>
-                    <td>{{ order_item.WC_CD }}</td>
-                    <td style="text-align: left;">{{ wc.WC_NM }}</td>
                     <td>{{ order_item.ITEM_CD }}</td>
                     <td style="text-align: left;">{{ item.ITEM_NM }}</td>
                     <td>{{ item.SPEC }}</td>
                     <td>{{ order_item.PRODT_ORDER_UNIT }}</td>
+                    <td>{{ order_item.WC_CD }}</td>
+                    <td style="text-align: left;">{{ wc.WC_NM }}</td>
+                    <td>{{ order_item.SL_CD }}</td>
                     <td>{{ order_item.RELEASE_DT.strftime('%Y-%m-%d') }}</td>
                     <td style="text-align: right;">{{ order_item.PRODT_ORDER_QTY | int }}</td>
                     <td style="text-align: right;">{{ order_item.PROD_QTY_IN_ORDER_UNIT | int }}</td>

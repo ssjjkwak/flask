@@ -27,10 +27,11 @@ def product_order():
     WC_CD = ''
     ITEM_CD = ''
     ORDER_STATUS = ''
-    PLANT_START_DT = None
-    PLANT_COMPT_DT = None
+    RELEASE_START_DT = None  # Release 시작일
+    RELEASE_END_DT = None    # Release 종료일
     PRODT_ORDER_NO = ''
     ALPHA_CODE = ''  # ALPHA_CODE 추가
+    SL_CD = ''  # 창고코드 추가
 
     plants = db.session.query(Plant).all()
 
@@ -40,81 +41,91 @@ def product_order():
         WC_CD = request.form.get('wc_cd', '')
         ITEM_CD = request.form.get('item_cd', '')
         ORDER_STATUS = request.form.get('order_status', '')
-        PLANT_START_DT = request.form.get('start_date', '')
-        PLANT_COMPT_DT = request.form.get('end_date', '')
+        RELEASE_START_DT = request.form.get('start_date', '')  # 시작일을 Release 날짜로 변경
+        RELEASE_END_DT = request.form.get('end_date', '')      # 종료일을 Release 날짜로 변경
         PRODT_ORDER_NO = request.form.get('prodt_order_no', '')
         ALPHA_CODE = request.form.get('alpha_code', '')  # ALPHA_CODE 가져오기
+        SL_CD = request.form.get('sl_cd', '')  # SL_CD 가져오기
 
-        if PLANT_START_DT:
-            PLANT_START_DT = datetime.strptime(PLANT_START_DT, '%Y-%m-%d')
-        if PLANT_COMPT_DT:
-            PLANT_COMPT_DT = datetime.strptime(PLANT_COMPT_DT, '%Y-%m-%d')
+        if RELEASE_START_DT:
+            RELEASE_START_DT = datetime.strptime(RELEASE_START_DT, '%Y-%m-%d')
+        if RELEASE_END_DT:
+            RELEASE_END_DT = datetime.strptime(RELEASE_END_DT, '%Y-%m-%d')
     else:
         if plants:
             PLANT_CD = plants[0].PLANT_CD
 
-    if not PLANT_START_DT:
-        PLANT_START_DT = datetime.today()
-    if not PLANT_COMPT_DT:
-        PLANT_COMPT_DT = datetime.today() + timedelta(days=30)
+    if not RELEASE_START_DT:
+        RELEASE_START_DT = datetime.today()
+    if not RELEASE_END_DT:
+        RELEASE_END_DT = datetime.today() + timedelta(days=30)
 
     # 아이템과 관련된 쿼리
-    query_item = db.session.query(Production_Order, Item).join(
+    orders_with_items = db.session.query(
+        Production_Order, Item, Storage_Location
+    ).join(
         Item, Production_Order.ITEM_CD == Item.ITEM_CD
     ).join(
         Item_Master, Item.ALPHA_CODE == Item_Master.ALPHA_CODE
+    ).join(
+        Storage_Location, Production_Order.SL_CD == Storage_Location.SL_CD
     )
 
     if PLANT_CD:
-        query_item = query_item.filter(Production_Order.PLANT_CD == PLANT_CD)
+        orders_with_items = orders_with_items.filter(Production_Order.PLANT_CD == PLANT_CD)
     if WC_CD:
-        query_item = query_item.filter(Production_Order.WC_CD == WC_CD)
+        orders_with_items = orders_with_items.filter(Production_Order.WC_CD == WC_CD)
     if ITEM_CD:
-        query_item = query_item.filter(Production_Order.ITEM_CD == ITEM_CD)
+        orders_with_items = orders_with_items.filter(Production_Order.ITEM_CD == ITEM_CD)
     if ORDER_STATUS:
-        query_item = query_item.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
-    if PLANT_START_DT:
-        query_item = query_item.filter(Production_Order.PLANT_START_DT >= PLANT_START_DT)
-    if PLANT_COMPT_DT:
-        query_item = query_item.filter(Production_Order.PLANT_COMPT_DT <= PLANT_COMPT_DT)
+        orders_with_items = orders_with_items.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
+    if RELEASE_START_DT and RELEASE_END_DT:
+        orders_with_items = orders_with_items.filter(Production_Order.RELEASE_DT.between(RELEASE_START_DT, RELEASE_END_DT))
     if PRODT_ORDER_NO:
-        query_item = query_item.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
+        orders_with_items = orders_with_items.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
     if ALPHA_CODE:  # ALPHA_CODE 필터링 추가
-        query_item = query_item.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
+        orders_with_items = orders_with_items.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
+    if SL_CD:  # SL_CD 필터링 추가
+        orders_with_items = orders_with_items.filter(Production_Order.SL_CD == SL_CD)
 
-    orders_with_items = query_item.all()
+    orders_with_items = orders_with_items.all()
 
     # 작업 센터와 관련된 쿼리
-    query_wc = db.session.query(Production_Order, Work_Center).join(
+    orders_with_wcs = db.session.query(
+        Production_Order, Work_Center, Storage_Location
+    ).join(
         Work_Center, Production_Order.WC_CD == Work_Center.WC_CD
     ).join(
         Item, Production_Order.ITEM_CD == Item.ITEM_CD
     ).join(
         Item_Master, Item.ALPHA_CODE == Item_Master.ALPHA_CODE
+    ).join(
+        Storage_Location, Production_Order.SL_CD == Storage_Location.SL_CD
     )
 
     if PLANT_CD:
-        query_wc = query_wc.filter(Production_Order.PLANT_CD == PLANT_CD)
+        orders_with_wcs = orders_with_wcs.filter(Production_Order.PLANT_CD == PLANT_CD)
     if WC_CD:
-        query_wc = query_wc.filter(Production_Order.WC_CD == WC_CD)
+        orders_with_wcs = orders_with_wcs.filter(Production_Order.WC_CD == WC_CD)
     if ITEM_CD:
-        query_wc = query_wc.filter(Production_Order.ITEM_CD == ITEM_CD)
+        orders_with_wcs = orders_with_wcs.filter(Production_Order.ITEM_CD == ITEM_CD)
     if ORDER_STATUS:
-        query_wc = query_wc.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
-    if PLANT_START_DT:
-        query_wc = query_wc.filter(Production_Order.PLANT_START_DT >= PLANT_START_DT)
-    if PLANT_COMPT_DT:
-        query_wc = query_wc.filter(Production_Order.PLANT_COMPT_DT <= PLANT_COMPT_DT)
+        orders_with_wcs = orders_with_wcs.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
+    if RELEASE_START_DT and RELEASE_END_DT:
+        orders_with_wcs = orders_with_wcs.filter(Production_Order.RELEASE_DT.between(RELEASE_START_DT, RELEASE_END_DT))
     if PRODT_ORDER_NO:
-        query_wc = query_wc.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
+        orders_with_wcs = orders_with_wcs.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
     if ALPHA_CODE:  # ALPHA_CODE 필터링 추가
-        query_wc = query_wc.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
+        orders_with_wcs = orders_with_wcs.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
+    if SL_CD:  # SL_CD 필터링 추가
+        orders_with_wcs = orders_with_wcs.filter(Production_Order.SL_CD == SL_CD)
 
-    orders_with_wcs = query_wc.all()
+    orders_with_wcs = orders_with_wcs.all()
 
     work_centers = db.session.query(Work_Center).all()
     items = db.session.query(Item).all()
     alpha_codes = db.session.query(Item_Master.ALPHA_CODE).distinct().all()  # ALPHA_CODE 목록 가져오기
+    storage_locations = db.session.query(Storage_Location).all()  # 창고 목록 가져오기
 
     return render_template('product/product_order.html',
                            orders_with_items=orders_with_items,
@@ -123,10 +134,11 @@ def product_order():
                            work_centers=work_centers,
                            items=items,
                            alpha_codes=alpha_codes,  # 템플릿에 ALPHA_CODE 목록 전달
+                           storage_locations=storage_locations,  # 템플릿에 창고 목록 전달
                            PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS,
-                           PLANT_START_DT=PLANT_START_DT,
-                           PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
-                           ALPHA_CODE=ALPHA_CODE,  # 템플릿에 선택된 ALPHA_CODE 전달
+                           RELEASE_START_DT=RELEASE_START_DT,  # Release 날짜 반영
+                           PRODT_ORDER_NO=PRODT_ORDER_NO, RELEASE_END_DT=RELEASE_END_DT,  # Release 날짜 반영
+                           ALPHA_CODE=ALPHA_CODE, SL_CD=SL_CD,  # 템플릿에 선택된 ALPHA_CODE 및 SL_CD 전달
                            form_submitted=form_submitted)
 
 
