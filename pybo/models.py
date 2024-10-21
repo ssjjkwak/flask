@@ -334,6 +334,46 @@ class Bom(db.Model):
     # Relationship to Item
     child_item = relationship('Item', primaryjoin=foreign(CHILD_ITEM_CD) == Item.ITEM_CD, backref=backref('boms', lazy=True))
 
+class Bom_Header(db.Model):
+    __tablename__ = 'P_BOM_HEADER'
+    __table_args__ = {'schema': 'dbo'}
+
+    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    ITEM_CD = db.Column(db.NVARCHAR(50), primary_key=True)
+    BOM_NO = db.Column(db.NVARCHAR(40), primary_key=True)
+    DESCRIPTION = db.Column(db.NVARCHAR(40), nullable=True)
+    MAJOR_FLG = db.Column(db.NVARCHAR(1), nullable=True)
+    VALID_FROM_DT = db.Column(db.DateTime, nullable=True)
+    VALID_TO_DT = db.Column(db.DateTime, nullable=True)
+    IF_INSRT_USER_ID = db.Column(db.NVARCHAR(40), nullable=True)
+    IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    IF_UPDT_USER_ID = db.Column(db.NVARCHAR(40), nullable=True)
+    IF_UPDT_DT = db.Column(db.DateTime, default=kst_now)
+
+class Bom_Detail(db.Model):
+    __tablename__ = 'P_BOM_DETAIL'
+    __table_args__ = {'schema': 'dbo'}
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    PRNT_PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    PRNT_ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    PRNT_BOM_NO = db.Column(db.NVARCHAR(40), nullable=True)
+    CHILD_ITEM_SEQ = db.Column(db.SMALLINT, nullable=True)
+    CHILD_PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    CHILD_ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    CHILD_BOM_NO = db.Column(db.NVARCHAR(40), nullable=True)
+    PRNT_ITEM_QTY = db.Column(db.NUMERIC(18,6),nullable=True)
+    PRNT_ITEM_UNIT = db.Column(db.NVARCHAR(4), nullable=True)
+    CHILD_ITEM_QTY = db.Column(db.NUMERIC(18,6),nullable=True)
+    CHILD_ITEM_UNIT = db.Column(db.NVARCHAR(4), nullable=True)
+    LOSS_RATE = db.Column(db.NUMERIC(18,6),nullable=True)
+    VALID_FROM_DT = db.Column(db.DateTime, default=kst_now)
+    VALID_TO_DT = db.Column(db.DateTime, default=kst_now)
+    IF_INSRT_USER_ID = db.Column(db.NVARCHAR(40), nullable=True)
+    IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    IF_UPDT_USER_ID = db.Column(db.NVARCHAR(40), nullable=True)
+    IF_UPDT_DT = db.Column(db.DateTime, default=kst_now)
+
 # 작업장
 class Work_Center(db.Model):
     __tablename__ = 'P_WORK_CENTER'

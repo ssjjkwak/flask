@@ -39,33 +39,13 @@
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px 0;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">기준정보 > 품목정보조회</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-toggle="modal"
-                    data-target=".bd-example-modal-lg" id="openModalButton"><i class="bi bi-card-checklist"></i>
+            <!-- 모달 열기 버튼 -->
+            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton" disabled><i class="bi bi-card-checklist"></i>
                 품목정보 수정
             </button>
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
                 <i class="bi bi-search"></i> 조회
             </button>
-        </div>
-        <!-- 모달 -->
-        <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
-             aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">품목 정보 수정</h5>
-                    </div>
-                    <div class="modal-body">
-                        <!-- 모달 내용 여기에 -->
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" form="productForm" class="btn btn-light shadow-sm ms-3"
-                                id="saveButton">저장
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -74,49 +54,68 @@
         <div class="row">
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="plant_code" class="form-label me-3" style="min-width: 110px;">공장</label>
+                    <label for="plant_code" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;&emsp;공장</label>
                     <select class="form-select form-select-sm" id="plant_code" name="plant_code">
                         <option value="">-</option>
                         {% for plant in plants %}
-                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD == PLANT_CD %}selected{% endif %}>
+                        <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD == (PLANT_CD or 'P710') %}selected{% endif %}>
                             {{ plant.PLANT_CD }} {{ plant.PLANT_NM }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">품목</label>
+                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;&emsp;품목</label>
                     <input type="text" class="form-control form-control-sm" id="item_cd" name="item_cd"
                            value="{{ ITEM_CD }}">
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="item_nm" class="form-label me-3" style="min-width: 110px;">제품명</label>
+                    <label for="item_nm" class="form-label me-3" style="min-width: 110px;">품목명</label>
                     <input type="text" class="form-control form-control-sm" id="item_nm" name="item_nm"
                            value="{{ ITEM_NM }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="spec" class="form-label me-3" style="min-width: 110px;">품목계정</label>
-                    <input type="text" class="form-control form-control-sm" id="spec" name="spec" value="{{ SPEC }}">
+                    <label for="item_acct" class="form-label me-3" style="min-width: 110px;">품목계정</label>
+                     <select class="form-select form-select-sm" id="item_acct" name="item_acct">
+                        <option value="">-</option>
+                        <option value="30" {% if ITEM_ACCT == '30' %}selected{% endif %}>원자재 30</option>
+                        <option value="35" {% if ITEM_ACCT == '35' %}selected{% endif %}>부자재 35</option>
+                        <option value="20" {% if ITEM_ACCT == '20' %}selected{% endif %}>반제품 20</option>
+                        <option value="10" {% if ITEM_ACCT == '10' %}selected{% endif %}>완제품 10</option>
+                    </select>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="item_nm" class="form-label me-3" style="min-width: 110px;">표준코드(DI)</label>
-                    <input type="text" class="form-control form-control-sm" id="UDI_DI" name="item_nm"
-                           value="{{ ITEM_NM }}">
+                    <label for="udi_code" class="form-label me-3" style="min-width: 110px;">표준코드(DI)</label>
+                    <input type="text" class="form-control form-control-sm" id="udi_code" name="udi_code"
+                           value="{{ UDI_CODE }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="spec" class="form-label me-3" style="min-width: 110px;">품목그룹</label>
-                    <input type="text" class="form-control form-control-sm" id="item_group" name="spec" value="{{ SPEC }}">
+                    <label for="item_group_cd" class="form-label me-3" style="min-width: 110px;">품목그룹</label>
+                    <select class="form-select form-select-sm" id="item_group_cd" name="item_group_cd">
+                        <option value="">-</option>
+                        {% for group in item_groups %}
+                        <option value="{{ group.ITEM_GROUP_CD }}" {% if group.ITEM_GROUP_CD == ITEM_GROUP_CD %}selected{% endif %}>
+                            {{ group.ITEM_GROUP_CD }} {{ group.ITEM_GROUP_NM }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
                     <label for="alpha_code" class="form-label me-3" style="min-width: 110px;">알파코드(제품)</label>
-                    <input type="text" class="form-control form-control-sm" id="alpha_code" name="alpha_code"
-                           value="{{ ALPHA_CODE }}">
+                    <select class="form-select form-select-sm" id="alpha_code" name="alpha_code">
+                        <option value="">-</option>
+                        {% for master in alpha_codes %}
+                        <option value="{{ master.ALPHA_CODE }}" {% if master.ALPHA_CODE == ALPHA_CODE %}selected{% endif %}>
+                            {{ master.ALPHA_CODE }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
         </div>
@@ -126,38 +125,48 @@
 <div class="gap" style="margin-top: 20px;"></div>
 
 <div>
-    <!--데이터 테이블-->
+    <!-- 데이터 테이블 -->
     <div>
-        {% if items %}
+        {% if form_submitted and items %}
         <div class="table-wrapper">
             <table class="table table-sm table-hover"
                    style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
                 <thead class="table-light">
                 <tr>
-                    <th>번호</th>
+                    <th></th>
+                    <th>공장</th>
                     <th>품목코드</th>
                     <th>품목명</th>
                     <th>규격</th>
+                    <th>품목계정</th>
                     <th>단위</th>
+                    <th>품목그룹</th>
                     <th>알파코드</th>
+                    <th>표준코드(DI)</th>
+                    <th class="sticky" style="width: 210px; font-weight: normal"></th>
                 </tr>
                 </thead>
 
                 <tbody>
                 {% for item in items %}
                 <tr data-item-cd="{{ item.ITEM_CD }}">
-                    <td>{{ loop.index }}</td>
-                    <td>{{ item.ITEM_CD }}</td>
-                    <td>{{ item.ITEM_NM }}</td>
-                    <td>{{ item.SPEC }}</td>
-                    <td>{{ item.BASIC_UNIT }}</td>
-                    <td>{{ item.ALPHA_CODE }}</td>
+                    <td class="sticky" style="width: 20px;">{{ loop.index }}</td>
+                    <td class="sticky" style="width: 20px;">{{ item.PLANT_CD or '' }}</td>
+                    <td class="sticky" style="width: 85px;">{{ item.ITEM_CD or '' }}</td>
+                    <td class="sticky" style="width: 170px;">{{ item.ITEM_NM or '' }}</td>
+                    <td class="sticky" style="width: 180px;">{{ item.SPEC or '' }}</td>
+                    <td class="sticky" style="width: 50px;">{{ item.ITEM_ACCT or '' }}</td>
+                    <td class="sticky" style="width: 50px;">{{ item.BASIC_UNIT or '' }}</td>
+                    <td class="sticky" style="width: 50px;">{{ item.ITEM_GROUP_CD or '' }}</td>
+                    <td class="sticky" style="width: 50px;">{{ item.ALPHA_CODE or '' }}</td>
+                    <td class="sticky" style="width: 70px;">{{ item.UDI_CODE or '' }}</td>
+                    <td></td>
                 </tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% else %}
+        {% elif form_submitted %}
         <div class="alert alert-warning" role="alert">
             조회 결과가 없습니다.
         </div>
@@ -165,37 +174,138 @@
     </div>
 </div>
 
+<!-- 모달 연결 -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">품목 정보 수정</h5>
+
+            </div>
+            <form id="editForm" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" id="modal_item_cd" name="modal_item_cd">
+                    <div class="form-group">
+                        <label for="modal_item_nm">품목명</label>
+                        <input type="text" class="form-control" id="modal_item_nm" name="modal_item_nm">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_spec">규격</label>
+                        <input type="text" class="form-control" id="modal_spec" name="modal_spec">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_item_acct">품목계정</label>
+                        <input type="text" class="form-control" id="modal_item_acct" name="modal_item_acct">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_basic_unit">단위</label>
+                        <input type="text" class="form-control" id="modal_basic_unit" name="modal_basic_unit">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_basic_unit">알파코드(제품)</label>
+                        <input type="text" class="form-control" id="modal_alpha_code" name="modal_alpha_code">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_basic_unit">표준코드(DI)</label>
+                        <input type="text" class="form-control" id="modal_udi_code" name="modal_udi_code">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     var selectedItemCd = '';
 
+    // 테이블의 행을 클릭할 때 선택된 품목코드를 저장
     document.querySelectorAll('#dataTable tbody tr').forEach(row => {
         row.addEventListener('click', function() {
-            // 모든 행에서 selected-row 클래스 제거
             document.querySelectorAll('#dataTable tbody tr').forEach(row => {
                 row.classList.remove('selected-row');
             });
 
-            // 클릭된 행에 selected-row 클래스 추가
             this.classList.add('selected-row');
-
-            // 선택된 품목 코드 저장
             selectedItemCd = this.getAttribute('data-item-cd');
+
+            console.log('선택된 품목코드:', selectedItemCd);
+
+            // 품목정보 수정 버튼 활성화
+            document.getElementById('openModalButton').disabled = false;
         });
     });
 
+    // 수정 버튼을 눌렀을 때 모달을 열고 품목 데이터를 가져와서 표시
     document.getElementById('openModalButton').addEventListener('click', function() {
         if (selectedItemCd) {
-            // 모달을 열고 해당 품목 데이터를 가져와서 수정
-            fetchModalData(selectedItemCd);
+            fetch('/masterdata/item/get_item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ item_cd: selectedItemCd })  // item_cd JSON으로 전송
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error fetching data: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    alert('해당 품목을 찾을 수 없습니다.');
+                } else {
+                    document.getElementById('modal_item_cd').value = data.ITEM_CD;
+                    document.getElementById('modal_item_nm').value = data.ITEM_NM || '';
+                    document.getElementById('modal_spec').value = data.SPEC || '';
+                    document.getElementById('modal_item_acct').value = data.ITEM_ACCT || '';
+                    document.getElementById('modal_basic_unit').value = data.BASIC_UNIT || '';
+                    document.getElementById('modal_alpha_code').value = data.ALPHA_CODE || '';
+                    document.getElementById('modal_udi_code').value = data.UDI_CODE || '';
+
+                    var modal = new bootstrap.Modal(document.getElementById('editModal'));
+                    modal.show();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching item data:', error);
+                //alert('데이터를 불러오는 중 문제가 발생했습니다.');
+            });
         } else {
-            alert('조회할 품목을 선택해주세요.');
+            //alert('수정할 품목을 선택해주세요.');
         }
     });
 
-    function fetchModalData(itemCd) {
-        // 품목 데이터를 가져오는 로직 (추후 구현)
-        console.log('품목코드: ' + itemCd);
-    }
+    // 수정된 데이터를 서버에 전송하여 업데이트
+    document.getElementById('editForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var formData = new FormData(this);
+
+        fetch('/masterdata/item/update_item', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('수정이 완료되었습니다.');
+                var modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                modal.hide();
+                location.reload();  // 페이지 새로고침
+            } else {
+                alert('수정 중 오류가 발생했습니다.');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating item:', error);
+            //alert('데이터 업데이트 중 오류가 발생했습니다.');
+        });
+    });
 </script>
+
 
 {% endblock %}

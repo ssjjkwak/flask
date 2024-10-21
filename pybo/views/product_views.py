@@ -604,7 +604,7 @@ def assign_orders_route():
     assign_production_orders()
     return '<script>alert("생산 오더가 할당되었습니다."); window.location.href="/product/assign/";</script>'
 
-
+#60이 완료되면 70제조 오더는 mes에서만 따로 진행해야함 -> 60까지 양품이 계획수량까지 완성되면 제조오더를 자동생성해서 packing로직으로 넘어가게 하는 과정 구현 요구됨
 @bp.route('/register_result_packing/', methods=['GET', 'POST'])
 def product_register_packing():
     form_submitted = False
@@ -966,9 +966,6 @@ def reprint_label(box_no):
         return jsonify({'message': '라벨이 성공적으로 재프린트되었습니다.'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-
 
 
 
