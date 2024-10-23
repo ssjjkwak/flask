@@ -87,7 +87,6 @@ def item():
                            form_submitted=form_submitted)
 
 
-
 @bp.route('/item/get_item', methods=['POST'])
 def get_item():
     data = request.get_json()  # 클라이언트로부터 받은 JSON 데이터
@@ -147,29 +146,40 @@ def bom():
     # 1. BOM 데이터를 데이터베이스에서 가져옵니다.
     bom_items = db.session.query(Bom_Detail).all()
 
-    # 2. BOM 데이터를 계층 구조로 변환 (이 부분은 이미 작성된 함수 로직을 사용)
-    def build_bom_tree(bom_items):
+    # 2. ITEM 테이블에서 자품목 정보를 가져옵니다 (CHILD_ITEM_CD에 해당하는 정보)
+    item_details = {item.ITEM_CD: item for item in db.session.query(Item).all()}
+
+    # 최상위 자품목의 모품목 데이터를 가져옵니다 (첫 번째 항목을 기준으로)
+    top_bom_item = bom_items[0] if bom_items else None
+    parent_item_cd = top_bom_item.PRNT_ITEM_CD if top_bom_item else None
+
+    # 3. BOM 데이터를 계층 구조로 변환
+    def build_bom_tree(bom_items, item_details):
         tree = []
         item_map = {}
 
-        # 각 자품목을 부모 품목을 기준으로 분류
         for item in bom_items:
-            # 항목을 dict로 변환
+            # Item 테이블에서 자품목과 매칭되는 항목을 가져와서 SPEC과 ITEM_ACCT 추가
+            child_item = item_details.get(item.CHILD_ITEM_CD)
+
             bom_item = {
                 'seq': item.CHILD_ITEM_SEQ,
-                'child_item_cd': item.CHILD_ITEM_CD,
-                'child_item_nm': item.CHILD_ITEM_CD,  # 자품목명 필드 추가
-                'spec': item.CHILD_ITEM_UNIT,  # 규격 필드 추가
-                'item_acct': item.PRNT_ITEM_UNIT,  # 품목계정 필드 추가
-                'child_item_qty': item.CHILD_ITEM_QTY,
-                'child_item_unit': item.CHILD_ITEM_UNIT,
-                'loss_rate': item.LOSS_RATE,
-                'valid_from_dt': item.VALID_FROM_DT,
-                'valid_to_dt': item.VALID_TO_DT,
+                'prnt_item_cd': item.PRNT_ITEM_CD,  # 모품목 코드
+                'prnt_item_nm': item.PRNT_ITEM_CD,  # 모품목명
+                'child_item_cd': item.CHILD_ITEM_CD, # 자품목 코드
+                'item_nm': child_item.ITEM_NM if child_item else None,
+                'spec': child_item.SPEC if child_item else None,  # 규격 (SPEC 가져오기)
+                'item_acct': child_item.ITEM_ACCT if child_item else None,  # 품목계정 (ITEM_ACCT 가져오기)
+                'child_item_qty': item.CHILD_ITEM_QTY,  # 자품목 수량
+                'child_item_unit': item.CHILD_ITEM_UNIT,  # 자품목 단위
+                'prnt_item_qty': item.PRNT_ITEM_QTY,
+                'prnt_item_unit': item.PRNT_ITEM_UNIT,
+                'loss_rate': item.LOSS_RATE,  # 손실율
+                'valid_from_dt': item.VALID_FROM_DT,  # 유효기간 시작
+                'valid_to_dt': item.VALID_TO_DT,  # 유효기간 종료
                 'level': 1  # 기본적으로 1단계로 시작
             }
 
-            # 부모 아이템을 기준으로 아이템들을 분류
             parent_id = item.PRNT_ITEM_CD
             if parent_id not in item_map:
                 item_map[parent_id] = []
@@ -184,19 +194,25 @@ def bom():
                     add_children(child['child_item_cd'], level + 1)
 
         # 최상위 부모들을 시작점으로 트리 구조 생성
-        # 최상위 부모란 다른 항목의 자품목이 아닌 항목들을 의미
         top_level_items = set(item_map.keys()) - set([item.CHILD_ITEM_CD for item in bom_items])
-
         for parent_id in top_level_items:
             add_children(parent_id, 1)
 
         return tree
 
-    # 3. 계층 구조로 변환된 BOM 데이터를 가져옵니다.
-    bom_tree_structure = build_bom_tree(bom_items)
+    # 4. 계층 구조로 변환된 BOM 데이터를 가져옵니다.
+    bom_tree_structure = build_bom_tree(bom_items, item_details)
 
-    # 4. 데이터를 템플릿으로 전달하여 렌더링
-    return render_template('masterdata/bom.html', bom_tree_structure=bom_tree_structure)
+    # 5. 템플릿에 모품목 코드(parent_item_cd)와 함께 전달
+    return render_template(
+        'masterdata/bom.html',
+        bom_tree_structure=bom_tree_structure,
+        parent_item_cd=parent_item_cd
+    )
+
+
+
+
 
 
 
