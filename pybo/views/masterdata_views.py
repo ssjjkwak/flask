@@ -143,17 +143,38 @@ def update_item():
 # 데이터 조회를 위한 라우트 함수
 @bp.route('/bom/', methods=['GET', 'POST'])
 def bom():
-    # 1. BOM 데이터를 데이터베이스에서 가져옵니다.
-    bom_items = db.session.query(Bom_Detail).all()
+    # 1. 필요한 데이터 생성
+    today = datetime.today().strftime('%Y-%m-%d')
+    plants = db.session.query(Plant).all()
 
-    # 2. ITEM 테이블에서 자품목 정보를 가져옵니다 (CHILD_ITEM_CD에 해당하는 정보)
+    # 모품목(PRNT_ITEM_CD)
+    top_level_items = db.session.query(Bom_Detail.PRNT_ITEM_CD).distinct().all()
+
+    selected_parent_item_cd = request.form.get('parent_item_cd') if request.method == 'POST' else None
+    selected_plant_code = request.form.get('plant_code') if request.method == 'POST' else None
+    start_date = request.form.get('start_date') if request.method == 'POST' else today
+
+    # 선택된 조건을 기준으로 BOM 데이터를 필터링
+    bom_items = []
+    if selected_parent_item_cd and start_date:
+        # 선택된 최상위 품목과 기준일을 기반으로 BOM 데이터 필터링
+        def get_bom_hierarchy(parent_item_cd):
+            items = db.session.query(Bom_Detail).filter(
+                Bom_Detail.PRNT_ITEM_CD == parent_item_cd,
+                Bom_Detail.VALID_FROM_DT <= start_date,
+                Bom_Detail.VALID_TO_DT >= start_date
+            ).all()
+            bom_items.extend(items)
+            for item in items:
+                get_bom_hierarchy(item.CHILD_ITEM_CD)
+
+        # 선택된 최상위 품목에 연결된 전체 BOM 트리를 조회
+        get_bom_hierarchy(selected_parent_item_cd)
+
+    # 4. ITEM 테이블에서 자품목 정보 (CHILD_ITEM_CD에 해당하는 정보)
     item_details = {item.ITEM_CD: item for item in db.session.query(Item).all()}
 
-    # 최상위 자품목의 모품목 데이터를 가져옵니다 (첫 번째 항목을 기준으로)
-    top_bom_item = bom_items[0] if bom_items else None
-    parent_item_cd = top_bom_item.PRNT_ITEM_CD if top_bom_item else None
-
-    # 3. BOM 데이터를 계층 구조로 변환
+    # 5. BOM 데이터를 계층 구조로 변환
     def build_bom_tree(bom_items, item_details):
         tree = []
         item_map = {}
@@ -166,10 +187,10 @@ def bom():
                 'seq': item.CHILD_ITEM_SEQ,
                 'prnt_item_cd': item.PRNT_ITEM_CD,  # 모품목 코드
                 'prnt_item_nm': item.PRNT_ITEM_CD,  # 모품목명
-                'child_item_cd': item.CHILD_ITEM_CD, # 자품목 코드
+                'child_item_cd': item.CHILD_ITEM_CD,  # 자품목 코드
                 'item_nm': child_item.ITEM_NM if child_item else None,
-                'spec': child_item.SPEC if child_item else None,  # 규격 (SPEC 가져오기)
-                'item_acct': child_item.ITEM_ACCT if child_item else None,  # 품목계정 (ITEM_ACCT 가져오기)
+                'spec': child_item.SPEC if child_item else None,  # 규격
+                'item_acct': child_item.ITEM_ACCT if child_item else None,  # 품목계정
                 'child_item_qty': item.CHILD_ITEM_QTY,  # 자품목 수량
                 'child_item_unit': item.CHILD_ITEM_UNIT,  # 자품목 단위
                 'prnt_item_qty': item.PRNT_ITEM_QTY,
@@ -200,22 +221,19 @@ def bom():
 
         return tree
 
-    # 4. 계층 구조로 변환된 BOM 데이터를 가져옵니다.
+    # 6. 계층 구조로 변환된 BOM 데이터.
     bom_tree_structure = build_bom_tree(bom_items, item_details)
 
-    # 5. 템플릿에 모품목 코드(parent_item_cd)와 함께 전달
+    # 7. 템플릿에 최상위 모품목 목록과 선택된 최상위 품목을 전달
     return render_template(
         'masterdata/bom.html',
         bom_tree_structure=bom_tree_structure,
-        parent_item_cd=parent_item_cd
+        parent_item_cd=selected_parent_item_cd,
+        top_level_items=top_level_items,  # 최상위 품목 목록을 템플릿으로 전달
+        plants=plants,  # 공장 목록 전달
+        selected_plant_code=selected_plant_code,
+        start_date=start_date
     )
-
-
-
-
-
-
-
 
 
 #거래처정보조회
