@@ -76,6 +76,10 @@ class Item(db.Model):
     IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
     UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
     UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+    MINOR_CATEGORY_NM = db.Column(db.NVARCHAR(100), nullable=True)
+    GRADE = db.Column(db.SMALLINT, nullable=True)
+    ITEM_PERMIT_NO = db.Column(db.NVARCHAR(100), nullable=True)
+    MEDICAL_CARE_BENEFIT_FLAG = db.Column(db.NVARCHAR(3), nullable=True)
 
 class Item_Master(db.Model):
     __tablename__ = 'B_ITEM_MASTER'
@@ -153,11 +157,14 @@ class Sales_Order(db.Model):
     SO_NO = db.Column(db.NVARCHAR(18), primary_key=True)
     SO_SEQ = db.Column(db.SMALLINT, primary_key=True)
     BP_CD = db.Column(db.NVARCHAR(10), nullable=True)
+    SO_DT = db.Column(db.DateTime, nullable=True)
+    REQ_DLVY_DT = db.Column(db.DateTime, nullable=True)
     PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
     SL_CD = db.Column(db.NVARCHAR(4), nullable=True)
     ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
     SO_PRICE = db.Column(db.NUMERIC(18,6), nullable=True)
     NET_AMT = db.Column(db.NUMERIC(18,2), nullable=True)
+    CUST_PO_NO = db.Column(db.NVARCHAR(50), nullable=True)
     ITEM_ACCT = db.Column(db.NCHAR(2), nullable=True)
     SO_QTY = db.Column(db.NUMERIC(18,6), nullable=True)
     BASE_UNIT = db.Column(db.NCHAR(3), nullable=True)

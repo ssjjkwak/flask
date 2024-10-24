@@ -16,6 +16,8 @@
         position: sticky;
         top: 0;
         z-index: 20;
+        font-size: 15px; /* 헤더 글자 크기 줄이기 */
+        padding: 4px; /* 헤더의 패딩 줄이기 */
     }
 
     .table-wrapper {
@@ -27,12 +29,25 @@
     table {
         border-collapse: collapse;
         width: 100%;
+        font-size: 13px; /* 전체 테이블 글자 크기 줄이기 */
     }
 
     th, td {
         min-width: 50px;
+        padding: 4px; /* 셀 간 패딩 줄이기 */
+        white-space: nowrap; /* 글자가 줄바꿈 없이 한 줄에 표시되게 설정 */
+        overflow: hidden; /* 테이블 너비보다 넘치지 않게 처리 */
+        text-overflow: ellipsis; /* 넘칠 때 ... 처리 */
+    }
+
+    .sticky {
+        position: sticky;
+        left: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
     }
 </style>
+
 
 <!-- 조회조건 -->
 <div>
@@ -143,7 +158,14 @@
                     <th>품목그룹</th>
                     <th>알파코드</th>
                     <th>표준코드(DI)</th>
-                    <th class="sticky" style="width: 210px; font-weight: normal"></th>
+
+                    <th>유통코드</th>
+                    <th>포장수량</th>
+                    <th>소분류품목명칭</th>
+                    <th>등급</th>
+                    <th>업체제품명칭</th>
+                    <th>모델명</th>
+                    <th>요양급여 대상 치료재료 여부</th>
                 </tr>
                 </thead>
 
@@ -153,14 +175,36 @@
                     <td class="sticky" style="width: 20px;">{{ loop.index }}</td>
                     <td class="sticky" style="width: 20px;">{{ item.PLANT_CD or '' }}</td>
                     <td class="sticky" style="width: 85px;">{{ item.ITEM_CD or '' }}</td>
-                    <td class="sticky" style="width: 170px;">{{ item.ITEM_NM or '' }}</td>
-                    <td class="sticky" style="width: 180px;">{{ item.SPEC or '' }}</td>
-                    <td class="sticky" style="width: 50px;">{{ item.ITEM_ACCT or '' }}</td>
+                    <td class="sticky" style="width: 170px; text-align: left;">{{ item.ITEM_NM or '' }}</td>
+                    <td class="sticky" style="width: 150px; text-align: left;">{{ item.SPEC or '' }}</td>
+
+                    <td class="sticky" style="width: 50px;">
+                        <!-- 품목계정 매핑 -->
+                        {% if item.ITEM_ACCT  == '10' %}
+                            완제품
+                        {% elif item.ITEM_ACCT == '20' %}
+                            반제품
+                        {% elif item.ITEM_ACCT == '30' %}
+                            원자재
+                        {% elif item.ITEM_ACCT == '35' %}
+                            부자재
+                        {% else %}
+                            {{ item.ITEM_ACCT or '' }}
+                        {% endif %}
+                    </td> <!-- 품목계정 -->
                     <td class="sticky" style="width: 50px;">{{ item.BASIC_UNIT or '' }}</td>
                     <td class="sticky" style="width: 50px;">{{ item.ITEM_GROUP_CD or '' }}</td>
                     <td class="sticky" style="width: 50px;">{{ item.ALPHA_CODE or '' }}</td>
                     <td class="sticky" style="width: 70px;">{{ item.UDI_CODE or '' }}</td>
-                    <td></td>
+
+                    <td class="sticky" style="width: 70px;">{{ item.GTIN_CODE1 or '' }}</td>
+                    <td class="sticky" style="width: 70px;">{{ item.PAC_QTY1 or '' }}</td>
+                    <td class="sticky" style="width: 70px;">{{ item.MINOR_CATEGORY_NM or '' }}</td>
+                    <td class="sticky" style="width: 70px;">{{ item.GRADE or '' }}</td>
+                    <td class="sticky" style="width: 70px;">{{ item.PRODUCT_NM or '' }}</td>
+                    <td class="sticky" style="width: 70px;">{{ item.MODEL_NM or '' }}</td>
+                    <td class="sticky" style="width: 70px;">{{ item.MEDICAL_CARE_BENEFIT_FLAG or '' }}</td>
+
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -211,8 +255,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">저장</button>
+                    <button type="button" class="btn btn-light shadow-sm ms-3" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-light shadow-sm ms-3">저장</button>
                 </div>
             </form>
         </div>

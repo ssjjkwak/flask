@@ -109,6 +109,7 @@
 <div class="gap" style="margin-top: 20px;"></div>
 
 <!-- BOM 테이블 -->
+{% if form_submitted %}
 <div class="table-wrapper">
     <table class="table table-sm table-hover" id="dataTable">
         <thead class="table-light">
@@ -123,7 +124,7 @@
                 <th>단위</th>
                 <th>모품목기준수</th>
                 <th>단위</th>
-                <th>LOSS율</th>
+
                 <th>시작일</th>
                 <th>종료일</th>
             </tr>
@@ -134,8 +135,8 @@
                 <td class="level-{{ bom.level }}" style="font-weight: bold;">{{ '..' * bom.level }}{{ bom.level }}</td> <!-- BOM 단계 -->
                 <td>{{ bom.seq }}</td> <!-- 순번 -->
                 <td>{{ bom.child_item_cd or '' }}</td> <!-- 자품목명 -->
-                <td>{{ bom.item_nm or '' }}</td>
-                <td>{{ bom.spec or '' }}</td> <!-- 규격 -->
+                <td style="text-align: left;">{{ bom.item_nm or '' }}</td>
+                <td style="text-align: left;">{{ bom.spec or '' }}</td> <!-- 규격 -->
                 <td>
                     <!-- 품목계정 매핑 -->
                     {% if bom.item_acct == '10' %}
@@ -154,7 +155,7 @@
                 <td>{{ bom.child_item_unit }}</td> <!-- 단위 -->
                 <td>{{ bom.prnt_item_qty }}</td> <!-- 기준수량 -->
                 <td>{{ bom.prnt_item_unit }}</td> <!-- 단위 -->
-                <td>{{ bom.loss_rate }}</td> <!-- LOSS율 -->
+
                 <td>{{ bom.valid_from_dt.strftime('%Y-%m-%d') if bom.valid_from_dt else '' }}</td> <!-- 시작일 -->
                 <td>{{ bom.valid_to_dt.strftime('%Y-%m-%d') if bom.valid_to_dt else '' }}</td> <!-- 종료일 -->
             </tr>
@@ -162,5 +163,5 @@
         </tbody>
     </table>
 </div>
-
+{% endif %}
 {% endblock %}

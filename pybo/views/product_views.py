@@ -981,7 +981,7 @@ def product_register_sterilizating():
     INSRT_DT_END = None
     BARCODE_NO_START = ''
     BARCODE_NO_END = ''
-    PO_STATUS = ''  # 발주 상태
+    PO_STATUS = 'all'  # 발주 상태
 
     # 공장 목록, 품목 목록, 외주업체 목록 조회
     plants = db.session.query(Purchase_Order.PLANT_CD).distinct().all()
@@ -997,7 +997,7 @@ def product_register_sterilizating():
         INSRT_DT_END = request.form.get('end_date', '')
         BARCODE_NO_START = request.form.get('barcode_no_start', '')
         BARCODE_NO_END = request.form.get('barcode_no_end', '')
-        PO_STATUS = request.form.get('po_status', '')
+        PO_STATUS = request.form.get('po_status', 'all')
 
         # 날짜 값이 있는지 확인하고 변환
         if INSRT_DT_START:
