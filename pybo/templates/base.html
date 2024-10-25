@@ -181,6 +181,9 @@
                             {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_b %}
                             <a class="dropdown-item" href="{{ url_for('product.product_register') }}">제조실적등록</a>
                             {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_f %}
+                            <a class="dropdown-item" href="{{ url_for('product.product_excel_result') }}">엑셀데이터조회</a>
+                            {% endif %}
                             {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_c %}
                             <a class="dropdown-item"
                                href="{{ url_for('product.product_register_packing') }}">Packing등록</a>

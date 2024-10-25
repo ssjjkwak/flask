@@ -282,6 +282,32 @@ def process_excel(filepath):
     return duplicate_count  # 중복 데이터 개수를 반환
 
 
+@bp.route('/product_excel_result/', methods=['GET', 'POST'])
+def product_excel_result():
+    # 기본 조회 화면으로 이동
+    query = db.session.query(Production_Alpha)
+
+    # 조건이 추가될 경우 필터링 처리 가능
+    barcode = request.form.get('barcode', '').strip()
+    product = request.form.get('product', '').strip()
+    lot = request.form.get('lot', '').strip()
+
+    if barcode:
+        query = query.filter(Production_Alpha.barcode.like(f'%{barcode}%'))
+    if product:
+        query = query.filter(Production_Alpha.product.like(f'%{product}%'))
+    if lot:
+        query = query.filter(Production_Alpha.LOT.like(f'%{lot}%'))
+
+    # 쿼리 실행
+    alpha_data = query.all()
+    return render_template('product/product_excel_result.html', alpha_data=alpha_data, barcode=barcode, product=product, lot=lot)
+
+
+
+
+
+
 # 여기에 조회조건 걸어서 register 화면에 데이터 렌더링
 @bp.route('/register/', methods=['GET', 'POST'])
 def product_register():
