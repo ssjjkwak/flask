@@ -16,8 +16,8 @@
         position: sticky;
         top: 0;
         z-index: 20;
-        font-size: 15px; /* 헤더 글자 크기 줄이기 */
-        padding: 4px; /* 헤더의 패딩 줄이기 */
+        font-size: 15px; /* 헤더 글자 크기 */
+        padding: 4px; /* 헤더의 패딩 */
     }
 
     .table-wrapper {
@@ -29,15 +29,15 @@
     table {
         border-collapse: collapse;
         width: 100%;
-        font-size: 13px; /* 전체 테이블 글자 크기 줄이기 */
+        font-size: 13px; /* 테이블 글자 크기 */
     }
 
     th, td {
-        min-width: 50px;
-        padding: 4px; /* 셀 간 패딩 줄이기 */
-        white-space: nowrap; /* 글자가 줄바꿈 없이 한 줄에 표시되게 설정 */
-        overflow: hidden; /* 테이블 너비보다 넘치지 않게 처리 */
+        padding: 8px; /* 셀 패딩을 조금 늘림 */
+        white-space: nowrap; /* 줄바꿈 없이 한 줄에 표시 */
+        text-align: center; /* 가운데 정렬 */
         text-overflow: ellipsis; /* 넘칠 때 ... 처리 */
+        overflow: hidden; /* 넘침을 감춤 */
     }
 
     .sticky {
@@ -45,8 +45,12 @@
         left: 0;
         background-color: #f8f9fa;
         z-index: 10;
+        padding-left: 8px; /* 왼쪽 패딩을 추가하여 글자가 붙지 않게 함 */
+        padding-right: 8px; /* 오른쪽 패딩 추가 */
+        text-align: left; /* sticky된 셀은 좌측 정렬 */
     }
 </style>
+
 
 
 <!-- 조회조건 -->
@@ -158,12 +162,12 @@
                     <th>품목그룹</th>
                     <th>알파코드</th>
                     <th>표준코드(DI)</th>
-
                     <th>유통코드</th>
                     <th>포장수량</th>
                     <th>소분류품목명칭</th>
                     <th>등급</th>
                     <th>업체제품명칭</th>
+                    <th>품목허가번호</th>
                     <th>모델명</th>
                     <th>요양급여 대상 치료재료 여부</th>
                 </tr>
@@ -172,12 +176,11 @@
                 <tbody>
                 {% for item in items %}
                 <tr data-item-cd="{{ item.ITEM_CD }}">
-                    <td class="sticky" style="width: 20px;">{{ loop.index }}</td>
-                    <td class="sticky" style="width: 20px;">{{ item.PLANT_CD or '' }}</td>
-                    <td class="sticky" style="width: 85px;">{{ item.ITEM_CD or '' }}</td>
+                    <td style="width: 20px;">{{ loop.index }}</td>
+                    <td style="width: 20px;">{{ item.PLANT_CD or '' }}</td>
+                    <td style="width: 85px;">{{ item.ITEM_CD or '' }}</td>
                     <td class="sticky" style="width: 170px; text-align: left;">{{ item.ITEM_NM or '' }}</td>
                     <td class="sticky" style="width: 150px; text-align: left;">{{ item.SPEC or '' }}</td>
-
                     <td class="sticky" style="width: 50px;">
                         <!-- 품목계정 매핑 -->
                         {% if item.ITEM_ACCT  == '10' %}
@@ -196,14 +199,14 @@
                     <td class="sticky" style="width: 50px;">{{ item.ITEM_GROUP_CD or '' }}</td>
                     <td class="sticky" style="width: 50px;">{{ item.ALPHA_CODE or '' }}</td>
                     <td class="sticky" style="width: 70px;">{{ item.UDI_CODE or '' }}</td>
-
                     <td class="sticky" style="width: 70px;">{{ item.GTIN_CODE1 or '' }}</td>
-                    <td class="sticky" style="width: 70px;">{{ item.PAC_QTY1 or '' }}</td>
+                    <td class="sticky" style="width: 70px; text-align: center;">{{ item.PAC_QTY1 or '' }}</td>
                     <td class="sticky" style="width: 70px;">{{ item.MINOR_CATEGORY_NM or '' }}</td>
-                    <td class="sticky" style="width: 70px;">{{ item.GRADE or '' }}</td>
+                    <td class="sticky" style="width: 70px; text-align: center;">{{ item.GRADE or '' }}</td>
                     <td class="sticky" style="width: 70px;">{{ item.PRODUCT_NM or '' }}</td>
+                    <td class="sticky" style="width: 70px;">{{ item.ITEM_PERMIT_NO or '' }}</td>
                     <td class="sticky" style="width: 70px;">{{ item.MODEL_NM or '' }}</td>
-                    <td class="sticky" style="width: 70px;">{{ item.MEDICAL_CARE_BENEFIT_FLAG or '' }}</td>
+                    <td class="sticky" style="width: 70px; text-align: center;">{{ item.MEDICAL_CARE_BENEFIT_FLAG or '' }}</td>
 
                 </tr>
                 {% endfor %}
@@ -224,7 +227,6 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel">품목 정보 수정</h5>
-
             </div>
             <form id="editForm" method="POST">
                 <div class="modal-body">
@@ -246,16 +248,48 @@
                         <input type="text" class="form-control" id="modal_basic_unit" name="modal_basic_unit">
                     </div>
                     <div class="form-group">
-                        <label for="modal_basic_unit">알파코드(제품)</label>
+                        <label for="modal_alpha_code">알파코드(제품)</label>
                         <input type="text" class="form-control" id="modal_alpha_code" name="modal_alpha_code">
                     </div>
                     <div class="form-group">
-                        <label for="modal_basic_unit">표준코드(DI)</label>
+                        <label for="modal_udi_code">표준코드(DI)</label>
                         <input type="text" class="form-control" id="modal_udi_code" name="modal_udi_code">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_gtin_code1">유통코드</label>
+                        <input type="text" class="form-control" id="modal_gtin_code1" name="modal_gtin_code1">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_pac_qty1">포장수량</label>
+                        <input type="text" class="form-control" id="modal_pac_qty1" name="modal_pac_qty1">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_minor_category_nm">소분류품목명칭</label>
+                        <input type="text" class="form-control" id="modal_minor_category_nm" name="modal_minor_category_nm">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_grade">등급</label>
+                        <input type="text" class="form-control" id="modal_grade" name="modal_grade">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_product_nm">업체제품명칭</label>
+                        <input type="text" class="form-control" id="modal_product_nm" name="modal_product_nm">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_item_permit_no">품목허가번호</label>
+                        <input type="text" class="form-control" id="modal_item_permit_no" name="modal_item_permit_no">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_model_nm">모델명</label>
+                        <input type="text" class="form-control" id="modal_model_nm" name="modal_model_nm">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_medical_care_benefit_flag">요양급여 대상 치료재료 여부</label>
+                        <input type="text" class="form-control" id="modal_medical_care_benefit_flag" name="modal_medical_care_benefit_flag">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light shadow-sm ms-3" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-light shadow-sm ms-3" data-dismiss="modal">닫기</button>
                     <button type="submit" class="btn btn-light shadow-sm ms-3">저장</button>
                 </div>
             </form>
@@ -310,6 +344,14 @@
                     document.getElementById('modal_basic_unit').value = data.BASIC_UNIT || '';
                     document.getElementById('modal_alpha_code').value = data.ALPHA_CODE || '';
                     document.getElementById('modal_udi_code').value = data.UDI_CODE || '';
+                    document.getElementById('modal_gtin_code1').value = data.GTIN_CODE1 || '';
+                    document.getElementById('modal_pac_qty1').value = data.PAC_QTY1 || '';
+                    document.getElementById('modal_minor_category_nm').value = data.MINOR_CATEGORY_NM || '';
+                    document.getElementById('modal_grade').value = data.GRADE || '';
+                    document.getElementById('modal_product_nm').value = data.PRODUCT_NM || '';
+                    document.getElementById('modal_item_permit_no').value = data.ITEM_PERMIT_NO || '';
+                    document.getElementById('modal_model_nm').value = data.MODEL_NM || '';
+                    document.getElementById('modal_medical_care_benefit_flag').value = data.MEDICAL_CARE_BENEFIT_FLAG || '';
 
                     var modal = new bootstrap.Modal(document.getElementById('editModal'));
                     modal.show();

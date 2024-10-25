@@ -134,7 +134,15 @@ def get_item():
             'ITEM_ACCT': item.ITEM_ACCT or '',  # 기본값 설정
             'BASIC_UNIT': item.BASIC_UNIT or '',  # 기본값 설정
             'ALPHA_CODE': item.ALPHA_CODE or '',
-            'UDI_CODE': item.UDI_CODE or ''
+            'UDI_CODE': item.UDI_CODE or '',
+            'PRODUCT_NM': item.PRODUCT_NM or '',
+            'MODEL_NM': item.MODEL_NM or '',
+            'GTIN_CODE1': item.GTIN_CODE1 or '',
+            'PAC_QTY1': item.PAC_QTY1 or '',
+            'MINOR_CATEGORY_NM': item.MINOR_CATEGORY_NM or '',
+            'GRADE': item.GRADE or '',
+            'ITEM_PERMIT_NO': item.ITEM_PERMIT_NO or '',
+            'MEDICAL_CARE_BENEFIT_FLAG': item.MEDICAL_CARE_BENEFIT_FLAG or ''
         })
     else:
         logging.info(f"Item not found for ITEM_CD: {item_cd}")
@@ -150,6 +158,15 @@ def update_item():
     basic_unit = request.form.get('modal_basic_unit')
     alpha_code = request.form.get('modal_alpha_code')
     udi_code = request.form.get('modal_udi_code')
+    gtin_code1 = request.form.get('modal_gtin_code1')
+    pac_qty1 = request.form.get('modal_pac_qty1')
+    minor_category_nm = request.form.get('modal_minor_category_nm')
+    grade = request.form.get('modal_grade')
+    product_nm = request.form.get('modal_product_nm')
+    item_permit_no = request.form.get('modal_item_permit_no')
+    model_nm = request.form.get('modal_model_nm')
+    medical_care_benefit_flag = request.form.get('modal_medical_care_benefit_flag')
+
 
     # 해당 ITEM_CD로 DB에서 아이템을 찾음
     item = db.session.query(Item).filter(Item.ITEM_CD == item_cd).first()
@@ -162,10 +179,19 @@ def update_item():
         item.BASIC_UNIT = basic_unit
         item.ALPHA_CODE = alpha_code
         item.UDI_CODE = udi_code
+        item.PRODUCT_NM = product_nm
+        item.MODEL_NM = model_nm
+        item.GTIN_CODE1 = gtin_code1
+        item.PAC_QTY1 = pac_qty1
+        item.MINOR_CATEGORY_NM = minor_category_nm
+        item.GRADE = grade
+        item.ITEM_PERMIT_NO = item_permit_no
+        item.MEDICAL_CARE_BENEFIT_FLAG = medical_care_benefit_flag
 
         # DB에 커밋
         db.session.commit()
         return jsonify({'success': True})
+
     return jsonify({'error': 'Item not found'}), 404
 
 
@@ -178,11 +204,18 @@ def bom():
     top_level_items = db.session.query(Bom_Detail.PRNT_ITEM_CD).distinct().all()
 
     form_submitted = False  # 조회 버튼이 눌렸는지 여부를 확인하는 변수
+    gtin_code = None  # 유통코드를 저장할 변수
 
     # 선택된 값 가져오기
     selected_parent_item_cd = request.form.get('parent_item_cd') if request.method == 'POST' else None
     selected_plant_code = request.form.get('plant_code') if request.method == 'POST' else None
     start_date = request.form.get('start_date') if request.method == 'POST' else today
+
+    # 선택된 모품목의 유통코드 조회
+    if selected_parent_item_cd:
+        # 유통코드는 최상위 품목에서 가져오므로 해당 품목의 유통코드를 조회
+        parent_item = db.session.query(Item).filter(Item.ITEM_CD == selected_parent_item_cd).first()
+        gtin_code = parent_item.GTIN_CODE1 if parent_item else None
 
     # 조회 버튼을 눌렀을 때만 데이터를 가져오게 처리
     bom_items = []
@@ -191,7 +224,9 @@ def bom():
         if selected_parent_item_cd and start_date:
             # 선택된 최상위 품목과 기준일을 기반으로 BOM 데이터 필터링
             def get_bom_hierarchy(parent_item_cd):
-                query = db.session.query(Bom_Detail).filter(
+                query = db.session.query(Bom_Detail, Item).join(
+                    Item, Bom_Detail.CHILD_ITEM_CD == Item.ITEM_CD
+                ).filter(
                     Bom_Detail.PRNT_ITEM_CD == parent_item_cd,
                     Bom_Detail.VALID_FROM_DT <= start_date,
                     Bom_Detail.VALID_TO_DT >= start_date
@@ -201,47 +236,43 @@ def bom():
                 items = query.all()
                 bom_items.extend(items)
                 for item in items:
-                    get_bom_hierarchy(item.CHILD_ITEM_CD)
+                    get_bom_hierarchy(item[0].CHILD_ITEM_CD)  # 아이템의 첫 번째 요소는 Bom_Detail
 
             # 선택된 최상위 품목에 연결된 전체 BOM 트리를 조회
             get_bom_hierarchy(selected_parent_item_cd)
 
-    # ITEM 테이블에서 자품목 정보 (CHILD_ITEM_CD에 해당하는 정보)
-    item_details = {item.ITEM_CD: item for item in db.session.query(Item).all()}
-
     # BOM 데이터를 계층 구조로 변환
-    def build_bom_tree(bom_items, item_details):
+    def build_bom_tree(bom_items):
         tree = []
         item_map = {}
 
-        for item in bom_items:
-            # Item 테이블에서 자품목과 매칭되는 항목을 가져와서 SPEC과 ITEM_ACCT 추가
-            child_item = item_details.get(item.CHILD_ITEM_CD)
-
+        for bom_detail, item in bom_items:
+            # Item 테이블에서 추가된 정보를 가져와서 ALPHA_CODE, UDI_CODE, GTIN_CODE1 추가
             bom_item = {
-                'seq': item.CHILD_ITEM_SEQ,
-                'prnt_item_cd': item.PRNT_ITEM_CD,  # 모품목 코드
-                'prnt_item_nm': item.PRNT_ITEM_CD,  # 모품목명
-                'child_item_cd': item.CHILD_ITEM_CD,  # 자품목 코드
-                'item_nm': child_item.ITEM_NM if child_item else None,
-                'spec': child_item.SPEC if child_item else None,  # 규격
-                'item_acct': child_item.ITEM_ACCT if child_item else None,  # 품목계정
-                'child_item_qty': item.CHILD_ITEM_QTY,  # 자품목 수량
-                'child_item_unit': item.CHILD_ITEM_UNIT,  # 자품목 단위
-                'prnt_item_qty': item.PRNT_ITEM_QTY,
-                'prnt_item_unit': item.PRNT_ITEM_UNIT,
-                'loss_rate': item.LOSS_RATE,  # 손실율
-                'valid_from_dt': item.VALID_FROM_DT,  # 유효기간 시작
-                'valid_to_dt': item.VALID_TO_DT,  # 유효기간 종료
-                'level': 1  # 기본적으로 1단계로 시작
+                'seq': bom_detail.CHILD_ITEM_SEQ,
+                'prnt_item_cd': bom_detail.PRNT_ITEM_CD,
+                'child_item_cd': bom_detail.CHILD_ITEM_CD,
+                'item_nm': item.ITEM_NM if item else None,
+                'spec': item.SPEC if item else None,
+                'item_acct': item.ITEM_ACCT if item else None,
+                'child_item_qty': bom_detail.CHILD_ITEM_QTY,
+                'child_item_unit': bom_detail.CHILD_ITEM_UNIT,
+                'prnt_item_qty': bom_detail.PRNT_ITEM_QTY,
+                'prnt_item_unit': bom_detail.PRNT_ITEM_UNIT,
+                'loss_rate': bom_detail.LOSS_RATE,
+                'valid_from_dt': bom_detail.VALID_FROM_DT,
+                'valid_to_dt': bom_detail.VALID_TO_DT,
+                'alpha_code': item.ALPHA_CODE if item else None,  # ALPHA_CODE 추가
+                'udi_code': item.UDI_CODE if item else None,  # UDI_CODE 추가
+                'gtin_code1': item.GTIN_CODE1 if item else None,  # GTIN_CODE1 추가
+                'level': 1
             }
 
-            parent_id = item.PRNT_ITEM_CD
+            parent_id = bom_detail.PRNT_ITEM_CD
             if parent_id not in item_map:
                 item_map[parent_id] = []
             item_map[parent_id].append(bom_item)
 
-        # 계층 트리 빌드
         def add_children(item_cd, level):
             if item_cd in item_map:
                 for child in item_map[item_cd]:
@@ -249,17 +280,14 @@ def bom():
                     tree.append(child)
                     add_children(child['child_item_cd'], level + 1)
 
-        # 최상위 부모들을 시작점으로 트리 구조 생성
-        top_level_items = set(item_map.keys()) - set([item.CHILD_ITEM_CD for item in bom_items])
+        top_level_items = set(item_map.keys()) - set([bom_detail.CHILD_ITEM_CD for bom_detail, _ in bom_items])
         for parent_id in top_level_items:
             add_children(parent_id, 1)
 
         return tree
 
-    # 계층 구조로 변환된 BOM 데이터를 가져옵니다.
-    bom_tree_structure = build_bom_tree(bom_items, item_details) if bom_items else []
+    bom_tree_structure = build_bom_tree(bom_items) if bom_items else []
 
-    # 템플릿에 데이터 전달
     return render_template(
         'masterdata/bom.html',
         bom_tree_structure=bom_tree_structure,
@@ -268,11 +296,15 @@ def bom():
         plants=plants,
         selected_plant_code=selected_plant_code,
         start_date=start_date,
-        form_submitted=form_submitted  # form 제출 여부 전달
+        form_submitted=form_submitted,
+        gtin_code=gtin_code
     )
 
 
+
+
 #거래처정보조회
+# 거래처 조회 및 필터링
 @bp.route('/vendor/', methods=['GET', 'POST'])
 def vendor():
     form_submitted = False
@@ -302,29 +334,60 @@ def vendor():
                            bp_cd=bp_cd,
                            bp_nm=bp_nm)
 
+# 특정 거래처 정보 조회
+@bp.route('/vendor/get_vendor', methods=['POST'])
+def get_vendor():
+    data = request.get_json()  # 클라이언트로부터 받은 JSON 데이터
+    bp_cd = data.get('bp_cd')  # 거래처 코드 (bp_cd) 값 추출
+
+    # 해당 거래처 조회
+    vendor = db.session.query(Biz_Partner).filter(Biz_Partner.bp_cd == bp_cd).first()
+
+    if vendor:
+        return jsonify({
+            'bp_cd': vendor.bp_cd,
+            'bp_nm': vendor.bp_nm or '',
+            'bp_rgst_no': vendor.bp_rgst_no or '',
+            'nids_cd': vendor.nids_cd or '',
+            'repre_nm': vendor.repre_nm or '',
+            'addr1': vendor.addr1 or '',
+            'addr2': vendor.addr2 or '',
+            'usage_flag': vendor.usage_flag or ''
+        })
+    else:
+        return jsonify({'error': 'Vendor not found'}), 404
+
+# 거래처 정보 업데이트
 @bp.route('/vendor/update_vendor', methods=['POST'])
 def update_vendor():
+    # 받아온 form 데이터를 처리
     bp_cd = request.form.get('bp_cd')
-    bp_nm = request.form.get('bp_nm')
-    bp_rgst_no = request.form.get('bp_rgst_no')
-    nids_cd = request.form.get('nids_cd')
-    repre_nm = request.form.get('repre_nm')
-    addr1 = request.form.get('addr1')
-    addr2 = request.form.get('addr2')
-    usage_flag = request.form.get('usage_flag')
+    bp_nm = request.form.get('bp_nm', '')  # 빈 문자열 기본값
+    bp_rgst_no = request.form.get('bp_rgst_no', '')  # 빈 문자열 기본값
+    nids_cd = request.form.get('nids_cd', '')  # 빈 문자열 기본값
+    repre_nm = request.form.get('repre_nm', '')  # 빈 문자열 기본값
+    addr1 = request.form.get('addr1', '')  # 빈 문자열 기본값
+    addr2 = request.form.get('addr2', '')  # 빈 문자열 기본값
+    usage_flag = request.form.get('usage_flag', '')  # 빈 문자열 기본값
 
+    # 해당 거래처코드(bp_cd)로 DB에서 거래처 정보 찾기
     vendor = db.session.query(Biz_Partner).filter_by(bp_cd=bp_cd).first()
 
     if vendor:
-        vendor.bp_nm = bp_nm
-        vendor.bp_rgst_no = bp_rgst_no
-        vendor.nids_cd = nids_cd
-        vendor.repre_nm = repre_nm
-        vendor.addr1 = addr1
-        vendor.addr2 = addr2
-        vendor.usage_flag = usage_flag
+        # 값이 빈 문자열이면 None으로 변환해서 처리
+        vendor.bp_nm = bp_nm if bp_nm else None
+        vendor.bp_rgst_no = bp_rgst_no if bp_rgst_no else None
+        vendor.nids_cd = nids_cd if nids_cd else None
+        vendor.repre_nm = repre_nm if repre_nm else None
+        vendor.addr1 = addr1 if addr1 else None
+        vendor.addr2 = addr2 if addr2 else None
+        vendor.usage_flag = usage_flag if usage_flag else None
+
+        # 변경 사항을 DB에 반영
         db.session.commit()
         return jsonify(success=True)
     else:
         return jsonify(success=False, error='Vendor not found')
+
+
 

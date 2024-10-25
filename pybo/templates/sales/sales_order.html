@@ -1,9 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-
 <style>
-
     .selected-row {
         background-color: #D6EAF8 !important;
     }
@@ -39,7 +37,8 @@
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px 0;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">영업관리 > 수주정보조회</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton" disabled><i class="bi bi-card-checklist"></i>
+            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton" disabled><i
+                    class="bi bi-truck"></i>
                 출하처리
             </button>
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
@@ -54,45 +53,43 @@
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
                     <label for="bp_cd" class="form-label me-3" style="min-width: 110px;">주문처</label>
-                    <input type="text" class="form-control form-control-sm" id="bp_cd" name="bp_cd"
-                           value="{{ bp_cd }}">
+                    <input type="text" class="form-control form-control-sm" id="bp_cd" name="bp_cd" value="{{ BP_CD }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
                     <label for="so_no" class="form-label me-3" style="min-width: 110px;">수주번호</label>
-                    <input type="text" class="form-control form-control-sm" id="so_no" name="so_no"
-                           value="{{ so_no }}">
+                    <input type="text" class="form-control form-control-sm" id="so_no" name="so_no" value="{{ SO_NO }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
                     <label for="item_cd" class="form-label me-3" style="min-width: 110px;">품목</label>
                     <input type="text" class="form-control form-control-sm" id="item_cd" name="item_cd"
-                           value="{{ item_cd }}">
+                           value="{{ ITEM_CD }}">
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="bp_cd" class="form-label me-3" style="min-width: 110px;">수주일자</label>
+                    <label for="so_dt_start" class="form-label me-3" style="min-width: 110px;">수주일자</label>
                     <div class="d-flex">
-                        <input type="date" class="form-control form-control-sm me-2" id="start_date" name="start_date"
-                               value="{{ RELEASE_START_DT.strftime('%Y-%m-%d') if RELEASE_START_DT else '' }}">
+                        <input type="date" class="form-control form-control-sm me-2" id="so_dt_start" name="so_dt_start"
+                               value="{{ SO_DT_START }}">
                         <span class="mx-2">~</span>
-                        <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
-                               value="{{ RELEASE_END_DT.strftime('%Y-%m-%d') if RELEASE_END_DT else '' }}">
+                        <input type="date" class="form-control form-control-sm ms-2" id="so_dt_end" name="so_dt_end"
+                               value="{{ SO_DT_END }}">
                     </div>
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="so_no" class="form-label me-3" style="min-width: 110px;">납기일자</label>
+                    <label for="req_dlvy_dt_start" class="form-label me-3" style="min-width: 110px;">납기일자</label>
                     <div class="d-flex">
-                        <input type="date" class="form-control form-control-sm me-2" id="start_date" name="start_date"
-                               value="{{ RELEASE_START_DT.strftime('%Y-%m-%d') if RELEASE_START_DT else '' }}">
+                        <input type="date" class="form-control form-control-sm me-2" id="req_dlvy_dt_start"
+                               name="req_dlvy_dt_start" value="{{ REQ_DLVY_DT_START }}">
                         <span class="mx-2">~</span>
-                        <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
-                               value="{{ RELEASE_END_DT.strftime('%Y-%m-%d') if RELEASE_END_DT else '' }}">
+                        <input type="date" class="form-control form-control-sm ms-2" id="req_dlvy_dt_end"
+                               name="req_dlvy_dt_end" value="{{ REQ_DLVY_DT_END }}">
                     </div>
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">고객주문번호</label>
-                    <input type="text" class="form-control form-control-sm" id="item_cd" name="item_cd"
-                           value="{{ item_cd }}">
+                    <label for="cust_po_no" class="form-label me-3" style="min-width: 110px;">고객주문번호</label>
+                    <input type="text" class="form-control form-control-sm" id="cust_po_no" name="cust_po_no"
+                           value="{{ CUST_PO_NO }}">
                 </div>
             </div>
         </div>
@@ -101,94 +98,137 @@
 
 <div class="gap" style="margin-top: 20px;"></div>
 
-<!-- 거래처정보 테이블 -->
-{% if form_submitted  %}
+<!-- 수주정보 테이블 -->
+{% if form_submitted %}
 <div class="table-wrapper">
     <table class="table table-sm table-hover" id="dataTable">
         <thead class="table-light">
-            <tr>
-                <th>거래처코드</th>
-                <th>거래처명</th>
-                <th>사업자등록번호</th>
-                <th>NIDS거래처코드</th>
-                <th>대표자</th>
-                <th>주소</th>
-                <th>사용여부</th>
-            </tr>
+        <tr>
+            <th>수주번호</th>
+            <th>SEQ</th>
+            <th>주문처</th>
+            <th>주문처명</th> <!-- Biz_Partner 모델에서 bp_nm 가져오기 -->
+            <th>품목</th>
+            <th>품목명</th> <!-- Item 모델에서 ITEM_NM 가져오기 -->
+            <th>규격</th> <!-- Item 모델에서 SPEC 가져오기 -->
+            <th>단위</th> <!-- Item 모델에서 BASIC_UNIT 가져오기 -->
+            <th>공장</th>
+            <th>창고</th>
+            <th>단가(KRW)</th>
+            <th>수량</th>
+            <th>수주금액(KRW)</th>
+            <th>수주일자</th>
+            <th>납기일자</th>
+            <th>고객주문번호</th>
+        </tr>
         </thead>
         <tbody>
-            {% for vendor in vendors %}
-            <tr data-bp-cd="{{ vendor.bp_cd }}" data-bp-nm="{{ vendor.bp_nm }}" data-bp-rgst-no="{{ vendor.bp_rgst_no }}" data-nids-cd=" {{ vendor.nids_cd }}"
-                data-repre-nm="{{ vendor.repre_nm }}" data-addr1="{{ vendor.addr1 }}" data-addr2="{{ vendor.addr2 }}"
-                data-usage-flag="{{ vendor.usage_flag }}">
-                <td>{{ vendor.bp_cd }}</td>
-                <td>{{ vendor.bp_nm }}</td>
-                <td>{{ vendor.bp_rgst_no }}</td>
-                <td>{{ vendor.nids_cd or '' }}</td>
-                <td>{{ vendor.repre_nm or '' }}</td>
-                <td>{{ vendor.addr1 or '' }} {{ vendor.addr2 or '' }}</td>
-                <td>{{ vendor.usage_flag }}</td>
-            </tr>
-            {% endfor %}
+        {% for order, bp_nm, item_nm, spec, basic_unit in sales_orders %}
+        <tr data-bp-cd="{{ order.BP_CD }}" data-so-no="{{ order.SO_NO }}" data-item-cd="{{ order.ITEM_CD }}"
+            data-so-dt="{{ order.SO_DT }}" data-req-dlvy-dt="{{ order.REQ_DLVY_DT }}" data-bp-nm="{{ bp_nm }}" data-so-qty="{{ order.SO_QTY | int }}"
+            data-cust-po-no="{{ order.CUST_PO_NO }}">
+            <td>{{ order.SO_NO }}</td>
+            <td>{{ order.SO_SEQ }}</td>
+            <td>{{ order.BP_CD }}</td>
+            <td>{{ bp_nm }}</td> <!-- Biz_Partner의 bp_nm -->
+            <td>{{ order.ITEM_CD }}</td>
+            <td>{{ item_nm }}</td> <!-- Item의 ITEM_NM -->
+            <td>{{ spec }}</td> <!-- Item의 SPEC -->
+            <td>{{ basic_unit }}</td> <!-- Item의 BASIC_UNIT -->
+            <td>{{ order.PLANT_CD }}</td>
+            <td>{{ order.SL_CD }}</td>
+            <td>{{ order.SO_PRICE | int }}</td>
+            <td>{{ order.SO_QTY | int }}</td>
+            <td>{{ order.NET_AMT | int }}</td>
+            <td>{{ order.SO_DT.strftime('%Y-%m-%d') if order.SO_DT else '' }}</td>
+            <td>{{ order.REQ_DLVY_DT.strftime('%Y-%m-%d') if order.REQ_DLVY_DT else '' }}</td>
+            <td>{{ order.CUST_PO_NO or '' }}</td>
+        </tr>
+        {% endfor %}
         </tbody>
     </table>
 </div>
 {% endif %}
 
-<!-- 거래처 수정 모달 -->
-<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<!-- 공급 내역 등록 모달 -->
+<div class="modal fade" id="supplyModal" tabindex="-1" aria-labelledby="supplyModalLabel" role="dialog"
+     aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">거래처 정보 수정</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="editModalLabel">공급내역 등록</h5>
             </div>
             <div class="modal-body">
-                <form id="editForm">
-                    <div class="mb-3">
-                        <label for="modal_bp_cd" class="form-label">거래처코드</label>
-                        <input type="text" class="form-control" id="modal_bp_cd" name="bp_cd" readonly>
+                <form id="supplyForm" class="px-5" method="POST">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3 col-10">
+                                <label for="modal_bp_cd" class="form-label">주문처</label>
+                                <input type="text" class="form-control" id="modal_bp_cd" name="bp_cd" readonly>
+                            </div>
+                            <div class="mb-3 col-10">
+                                <label for="modal_bp_nm" class="form-label">주문처명</label>
+                                <input type="text" class="form-control" id="modal_bp_nm" name="bp_nm" readonly>
+                            </div>
+                            <div class="mb-3 col-10">
+                                <label for="modal_so_no" class="form-label">수주번호</label>
+                                <input type="text" class="form-control" id="modal_so_no" name="so_no" readonly>
+                            </div>
+                            <div class="mb-3 col-10">
+                                <label for="modal_item_cd" class="form-label">품목코드</label>
+                                <input type="text" class="form-control" id="modal_item_cd" name="item_cd" readonly>
+                            </div>
+                            <div class="mb-3 col-10">
+                                <label for="modal_so_qty" class="form-label">수량</label>
+                                <input type="text" class="form-control" id="modal_so_qty" name="so_qty" readonly>
+                            </div>
+<!--                            <div class="mb-3 col-10">-->
+<!--                                <label for="modal_so_dt" class="form-label">수주일자</label>-->
+<!--                                <input type="date" class="form-control" id="modal_so_dt" name="so_dt">-->
+<!--                            </div>-->
+<!--                            <div class="mb-3 col-10">-->
+<!--                                <label for="modal_req_dlvy_dt" class="form-label">납기일자</label>-->
+<!--                                <input type="date" class="form-control" id="modal_req_dlvy_dt" name="req_dlvy_dt">-->
+<!--                            </div>-->
+<!--                            <div class="mb-3 col-10">-->
+<!--                                <label for="modal_cust_po_no" class="form-label">고객주문번호</label>-->
+<!--                                <input type="text" class="form-control" id="modal_cust_po_no" name="cust_po_no">-->
+<!--                            </div>-->
+                        </div>
+                        <div class="col-md-8">
+                            <table class="table table-sm table-borderless ms-auto" style="text-align: center;" id="dataTable_modal">
+                                <thead class="table-sm">
+                                <tr>
+                                    <th>Box QR</th>
+                                    <th>MasterBox 번호</th>
+                                    <th>Box내 수량</th>
+                                    <th>포장일자</th>
+                                    <th>멸균일자</th>
+                                </tr>
+                                </thead>
+                                <tbody id="modalTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="modal_bp_nm" class="form-label">거래처명</label>
-                        <input type="text" class="form-control" id="modal_bp_nm" name="bp_nm">
-                    </div>
-                    <div class="mb-3">
-                        <label for="modal_bp_rgst_no" class="form-label">사업자등록번호</label>
-                        <input type="text" class="form-control" id="modal_bp_rgst_no" name="bp_rgst_no">
-                    </div>
-                    <div class="mb-3">
-                        <label for="modal_nids_cd" class="form-label">NIDS거래처코드</label>
-                        <input type="text" class="form-control" id="modal_nids_cd" name="nids_cd">
-                    </div>
-                    <div class="mb-3">
-                        <label for="modal_repre_nm" class="form-label">대표자</label>
-                        <input type="text" class="form-control" id="modal_repre_nm" name="repre_nm">
-                    </div>
-                    <div class="mb-3">
-                        <label for="modal_addr" class="form-label">주소</label>
-                        <input type="text" class="form-control" id="modal_addr1" name="addr1" placeholder="주소1">
-                        <input type="text" class="form-control mt-2" id="modal_addr2" name="addr2" placeholder="주소2">
-                    </div>
-                    <div class="mb-3">
-                        <label for="modal_usage_flag" class="form-label">사용여부</label>
-                        <select class="form-select" id="modal_usage_flag" name="usage_flag">
-                            <option value="Y">사용</option>
-                            <option value="N">미사용</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">저장</button>
                 </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <div class="d-flex">
+                    <input type="text" id="BoxNumScan" class="form-control" placeholder="Box QR 스캔" style="width: 370px; margin-right: 10px; border: none;">
+                </div>
+                <div>
+                    <button type="button" class="btn btn-light shadow-sm ms-3" data-dismiss="modal">닫기</button>
+                    <button type="submit" class="btn btn-light shadow-sm ms-3">등록</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-
 <script>
-    var selectedBpCd = '';
+    var selectedSoNo = '';
 
-    // 테이블의 행을 클릭할 때 선택된 거래처코드를 저장
+    // 테이블의 행을 클릭할 때 선택된 수주번호를 저장
     document.querySelectorAll('#dataTable tbody tr').forEach(row => {
         row.addEventListener('click', function() {
             document.querySelectorAll('#dataTable tbody tr').forEach(row => {
@@ -196,17 +236,17 @@
             });
 
             this.classList.add('selected-row');
-            selectedBpCd = this.getAttribute('data-bp-cd');
+            selectedSoNo = this.getAttribute('data-so-no');
 
             // 모달에 데이터를 채움
             document.getElementById('modal_bp_cd').value = this.getAttribute('data-bp-cd');
             document.getElementById('modal_bp_nm').value = this.getAttribute('data-bp-nm');
-            document.getElementById('modal_bp_rgst_no').value = this.getAttribute('data-bp-rgst-no');
-            document.getElementById('modal_nids_cd').value = this.getAttribute('data-nids-cd');
-            document.getElementById('modal_repre_nm').value = this.getAttribute('data-repre-nm');
-            document.getElementById('modal_addr1').value = this.getAttribute('data-addr1');
-            document.getElementById('modal_addr2').value = this.getAttribute('data-addr2');
-            document.getElementById('modal_usage_flag').value = this.getAttribute('data-usage-flag');
+            document.getElementById('modal_so_no').value = this.getAttribute('data-so-no');
+            document.getElementById('modal_item_cd').value = this.getAttribute('data-item-cd');
+            document.getElementById('modal_so_qty').value = this.getAttribute('data-so-qty');
+            // document.getElementById('modal_so_dt').value = this.getAttribute('data-so-dt');
+            // document.getElementById('modal_req_dlvy_dt').value = this.getAttribute('data-req-dlvy-dt');
+            // document.getElementById('modal_cust_po_no').value = this.getAttribute('data-cust-po-no');
 
             // 수정 버튼 활성화
             document.getElementById('openModalButton').disabled = false;
@@ -215,7 +255,7 @@
 
     // 수정 버튼을 눌렀을 때 모달을 표시
     document.getElementById('openModalButton').addEventListener('click', function() {
-        var modal = new bootstrap.Modal(document.getElementById('editModal'));
+        var modal = new bootstrap.Modal(document.getElementById('supplyModal'));
         modal.show();
     });
 
@@ -225,7 +265,7 @@
 
         var formData = new FormData(this);
 
-        fetch('/vendor/update_vendor', {
+        fetch('/sales/sales_order/update_order', {
             method: 'POST',
             body: formData
         })
@@ -241,7 +281,7 @@
             }
         })
         .catch(error => {
-            console.error('Error updating vendor:', error);
+            console.error('Error updating order:', error);
         });
     });
 </script>
