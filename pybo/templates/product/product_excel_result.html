@@ -2,10 +2,16 @@
 {% block content %}
 
 <style>
-    th, td {
-        padding: 15px;
-        text-align: center;
-        white-space: nowrap;
+    .selected-row {
+        background-color: #D6EAF8 !important;
+    }
+
+    .completed-item {
+        background-color: #e0ffff !important;
+    }
+
+    .report-flag-yes {
+        background-color: #F0F8FF !important; /* 파란색 배경 */
     }
 
     th {
@@ -13,170 +19,187 @@
         box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4);
         position: sticky;
         top: 0;
-        z-index: 40; /* 헤더의 z-index를 높임 */
-    }
-
-    th.fixed, td.fixed {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 0;
-        background-color: #fff;
-        z-index: 50; /* 고정 열의 z-index를 높임 */
-    }
-
-    th.fixed-2, td.fixed-2 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 50px;
-        background-color: #fff;
-        z-index: 50;
-    }
-
-    th.fixed-3, td.fixed-3 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 150px;
-        background-color: #fff;
-        z-index: 50;
-    }
-
-    th.fixed-4, td.fixed-4 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 250px;
-        background-color: #fff;
-        z-index: 50;
-    }
-
-    th.fixed-5, td.fixed-5 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 350px;
-        background-color: #fff;
-        z-index: 50;
-    }
-
-    th.fixed-6, td.fixed-6 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 450px;
-        background-color: #fff;
-        z-index: 50;
-    }
-
-    th.fixed-7, td.fixed-7 {
-        position: -webkit-sticky;
-        position: sticky;
-        left: 550px;
-        background-color: #fff;
-        z-index: 50;
+        z-index: 20;
+        font-size: 15px; /* 헤더 글자 크기 */
+        padding: 4px; /* 헤더의 패딩 */
     }
 
     .table-wrapper {
-        overflow: auto;
-        height: calc(100vh - 186px); /* 화면 높이에 따라 조절 */
+        overflow-x: auto;
+        overflow-y: auto;
+        height: calc(100vh - 250px); /* 화면 높이에 따라 조절 */
         width: 100%;
-        margin-bottom: 20px;
     }
 
     table {
         border-collapse: collapse;
         width: 100%;
+        font-size: 13px; /* 테이블 글자 크기 */
     }
 
     th, td {
-        min-width: 100px;
+        padding: 8px; /* 셀 패딩을 조금 늘림 */
+        white-space: nowrap; /* 줄바꿈 없이 한 줄에 표시 */
+        text-align: center; /* 가운데 정렬 */
+        text-overflow: ellipsis; /* 넘칠 때 ... 처리 */
+        overflow: hidden; /* 넘침을 감춤 */
     }
-    .flash {
-        display: none;
+
+    .sticky {
+        position: sticky;
+        left: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+        padding-left: 8px; /* 왼쪽 패딩을 추가하여 글자가 붙지 않게 함 */
+        padding-right: 8px; /* 오른쪽 패딩 추가 */
+        text-align: left; /* sticky된 셀은 좌측 정렬 */
     }
+
 </style>
 
 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px 15px;">
-        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 제조실적등록</h7>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-toggle="modal"
-                    data-bs-target="#uploadModal" id="openModalButton"><i
-                    class="bi bi-file-earmark-spreadsheet"></i>
-                실적 Excel 업로드
-            </button>
-            <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel"
-                 aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <form method="POST" action="{{ url_for('product.upload_excel') }}" enctype="multipart/form-data"
-                              onsubmit="showLoadingModal()">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="uploadModalLabel">엑셀 파일 업로드</h5>
+    <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 엑셀데이터조회</h7>
+    <div style="display: flex; gap: 10px; align-items: center;">
+
+        <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="{{ url_for('product.upload_excel') }}" enctype="multipart/form-data"
+                          onsubmit="showLoadingModal()">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="uploadModalLabel">엑셀 파일 업로드</h5>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="excelFile" class="form-label">엑셀 파일 선택</label>
+                                <input class="form-control" type="file" id="excelFile" name="excelFile"
+                                       accept=".xlsx,.xls">
                             </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="excelFile" class="form-label">엑셀 파일 선택</label>
-                                    <input class="form-control" type="file" id="excelFile" name="excelFile"
-                                           accept=".xlsx,.xls">
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                                        onclick="location.reload();">닫기
-                                </button>
-                                <button type="submit" class="btn btn-primary">업로드</button>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    onclick="location.reload();">닫기
+                            </button>
+                            <button type="submit" class="btn btn-primary">업로드</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" onclick="handleSubmit()">
-                <i class="bi bi-box-arrow-in-down"></i> 실적 등록
-            </button>
         </div>
+        <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
+            <i class="bi bi-search"></i> 조회
+        </button>
     </div>
+</div>
 
 <!-- 조회 필터 -->
-<form method="POST" action="{{ url_for('product.product_excel_result') }}">
-    <div class="form-group">
-        <label for="barcode">Barcode:</label>
-        <input type="text" name="barcode" id="barcode" value="{{ barcode }}" class="form-control">
+<form method="POST" action="{{ url_for('product.product_excel_result') }}" class="px-4" id="searchForm">
+    <input type="hidden" name="form_submitted" value="True">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="mb-1 col-9 d-flex align-items-center">
+                <label for="barcode" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;바코드</label>
+                <input type="text" name="barcode" id="barcode" value="{{ barcode }}" class="form-control">
+            </div>
+            <div class="mb-1 col-9 d-flex align-items-center">
+                <label for="product" class="form-label me-3" style="min-width: 110px;">알파코드(제품)</label>
+                <input type="text" name="product" id="product" value="{{ product }}" class="form-control">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="mb-1 col-9 d-flex align-items-center">
+                <label for="lot" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;Lot 번호</label>
+                <input type="text" name="lot" id="lot" value="{{ lot }}" class="form-control">
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-        <label for="product">Product:</label>
-        <input type="text" name="product" id="product" value="{{ product }}" class="form-control">
-    </div>
-    <div class="form-group">
-        <label for="lot">LOT:</label>
-        <input type="text" name="lot" id="lot" value="{{ lot }}" class="form-control">
-    </div>
-    <button type="submit" class="btn btn-primary mt-2">Search</button>
 </form>
 
 <!-- 조회 결과 테이블 -->
-<table class="table table-striped mt-4">
-    <thead>
-        <tr>
-            <th>Barcode</th>
-            <th>Product</th>
-            <th>LOT</th>
-            <th>Error Code</th>
-            <th>Error Info</th>
-            <th>Modified</th>
-            <th>Print Time</th>
-            <!-- 필요한 컬럼 추가 가능 -->
-        </tr>
-    </thead>
-    <tbody>
+<div class="table-wrapper">
+    <table class="table table-striped mt-4">
+        <thead>
+            <tr>
+                <th style="background-color: white; ">barcode</th>
+                <th style="background-color: white; ">product</th>
+                <th style="background-color: white; ">LOT</th>
+                <th style="background-color: white; ">modified</th>
+                <th style="background-color: white; ">실적처리</th>
+                <th style="background-color: white;">err_code</th>
+                <th style="background-color: white;">err_info</th>
+                <th style="background-color: white;">print_time</th>
+                <th style="background-color: white;">inweight_time</th>
+                <th style="background-color: white;">inweight_cycles</th>
+                <th style="background-color: white;">inweight_station</th>
+                <th style="background-color: white;">inweight_result</th>
+                <th style="background-color: white;">inweight_value</th>
+                <th style="background-color: white;">leaktest_cycles</th>
+                <th style="background-color: white;">leaktest_entry</th>
+                <th style="background-color: white;">leaktest_exit</th>
+                <th style="background-color: white;">leaktest_station</th>
+                <th style="background-color: white;">leaktest_value</th>
+                <th style="background-color: white;">leaktest_ptest</th>
+                <th style="background-color: white;">leaktest_duration</th>
+                <th style="background-color: white;">leaktest_result</th>
+                <th style="background-color: white;">outweight_time</th>
+                <th style="background-color: white;">outweight_station</th>
+                <th style="background-color: white;">outweight_cycles</th>
+                <th style="background-color: white;">outweight_result</th>
+                <th style="background-color: white;">outweight_value</th>
+                <th style="background-color: white;">itest2_time</th>
+                <th style="background-color: white;">itest2_station</th>
+                <th style="background-color: white;">itest2_cycles</th>
+                <th style="background-color: white;">itest2_result</th>
+                <th style="background-color: white;">itest2_value</th>
+                <th style="background-color: white;">itest2_ptest</th>
+                <th style="background-color: white;">prodlabel_time</th>
+                <th style="background-color: white;">prodlabel_cycles</th>
+            </tr>
+        </thead>
+        <tbody>
         {% for record in alpha_data %}
         <tr>
             <td>{{ record.barcode }}</td>
             <td>{{ record.product }}</td>
             <td>{{ record.LOT }}</td>
+            <td>{{ record.modified }}</td>
+            <td class="{% if record.REPORT_FLAG == 'Y' %}report-flag-yes{% endif %}">
+                {{ record.REPORT_FLAG }}
+            </td>
             <td>{{ record.err_code }}</td>
             <td>{{ record.err_info }}</td>
-            <td>{{ record.modified }}</td>
             <td>{{ record.print_time }}</td>
-            <!-- 필요한 데이터 추가 가능 -->
+            <td>{{ record.inweight_time.strftime('%Y-%m-%d %H:%M:%S') if record.inweight_time else '' }}</td>
+            <td>{{ record.inweight_cycles }}</td>
+            <td>{{ record.inweight_station }}</td>
+            <td>{{ record.inweight_result }}</td>
+            <td>{{ record.inweight_value }}</td>
+            <td>{{ record.leaktest_cycles }}</td>
+            <td>{{ record.leaktest_entry.strftime('%Y-%m-%d %H:%M:%S') if record.leaktest_entry else '' }}</td>
+            <td>{{ record.leaktest_exit.strftime('%Y-%m-%d %H:%M:%S') if record.leaktest_exit else '' }}</td>
+            <td>{{ record.leaktest_station }}</td>
+            <td>{{ record.leaktest_value }}</td>
+            <td>{{ record.leaktest_ptest }}</td>
+            <td>{{ record.leaktest_duration }}</td>
+            <td>{{ record.leaktest_result }}</td>
+            <td>{{ record.outweight_time.strftime('%Y-%m-%d %H:%M:%S') if record.outweight_time else '' }}</td>
+            <td>{{ record.outweight_station }}</td>
+            <td>{{ record.outweight_cycles }}</td>
+            <td>{{ record.outweight_result }}</td>
+            <td>{{ record.outweight_value }}</td>
+            <td>{{ record.itest2_time.strftime('%Y-%m-%d %H:%M:%S') if record.itest2_time else '' }}</td>
+            <td>{{ record.itest2_station }}</td>
+            <td>{{ record.itest2_cycles }}</td>
+            <td>{{ record.itest2_result }}</td>
+            <td>{{ record.itest2_value }}</td>
+            <td>{{ record.itest2_ptest }}</td>
+            <td>{{ record.prodlabel_time.strftime('%Y-%m-%d %H:%M:%S') if record.prodlabel_time else '' }}</td>
+            <td>{{ record.prodlabel_cycles }}</td>
         </tr>
         {% endfor %}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 
 {% endblock %}
