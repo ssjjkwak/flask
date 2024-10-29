@@ -2,41 +2,17 @@
 {% block content %}
 
 <style>
-    .selected-row {
-        background-color: #D6EAF8 !important;
-    }
-
-    .table-wrapper {
-        overflow: auto;
-        height: calc(100vh - 300px); /* 화면 높이에 따라 조절 */
-        width: 100%;
-    }
-
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-    th, td {
-        min-width: 50px;
-        text-align: center;
-        padding: 8px;
-        border-bottom: 1px solid #ddd;
-    }
-
-    th {
-        background-color: #f8f9fa;
-        position: sticky;
-        top: 0;
-        z-index: 20;
-    }
+    .selected-row { background-color: #D6EAF8 !important; }
+    .table-wrapper { overflow: auto; height: calc(100vh - 300px); width: 100%; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { min-width: 50px; text-align: center; padding: 8px; border-bottom: 1px solid #ddd; }
+    th { background-color: #f8f9fa; position: sticky; top: 0; z-index: 20; }
 </style>
 
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px 0;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">재고관리 > 재고조회</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
-
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
                 <i class="bi bi-search"></i> 조회
             </button>
@@ -48,60 +24,43 @@
         <div class="row">
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="bp_cd" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;공장</label>
+                    <label for="bp_cd" class="form-label me-3" style="min-width: 110px;">공장</label>
                     <input type="text" class="form-control form-control-sm" id="bp_cd" name="bp_cd" value="{{ BP_CD }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="so_no" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;바코드</label>
+                    <label for="so_no" class="form-label me-3" style="min-width: 110px;">바코드</label>
                     <input type="text" class="form-control form-control-sm" id="so_no" name="so_no" value="{{ SO_NO }}">
                 </div>
-
             </div>
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;품목</label>
-                    <input type="text" class="form-control form-control-sm" id="item_cd" name="item_cd"
-                           value="{{ ITEM_CD }}">
+                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">품목</label>
+                    <input type="text" class="form-control form-control-sm" id="item_cd" name="item_cd" value="{{ ITEM_CD }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="cust_po_no" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;창고</label>
-                    <input type="text" class="form-control form-control-sm" id="cust_po_no" name="cust_po_no"
-                           value="{{ CUST_PO_NO }}">
+                    <label for="cust_po_no" class="form-label me-3" style="min-width: 110px;">창고</label>
+                    <input type="text" class="form-control form-control-sm" id="cust_po_no" name="cust_po_no" value="{{ CUST_PO_NO }}">
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="mb-1 col-9 d-flex align-items-center">
                     <label for="so_dt_start" class="form-label me-3" style="min-width: 110px;">표준코드(DI)</label>
-                    <div class="d-flex">
-                        <input type="text" class="form-control form-control-sm" id="cust_po_no112" name="cust_po_no"
-                           value="{{ CUST_PO_NO }}">
-                    </div>
+                    <input type="text" class="form-control form-control-sm" id="cust_po_no112" name="cust_po_no" value="{{ CUST_PO_NO }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
                     <label for="req_dlvy_dt_start" class="form-label me-3" style="min-width: 110px;">알파코드(제품)</label>
-                    <div class="d-flex">
-                        <input type="text" class="form-control form-control-sm" id="cust_po_no1" name="cust_po_no"
-                           value="{{ CUST_PO_NO }}">
-                    </div>
+                    <input type="text" class="form-control form-control-sm" id="cust_po_no1" name="cust_po_no" value="{{ CUST_PO_NO }}">
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="mb-1 col-9 d-flex align-items-center" style="visibility: hidden;">
-                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">EMPTYLABEL</label>
-                        <div class="d-flex">
-
-                        </div>
-                    </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
                     <label for="cust_po_no" class="form-label me-3" style="min-width: 110px;"></label>
                     <div class="d-flex">
-                            <!-- 미등록: PO_STATUS가 None 또는 빈 문자열일 때 선택 -->
-                            <div class="form-check me-3">
-                                <input class="form-check-input" type="checkbox" id="status1" name="po_status"
-                                       value="none" {% if PO_STATUS== 'none' %}checked{% endif %}>
-                                <label class="form-check-label" for="status1">바코드 단위</label>
-                            </div>
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="checkbox" id="status1" name="po_status" value="none" {% if po_status == 'none' %}checked{% endif %}>
+                            <label class="form-check-label" for="status1">바코드 단위</label>
                         </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -110,46 +69,45 @@
 
 <div class="gap" style="margin-top: 20px;"></div>
 
-
-
-
 {% if form_submitted %}
 <div class="table-wrapper">
     <table class="table table-sm table-hover" id="dataTable">
         <thead class="table-light">
             <tr>
-                <th></th>
                 <th>품목</th>
                 <th>품목명</th>
                 <th>단위</th>
-                <th>수량</th>
-                <th>창고</th>
-                <th>창고명</th>
-                <th>바코드</th>
-                <th>MasterBox번호</th>
-
+                {% if po_status == 'none' %}
+                    <th>바코드</th>
+                    <th>작업센터</th>
+                    <th>창고</th>
+                    <th>창고명</th>
+                    <th>수량</th>
+                {% else %}
+                    <th>수량</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
             {% for result in results %}
             <tr>
-                <td>{{ loop.index }}</td>
                 <td>{{ result.item_cd }}</td>
                 <td style="text-align: left;">{{ result.item_nm }}</td>
                 <td>{{ result.basic_unit }}</td>
-                <td>1</td>
-                <td>{{ result.sl_cd }}</td>
-                <td>{{ result.sl_nm }}</td>
-                <td>{{ result.barcode }}</td>
-                <td></td>
-
+                {% if po_status == 'none' %}
+                    <td>{{ result.barcode }}</td>
+                    <td>{{ result.wc_cd }}</td>
+                    <td>{{ result.sl_cd }}</td>
+                    <td>{{ result.sl_nm }}</td>
+                    <td>1</td>
+                {% else %}
+                    <td>{{ result.total_qty }}</td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% endif %}
-
-
 
 {% endblock %}
