@@ -63,8 +63,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">하위반제품 조회</h5>
-
+                        <h5 class="modal-title" id="exampleModalLabel">하위 반제품 조회</h5>
                     </div>
                     <div class="modal-body">
                         <form id="productForm" method="POST" action="{{ url_for('product.product_order') }}"
@@ -74,7 +73,7 @@
                                     <div class="mb-1 col-8">
                                         <label for="plant_code2" class="form-label">공장:</label>
                                         <select class="form-control" id="plant_code2" name="plant_code">
-                                            <option value="">-</option>
+                                            <option value="">p710</option>
                                             {% for plant in plants %}
                                             <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD==
                                                     selected_plant_cd %}selected{% endif %}>
@@ -92,8 +91,7 @@
                                 <div class="col-md-4">
                                     <div class="mb-1 col-14">
                                         <label for="modal_item_cd" class="form-label">상위품목:</label>
-                                        <input type="text" class="form-control" id="modal_item_cd"
-                                               name="modal_item_cd">
+                                        <input type="text" class="form-control" id="modal_item_cd" name="modal_item_cd">
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +110,6 @@
                                 <th>소요량</th>
                             </tr>
                             </thead>
-
                             <tbody id="modalTableBody">
                             <!-- 하위 반제품 정보가 여기에 표시됩니다 -->
                             </tbody>
@@ -120,13 +117,15 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" form="productForm" class="btn btn-light shadow-sm ms-3"
-                                id="searchButton"><i class="bi bi-search"></i> 조회
+                        <button type="button" form="productForm" class="btn btn-light shadow-sm ms-3" id="searchButton">
+                            <i class="bi bi-search"></i> 조회
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+
+
     </div>
 
     <form method="POST" action="{{ url_for('product.product_order') }}" class="px-4" id="searchForm">
@@ -214,7 +213,8 @@
                     <select class="form-select form-select-sm" id="sl_cd" name="sl_cd">
                         <option value="">-</option>
                         {% for storage_location in storage_locations %}
-                        <option value="{{ storage_location.SL_CD }}" {% if storage_location.SL_CD == SL_CD %}selected{% endif %}>
+                        <option value="{{ storage_location.SL_CD }}" {% if storage_location.SL_CD== SL_CD %}selected{%
+                                endif %}>
                             {{ storage_location.SL_CD }} {{ storage_location.SL_NM }}
                         </option>
                         {% endfor %}
@@ -273,7 +273,8 @@
                 </thead>
 
                 <tbody>
-                {% for (order_item, item, storage_location), (order_wc, wc, storage_location_wc) in zip(orders_with_items, orders_with_wcs) %}
+                {% for (order_item, item, storage_location), (order_wc, wc, storage_location_wc) in
+                zip(orders_with_items, orders_with_wcs) %}
                 <tr data-order-no="{{ order_item.PRODT_ORDER_NO }}" data-item-cd="{{ order_item.ITEM_CD }}"
                     class="{% if order_item.ORDER_STATUS == 'CL' %}completed-order{% endif %}">
                     <td>{{ loop.index }}</td>
@@ -334,12 +335,14 @@
         });
     });
 
-    document.getElementById('openModalButton').addEventListener('click', function() {
+    document.getElementById('openModalButton').addEventListener('click', function () {
         if (selectedOrderNo && selectedItemCd) {
+            console.log(`Opening modal for Order No: ${selectedOrderNo}, Item Code: ${selectedItemCd}`);
             document.getElementById('modal_order_no').value = selectedOrderNo;
             document.getElementById('modal_item_cd').value = selectedItemCd;
             fetchModalData(selectedOrderNo, selectedItemCd);
         } else {
+            console.error("Error: 조회할 제조오더를 선택해주세요.");
             document.getElementById('errorModalBody').innerText = "조회할 제조오더를 선택해주세요.";
             var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
             errorModal.show();
@@ -347,24 +350,38 @@
     });
 
     function fetchModalData(orderNo, itemCd) {
+        console.log(`Fetching BOM data for Order No: ${orderNo}, Item Code: ${itemCd}`);
+
         fetch(`/product/get_bom_data?order_no=${orderNo}&item_cd=${itemCd}`)
-            .then(response => response.json())
+            .then(response => {
+                console.log("Received response from server:", response);
+                return response.json();
+            })
             .then(data => {
+                console.log("Received data:", data);
+
                 const tbody = document.getElementById('modalTableBody');
-                tbody.innerHTML = '';
+                tbody.innerHTML = ''; // Clear existing rows
+
                 data.forEach(row => {
+                    console.log("Processing row:", row);
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${row.child_item_cd}</td>
-                        <td>${row.child_item_nm}</td>
-                        <td>${row.spec}</td>
-                        <td>${row.child_item_unit}</td>
-                        <td>${row.child_item_qty}</td>
+                        <td>${row.child_item_nm || '-'}</td>
+                        <td>${row.spec || '-'}</td>
+                        <td>${row.child_item_unit || '-'}</td>
+                        <td>${row.child_item_qty || '-'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             })
-            .catch(error => console.error('Error fetching BOM data:', error));
+            .catch(error => {
+                console.error("Error fetching BOM data:", error);
+            });
     }
+
+
+
 </script>
 {% endblock %}

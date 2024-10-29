@@ -389,6 +389,7 @@ class Work_Center(db.Model):
     PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
     WC_CD = db.Column(db.NVARCHAR(7), primary_key=True)
     WC_NM = db.Column(db.NVARCHAR(50), nullable=True)
+    PASS_CONDITION = db.Column(db.NVARCHAR(50), nullable=True)
 
 class Packing_Hdr(db.Model):
     __tablename__ = 'P_PACKING_HDR'

@@ -9,8 +9,8 @@ from sqlalchemy import null, func
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
-from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Master, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs
+from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode,  \
+    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Master, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location
 from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
@@ -147,18 +147,36 @@ def get_bom_data():
     order_no = request.args.get('order_no')
     item_cd = request.args.get('item_cd')
 
-    bom_data = db.session.query(Bom, Item).join(Item, Bom.CHILD_ITEM_CD == Item.ITEM_CD).filter(
-        Bom.PRNT_ITEM_CD == item_cd).all()
+    # 로그: 입력된 파라미터 확인
+    print(f"Received order_no: {order_no}, item_cd: {item_cd}")
 
+    # 단일 단계 조회 쿼리 - 선택된 품목의 바로 하위 자품목만 조회
+    bom_data = db.session.query(Bom_Detail, Item).join(
+        Item, Bom_Detail.CHILD_ITEM_CD == Item.ITEM_CD
+    ).filter(
+        Bom_Detail.PRNT_ITEM_CD == item_cd
+    ).all()
+
+    # 로그: 쿼리 결과 확인
+    print(f"Fetched bom_data: {bom_data}")
+
+    # 조회된 데이터를 리스트로 변환
     results = []
-    for bom, item in bom_data:
-        results.append({
-            'child_item_cd': bom.CHILD_ITEM_CD,
-            'child_item_nm': item.ITEM_NM,
-            'spec': item.SPEC,
-            'child_item_unit': bom.CHILD_ITEM_UNIT,
-            'child_item_qty': bom.CHILD_ITEM_QTY
-        })
+    for bom_detail, item in bom_data:
+        result_item = {
+            'child_item_cd': bom_detail.CHILD_ITEM_CD,
+            'child_item_nm': item.ITEM_NM if item else None,
+            'spec': item.SPEC if item else None,
+            'child_item_unit': bom_detail.CHILD_ITEM_UNIT,
+            'child_item_qty': bom_detail.CHILD_ITEM_QTY
+        }
+        results.append(result_item)
+
+        # 로그: 개별 항목 확인
+        print(f"Processed result item: {result_item}")
+
+    # 최종 결과 확인
+    print(f"Final JSON response: {results}")
 
     return jsonify(results)
 
@@ -281,7 +299,7 @@ def process_excel(filepath):
 
     return duplicate_count  # 중복 데이터 개수를 반환
 
-
+# 엑셀데이터 조회화면
 @bp.route('/product_excel_result/', methods=['GET', 'POST'])
 def product_excel_result():
     # 기본 조회 화면으로 이동
@@ -409,6 +427,9 @@ def register():
     if not selected_records:
         return '<script>alert("실적 처리할 레코드를 선택해 주세요."); window.location.href="/product/register/";</script>'
 
+    # Work_Center에서 공정과 PASS_CONDITION 정보 -> 이 정보로 양불 판단 진행 -> 기준정보 활용.
+    work_centers = db.session.query(Work_Center.WC_CD, Work_Center.PASS_CONDITION).all()
+
     new_alpha_records = []
     new_barcode_records = []
     updated_alpha_records = []
@@ -416,11 +437,10 @@ def register():
     for record_id in selected_records:
         barcode, modified_str = record_id.split('|')
         modified = parse_datetime(modified_str)
-
         alpha_record = Production_Alpha.query.filter_by(barcode=barcode).first()
 
         if alpha_record:
-            # P_PRODUCTION_BARCODE에 데이터 추가
+            # 바코드 실적에 추가할 항목
             barcode_record = {
                 'LOT': alpha_record.LOT,
                 'product': alpha_record.product,
@@ -464,40 +484,29 @@ def register():
             new_barcode_records.append(barcode_record)
 
             processes = []
-            if alpha_record.err_code != 0:
-                # 불량 로직
-                if alpha_record.print_time is not None and alpha_record.outweight_value is not None:
-                    processes.append(('WSF10', 'G'))
-                    processes.append(('WSF30', 'G'))
-                    processes.append(('WSF60', 'B'))
-                elif alpha_record.print_time is not None:
-                    processes.append(('WSF10', 'G'))
-                    processes.append(('WSF30', 'B'))
-                    processes.append(('WSF60', 'B'))
-                else:
-                    processes.append(('WSF10', 'B'))
-                    processes.append(('WSF30', 'B'))
-                    processes.append(('WSF60', 'B'))
-            elif alpha_record.print_time is not None or alpha_record.outweight_value is not None:
-                # 정상 로직
-                processes.append(('WSF10', 'G'))
-                if alpha_record.outweight_value is not None:
-                    processes.append(('WSF30', 'G'))
-                if alpha_record.prodlabel_cycles == 1:
-                    processes.append(('WSF60', 'G'))
-            else:
-                continue  # 해당 칼럼들에 값이 없으면 보류
 
+            # 각 공정에 따라 PASS_CONDITION 기반 양불 판단 -> 작업장 테이블에 양불 포인트를 적어서 동적으로 처리되도록 변경 -> 기준정보 활용.
+            for wc_cd, pass_condition in work_centers:
+
+                if pass_condition:
+                    result_value = getattr(alpha_record, pass_condition, None)  # 조건 필드를 동적으로 참조
+                    if result_value == 1:
+                        processes.append((wc_cd, 'G'))
+                    else:
+                        processes.append((wc_cd, 'B'))
+                else:
+                    # pass_condition이 None일 경우 기본 불량으로 설정하거나 생략
+                    processes.append((wc_cd, 'B'))
+
+            # 각 공정에 대한 실적 생성
             for wc_cd, report_type in processes:
                 assn_record = {
                     'barcode': alpha_record.barcode,
-                    'PRODT_ORDER_NO': None,  # 이 부분은 assign_production_orders 함수에서 업데이트
+                    'PRODT_ORDER_NO': None,
                     'OPR_NO': '10',
                     'REPORT_TYPE': report_type,
                     'WC_CD': wc_cd,
-                    'INSRT_DT': alpha_record.INSRT_DT,
                     'INSRT_USR': g.user.USR_ID,
-                    'UPDT_DT': alpha_record.UPDT_DT,
                     'UPDT_USR': g.user.USR_ID
                 }
                 new_alpha_records.append(assn_record)
@@ -513,7 +522,6 @@ def register():
         db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
 
     db.session.commit()
-
     assign_production_orders()
 
     flash('실적처리 완료.', 'success')
@@ -521,43 +529,72 @@ def register():
 
 
 def assign_production_orders():
-    barcodes = Production_Barcode_Assign.query.filter(Production_Barcode_Assign.PRODT_ORDER_NO == None).all()
-    orders = {wc_cd: [] for wc_cd in ['WSF10', 'WSF30', 'WSF60']}
+    # Work_Center에서 모든 공정을 동적으로 가져옴 -> 기준정보 활용.
+    work_centers = db.session.query(Work_Center.WC_CD).all()
 
-    for wc_cd in orders.keys():
-        orders[wc_cd] = Production_Order.query.filter_by(WC_CD=wc_cd).all()
+    # PRODT_ORDER_NO가 없는 바코드 실적을 Production_Barcode와 조인하여 가져오기
+    barcodes = db.session.query(Production_Barcode_Assign, Production_Barcode.product).join(
+        Production_Barcode, Production_Barcode_Assign.barcode == Production_Barcode.barcode
+    ).filter(
+        Production_Barcode_Assign.PRODT_ORDER_NO == None
+    ).all()
 
-    order_indices = {wc_cd: 0 for wc_cd in orders.keys()}
+    # 공정 별 오더 검색
+    orders = {wc_cd: {} for wc_cd, in work_centers}
+    for wc_cd, in work_centers:
+        wc_orders = db.session.query(Production_Order, Item).join(
+            Item, Production_Order.ITEM_CD == Item.ITEM_CD
+        ).filter(
+            Production_Order.WC_CD == wc_cd
+        ).all()
+
+        for order, item in wc_orders:
+            alpha_code = item.ALPHA_CODE
+            if alpha_code not in orders[wc_cd]:
+                orders[wc_cd][alpha_code] = []
+            orders[wc_cd][alpha_code].append(order)
+
+    # 각 공정의 오더 인덱스를 관리하여 오더 할당
+    order_indices = {wc_cd: {} for wc_cd in orders.keys()}
     assn_records = []
 
-    for barcode in barcodes:
-        wc_cd = barcode.WC_CD
-        if wc_cd in orders and orders[wc_cd]:
-            order = orders[wc_cd][order_indices[wc_cd]]
+    for barcode_assign, barcode_product in barcodes:
+        wc_cd = barcode_assign.WC_CD
+        if wc_cd in orders and barcode_product in orders[wc_cd]:
+            order_list = orders[wc_cd][barcode_product]
 
-            barcode.PRODT_ORDER_NO = order.PRODT_ORDER_NO
+            if barcode_product not in order_indices[wc_cd]:
+                order_indices[wc_cd][barcode_product] = 0
 
-            if barcode.REPORT_TYPE == 'G':
-                order.PROD_QTY_IN_ORDER_UNIT += 1
-            else:
-                order.BAD_QTY_IN_ORDER_UNIT += 1
+            order = order_list[order_indices[wc_cd][barcode_product]]
 
-            if (order.PROD_QTY_IN_ORDER_UNIT + order.BAD_QTY_IN_ORDER_UNIT) >= order.PRODT_ORDER_QTY:
-                order.ORDER_STATUS = 'CL'
-                order_indices[wc_cd] += 1
-                if order_indices[wc_cd] >= len(orders[wc_cd]):
-                    order_indices[wc_cd] = len(orders[wc_cd]) - 1
+            # Order 객체인지 확인 후 처리
+            if isinstance(order, Production_Order):
+                barcode_assign.PRODT_ORDER_NO = order.PRODT_ORDER_NO
+                if barcode_assign.REPORT_TYPE == 'G':
+                    order.PROD_QTY_IN_ORDER_UNIT += 1
+                else:
+                    order.BAD_QTY_IN_ORDER_UNIT += 1
 
-            barcode.INSRT_USR = g.user.USR_ID
-            barcode.UPDT_USR = g.user.USR_ID
+                # 오더 수량 초과 시 다음 오더로 이동
+                if (order.PROD_QTY_IN_ORDER_UNIT + order.BAD_QTY_IN_ORDER_UNIT) >= order.PRODT_ORDER_QTY:
+                    order.ORDER_STATUS = 'CL'
+                    order_indices[wc_cd][barcode_product] += 1
+                    if order_indices[wc_cd][barcode_product] >= len(order_list):
+                        order_indices[wc_cd][barcode_product] = len(order_list) - 1
 
-            assn_records.append(barcode)
+                barcode_assign.INSRT_USR = g.user.USR_ID
+                barcode_assign.UPDT_USR = g.user.USR_ID
+                assn_records.append(barcode_assign)
+
+        else:
+            print(f"No matching order found for barcode: {barcode_assign.barcode} with product: {barcode_product}")
+            continue
 
     if assn_records:
         db.session.bulk_update_mappings(Production_Barcode_Assign, [record.__dict__ for record in assn_records])
 
     db.session.commit()
-
     insert_production_results(orders)
 
 
@@ -565,65 +602,62 @@ def insert_production_results(orders):
     result_records = []
 
     for wc_cd in orders.keys():
-        for order in orders[wc_cd]:
-            if order.ORDER_STATUS == 'CL' or order.PROD_QTY_IN_ORDER_UNIT > 0 or order.BAD_QTY_IN_ORDER_UNIT > 0:
-                existing_good_qty = db.session.query(
-                    db.func.sum(Production_Results.TOTAL_QTY)
-                ).filter(
-                    Production_Results.PRODT_ORDER_NO == order.PRODT_ORDER_NO,
-                    Production_Results.REPORT_TYPE == 'G'
-                ).scalar() or 0
+        for alpha_code in orders[wc_cd].keys():
+            for order in orders[wc_cd][alpha_code]:
+                if isinstance(order, Production_Order):
+                    if order.ORDER_STATUS == 'CL' or order.PROD_QTY_IN_ORDER_UNIT > 0 or order.BAD_QTY_IN_ORDER_UNIT > 0:
+                        existing_good_qty = db.session.query(
+                            db.func.sum(Production_Results.TOTAL_QTY)
+                        ).filter(
+                            Production_Results.PRODT_ORDER_NO == order.PRODT_ORDER_NO,
+                            Production_Results.REPORT_TYPE == 'G'
+                        ).scalar() or 0
 
-                existing_bad_qty = db.session.query(
-                    db.func.sum(Production_Results.TOTAL_QTY)
-                ).filter(
-                    Production_Results.PRODT_ORDER_NO == order.PRODT_ORDER_NO,
-                    Production_Results.REPORT_TYPE == 'B'
-                ).scalar() or 0
+                        existing_bad_qty = db.session.query(
+                            db.func.sum(Production_Results.TOTAL_QTY)
+                        ).filter(
+                            Production_Results.PRODT_ORDER_NO == order.PRODT_ORDER_NO,
+                            Production_Results.REPORT_TYPE == 'B'
+                        ).scalar() or 0
 
-                good_qty = order.PROD_QTY_IN_ORDER_UNIT - existing_good_qty
-                bad_qty = order.BAD_QTY_IN_ORDER_UNIT - existing_bad_qty
+                        good_qty = order.PROD_QTY_IN_ORDER_UNIT - existing_good_qty
+                        bad_qty = order.BAD_QTY_IN_ORDER_UNIT - existing_bad_qty
 
-                seq = Production_Results.query.filter_by(PRODT_ORDER_NO=order.PRODT_ORDER_NO).count() + 1
-                if good_qty > 0:
-                    result_record_good = {
-                        'PRODT_ORDER_NO': order.PRODT_ORDER_NO,
-                        'OPR_NO': '10',
-                        'WC_CD': order.WC_CD,
-                        'SEQ': seq,
-                        'REPORT_TYPE': 'G',
-                        'TOTAL_QTY': good_qty,
-                        'PLANT_CD': 'P710',
-                        'REPORT_DT': None,
-                        'INSRT_USR': g.user.USR_ID,
-                        'UPDT_USR': g.user.USR_ID
-                    }
-                    result_records.append(result_record_good)
+                        seq = Production_Results.query.filter_by(PRODT_ORDER_NO=order.PRODT_ORDER_NO).count() + 1
+                        if good_qty > 0:
+                            result_records.append({
+                                'PRODT_ORDER_NO': order.PRODT_ORDER_NO,
+                                'OPR_NO': '10',
+                                'WC_CD': order.WC_CD,
+                                'SEQ': seq,
+                                'REPORT_TYPE': 'G',
+                                'TOTAL_QTY': good_qty,
+                                'PLANT_CD': 'P710',
+                                'INSRT_USR': g.user.USR_ID,
+                                'UPDT_USR': g.user.USR_ID
+                            })
 
-                if bad_qty > 0:
-                    seq += 1
-                    result_record_bad = {
-                        'PRODT_ORDER_NO': order.PRODT_ORDER_NO,
-                        'OPR_NO': '10',
-                        'WC_CD': order.WC_CD,
-                        'SEQ': seq,
-                        'REPORT_TYPE': 'B',
-                        'TOTAL_QTY': bad_qty,
-                        'PLANT_CD': 'P710',
-                        'REPORT_DT': None,
-                        'INSRT_USR': g.user.USR_ID,
-                        'UPDT_USR': g.user.USR_ID
-                    }
-                    result_records.append(result_record_bad)
+                        if bad_qty > 0:
+                            seq += 1
+                            result_records.append({
+                                'PRODT_ORDER_NO': order.PRODT_ORDER_NO,
+                                'OPR_NO': '10',
+                                'WC_CD': order.WC_CD,
+                                'SEQ': seq,
+                                'REPORT_TYPE': 'B',
+                                'TOTAL_QTY': bad_qty,
+                                'PLANT_CD': 'P710',
+                                'INSRT_USR': g.user.USR_ID,
+                                'UPDT_USR': g.user.USR_ID
+                            })
 
-                order.PROD_QTY_IN_ORDER_UNIT = existing_good_qty + good_qty
-                order.BAD_QTY_IN_ORDER_UNIT = existing_bad_qty + bad_qty
+                        order.PROD_QTY_IN_ORDER_UNIT = existing_good_qty + good_qty
+                        order.BAD_QTY_IN_ORDER_UNIT = existing_bad_qty + bad_qty
 
     if result_records:
         db.session.bulk_insert_mappings(Production_Results, result_records)
 
     db.session.commit()
-
 
 @bp.route('/assign-orders', methods=['POST'])
 def assign_orders_route():
@@ -712,8 +746,6 @@ def product_register_packing():
                            PLANT_START_DT=PLANT_START_DT,
                            PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
                            form_submitted=form_submitted)
-
-
 
 
 # 바코드 스캔 데이터 검증 로직
