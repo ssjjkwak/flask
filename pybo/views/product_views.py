@@ -238,6 +238,13 @@ def process_excel(filepath):
 
         existing_record = Production_Alpha.query.filter_by(barcode=barcode).first()
 
+        # 'REPORT_FLAG' 값이 없는 경우 기본값 'N' 설정
+        report_flag_value = convert_value(row.get('REPORT_FLAG'))
+        report_flag_value = report_flag_value if report_flag_value is not None else 'N'
+
+        insrt_dt_value = convert_value(row.get('INSRT_DT')) or datetime.now()
+        updt_dt_value = convert_value(row.get('UPDT_DT')) or datetime.now()
+
         record_data = {
             'LOT': convert_value(row.get('LOT')),
             'product': convert_value(row.get('product')),
@@ -272,11 +279,11 @@ def process_excel(filepath):
             'itest2_ptest': convert_value(row.get('itest2_ptest')),
             'prodlabel_time': convert_value(row.get('prodlabel_time')),
             'prodlabel_cycles': convert_value(row.get('prodlabel_cycles')),
-            'INSRT_DT': convert_value(row.get('INSRT_DT')),
+            'INSRT_DT': insrt_dt_value,
             'INSRT_USR': g.user.USR_ID,
-            'UPDT_DT': convert_value(row.get('UPDT_DT')),
+            'UPDT_DT': updt_dt_value,
             'UPDT_USR': g.user.USR_ID,
-            'REPORT_FLAG': convert_value(row.get('REPORT_FLAG'))
+            'REPORT_FLAG': report_flag_value
         }
 
         if existing_record:
@@ -427,7 +434,6 @@ def register():
     if not selected_records:
         return '<script>alert("실적 처리할 레코드를 선택해 주세요."); window.location.href="/product/register/";</script>'
 
-    # Work_Center에서 공정과 PASS_CONDITION 정보 -> 이 정보로 양불 판단 진행 -> 기준정보 활용.
     work_centers = db.session.query(Work_Center.WC_CD, Work_Center.PASS_CONDITION).all()
 
     new_alpha_records = []
@@ -440,7 +446,7 @@ def register():
         alpha_record = Production_Alpha.query.filter_by(barcode=barcode).first()
 
         if alpha_record:
-            # 바코드 실적에 추가할 항목
+            # Production_Barcode에 추가할 항목 생성
             barcode_record = {
                 'LOT': alpha_record.LOT,
                 'product': alpha_record.product,
@@ -484,25 +490,23 @@ def register():
             new_barcode_records.append(barcode_record)
 
             processes = []
-
-            # 각 공정에 따라 PASS_CONDITION 기반 양불 판단 -> 작업장 테이블에 양불 포인트를 적어서 동적으로 처리되도록 변경 -> 기준정보 활용.
             for wc_cd, pass_condition in work_centers:
-
-                if pass_condition:
-                    result_value = getattr(alpha_record, pass_condition, None)  # 조건 필드를 동적으로 참조
-                    if result_value == 1:
-                        processes.append((wc_cd, 'G'))
-                    else:
-                        processes.append((wc_cd, 'B'))
+                # 공정마다 PASS_CONDITION을 동적으로 확인
+                result_value = getattr(alpha_record, pass_condition, None) if pass_condition else None
+                if wc_cd == '60' and pass_condition == 'prodlabel_cycles':
+                    # 60 공정에서 prodlabel_cycles이 0이면 불량, 그 외에는 양품
+                    report_type = 'B' if result_value == 0 else 'G'
                 else:
-                    # pass_condition이 None일 경우 기본 불량으로 설정하거나 생략
-                    processes.append((wc_cd, 'B'))
+                    # 다른 공정에서는 result_value >= 1인 경우 양품, 그 외에는 불량
+                    report_type = 'G' if result_value is not None and result_value >= 1 else 'B'
+
+                processes.append((wc_cd, report_type))
 
             # 각 공정에 대한 실적 생성
             for wc_cd, report_type in processes:
                 assn_record = {
                     'barcode': alpha_record.barcode,
-                    'PRODT_ORDER_NO': None,
+                    'PRODT_ORDER_NO': None,  # 후속 프로세스에서 할당
                     'OPR_NO': '10',
                     'REPORT_TYPE': report_type,
                     'WC_CD': wc_cd,
@@ -511,7 +515,8 @@ def register():
                 }
                 new_alpha_records.append(assn_record)
 
-            alpha_record.REPORT_FLAG = 'Y'
+            # PRODT_ORDER_NO 할당이 없으면 REPORT_FLAG는 "N"으로 유지
+            alpha_record.REPORT_FLAG = 'N'
             updated_alpha_records.append(alpha_record)
 
     if new_barcode_records:
@@ -529,7 +534,6 @@ def register():
 
 
 def assign_production_orders():
-    # Work_Center에서 모든 공정을 동적으로 가져옴 -> 기준정보 활용.
     work_centers = db.session.query(Work_Center.WC_CD).all()
 
     # PRODT_ORDER_NO가 없는 바코드 실적을 Production_Barcode와 조인하여 가져오기
@@ -554,9 +558,9 @@ def assign_production_orders():
                 orders[wc_cd][alpha_code] = []
             orders[wc_cd][alpha_code].append(order)
 
-    # 각 공정의 오더 인덱스를 관리하여 오더 할당
     order_indices = {wc_cd: {} for wc_cd in orders.keys()}
     assn_records = []
+    updated_alpha_records = []
 
     for barcode_assign, barcode_product in barcodes:
         wc_cd = barcode_assign.WC_CD
@@ -568,7 +572,6 @@ def assign_production_orders():
 
             order = order_list[order_indices[wc_cd][barcode_product]]
 
-            # Order 객체인지 확인 후 처리
             if isinstance(order, Production_Order):
                 barcode_assign.PRODT_ORDER_NO = order.PRODT_ORDER_NO
                 if barcode_assign.REPORT_TYPE == 'G':
@@ -576,7 +579,6 @@ def assign_production_orders():
                 else:
                     order.BAD_QTY_IN_ORDER_UNIT += 1
 
-                # 오더 수량 초과 시 다음 오더로 이동
                 if (order.PROD_QTY_IN_ORDER_UNIT + order.BAD_QTY_IN_ORDER_UNIT) >= order.PRODT_ORDER_QTY:
                     order.ORDER_STATUS = 'CL'
                     order_indices[wc_cd][barcode_product] += 1
@@ -585,17 +587,38 @@ def assign_production_orders():
 
                 barcode_assign.INSRT_USR = g.user.USR_ID
                 barcode_assign.UPDT_USR = g.user.USR_ID
-                assn_records.append(barcode_assign)
 
+                # PRODT_ORDER_NO가 있을 때만 assn_records에 추가
+                if barcode_assign.PRODT_ORDER_NO is not None:
+                    assn_records.append(barcode_assign)
+
+                # PRODT_ORDER_NO가 할당된 경우 Production_Alpha의 REPORT_FLAG를 "Y"로 설정
+                alpha_record = Production_Alpha.query.filter_by(barcode=barcode_assign.barcode).first()
+                if alpha_record:
+                    alpha_record.REPORT_FLAG = 'Y'
+                    updated_alpha_records.append(alpha_record)
         else:
-            print(f"No matching order found for barcode: {barcode_assign.barcode} with product: {barcode_product}")
-            continue
+            # PRODT_ORDER_NO가 할당되지 않은 경우 REPORT_FLAG를 "N"으로 유지
+            alpha_record = Production_Alpha.query.filter_by(barcode=barcode_assign.barcode).first()
+            if alpha_record:
+                alpha_record.REPORT_FLAG = 'N'
+                updated_alpha_records.append(alpha_record)
+
+    # null PRODT_ORDER_NO가 들어갔을 경우에 대한 삭제 처리
+    db.session.query(Production_Barcode_Assign).filter(
+        Production_Barcode_Assign.PRODT_ORDER_NO == None
+    ).delete(synchronize_session=False)
 
     if assn_records:
         db.session.bulk_update_mappings(Production_Barcode_Assign, [record.__dict__ for record in assn_records])
 
+    if updated_alpha_records:
+        db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
+
     db.session.commit()
     insert_production_results(orders)
+
+
 
 
 def insert_production_results(orders):

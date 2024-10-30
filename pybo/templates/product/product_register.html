@@ -188,7 +188,7 @@
                 <th>실적처리</th>
                 <th>err_code</th>
                 <th style="background-color: #fffacd;">err_info</th>
-                <th style="background-color: #fff0f5;">print_time</th>
+                <th>print_time</th>
                 <th>inweight_time</th>
                 <th>inweight_cycles</th>
                 <th>inweight_station</th>
@@ -201,8 +201,8 @@
                 <th>leaktest_value</th>
                 <th>leaktest_ptest</th>
                 <th>leaktest_duration</th>
-                <th>leaktest_result</th>
-                <th style="background-color: #fff0f5;">outweight_time</th>
+                <th style="background-color: #fff0f5;">leaktest_result</th>
+                <th>outweight_time</th>
                 <th>outweight_station</th>
                 <th>outweight_cycles</th>
                 <th>outweight_result</th>
@@ -210,7 +210,7 @@
                 <th>itest2_time</th>
                 <th>itest2_station</th>
                 <th>itest2_cycles</th>
-                <th>itest2_result</th>
+                <th style="background-color: #fff0f5;">itest2_result</th>
                 <th>itest2_value</th>
                 <th>itest2_ptest</th>
                 <th style="background-color: #fff0f5;">prodlabel_time</th>
@@ -231,7 +231,7 @@
                 <td>{{ row.REPORT_FLAG }}</td>
                 <td>{{ row.err_code }}</td>
                 <td style="background-color: #fffacd;">{{ row.err_info }}</td>
-                <td style="background-color: #fff0f5;">{{ row.print_time.strftime('%Y-%m-%d %H:%M:%S') if row.print_time else '' }}</td>
+                <td>{{ row.print_time.strftime('%Y-%m-%d %H:%M:%S') if row.print_time else '' }}</td>
                 <td>{{ row.inweight_time.strftime('%Y-%m-%d %H:%M:%S') if row.inweight_time else '' }}</td>
                 <td>{{ row.inweight_cycles }}</td>
                 <td>{{ row.inweight_station }}</td>
@@ -244,8 +244,8 @@
                 <td>{{ row.leaktest_value }}</td>
                 <td>{{ row.leaktest_ptest }}</td>
                 <td>{{ row.leaktest_duration }}</td>
-                <td>{{ row.leaktest_result }}</td>
-                <td style="background-color: #fff0f5;">{{ row.outweight_time.strftime('%Y-%m-%d %H:%M:%S') if row.outweight_time else '' }}</td>
+                <td style="background-color: #fff0f5;">{{ row.leaktest_result }}</td>
+                <td>{{ row.outweight_time.strftime('%Y-%m-%d %H:%M:%S') if row.outweight_time else '' }}</td>
                 <td>{{ row.outweight_station }}</td>
                 <td>{{ row.outweight_cycles }}</td>
                 <td>{{ row.outweight_result }}</td>
@@ -253,7 +253,7 @@
                 <td>{{ row.itest2_time.strftime('%Y-%m-%d %H:%M:%S') if row.itest2_time else '' }}</td>
                 <td>{{ row.itest2_station }}</td>
                 <td>{{ row.itest2_cycles }}</td>
-                <td>{{ row.itest2_result }}</td>
+                <td style="background-color: #fff0f5;">{{ row.itest2_result }}</td>
                 <td>{{ row.itest2_value }}</td>
                 <td>{{ row.itest2_ptest }}</td>
                 <td style="background-color: #fff0f5;">{{ row.prodlabel_time.strftime('%Y-%m-%d %H:%M:%S') if row.prodlabel_time else '' }}</td>
