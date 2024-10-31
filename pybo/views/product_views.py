@@ -329,10 +329,6 @@ def product_excel_result():
     return render_template('product/product_excel_result.html', alpha_data=alpha_data, barcode=barcode, product=product, lot=lot)
 
 
-
-
-
-
 # 여기에 조회조건 걸어서 register 화면에 데이터 렌더링
 @bp.route('/register/', methods=['GET', 'POST'])
 def product_register():
@@ -427,7 +423,6 @@ def parse_datetime(datetime_str):
             continue
     raise ValueError(f'time data {datetime_str} does not match any known format')
 
-
 @bp.route('/register', methods=['POST'])
 def register():
     selected_records = request.form.getlist('chkRow')
@@ -446,7 +441,7 @@ def register():
         alpha_record = Production_Alpha.query.filter_by(barcode=barcode).first()
 
         if alpha_record:
-            # Production_Barcode에 추가할 항목 생성
+            # 바코드에 넣을 레코드 생성
             barcode_record = {
                 'LOT': alpha_record.LOT,
                 'product': alpha_record.product,
@@ -491,13 +486,15 @@ def register():
 
             processes = []
             for wc_cd, pass_condition in work_centers:
-                # 공정마다 PASS_CONDITION을 동적으로 확인
+                # 70 공정은 판단 없이 진행, 양불 판단 생략
+                if wc_cd == 'WSF70':
+                    continue
+
+                # PASS_CONDITION을 기준으로 양불 판단
                 result_value = getattr(alpha_record, pass_condition, None) if pass_condition else None
                 if wc_cd == '60' and pass_condition == 'prodlabel_cycles':
-                    # 60 공정에서 prodlabel_cycles이 0이면 불량, 그 외에는 양품
                     report_type = 'B' if result_value == 0 else 'G'
                 else:
-                    # 다른 공정에서는 result_value >= 1인 경우 양품, 그 외에는 불량
                     report_type = 'G' if result_value is not None and result_value >= 1 else 'B'
 
                 processes.append((wc_cd, report_type))
@@ -506,7 +503,7 @@ def register():
             for wc_cd, report_type in processes:
                 assn_record = {
                     'barcode': alpha_record.barcode,
-                    'PRODT_ORDER_NO': None,  # 후속 프로세스에서 할당
+                    'PRODT_ORDER_NO': None,
                     'OPR_NO': '10',
                     'REPORT_TYPE': report_type,
                     'WC_CD': wc_cd,
@@ -515,7 +512,6 @@ def register():
                 }
                 new_alpha_records.append(assn_record)
 
-            # PRODT_ORDER_NO 할당이 없으면 REPORT_FLAG는 "N"으로 유지
             alpha_record.REPORT_FLAG = 'N'
             updated_alpha_records.append(alpha_record)
 
@@ -533,17 +529,16 @@ def register():
     return redirect(url_for('product.product_register'))
 
 
+
 def assign_production_orders():
     work_centers = db.session.query(Work_Center.WC_CD).all()
 
-    # PRODT_ORDER_NO가 없는 바코드 실적을 Production_Barcode와 조인하여 가져오기
     barcodes = db.session.query(Production_Barcode_Assign, Production_Barcode.product).join(
         Production_Barcode, Production_Barcode_Assign.barcode == Production_Barcode.barcode
     ).filter(
         Production_Barcode_Assign.PRODT_ORDER_NO == None
     ).all()
 
-    # 공정 별 오더 검색
     orders = {wc_cd: {} for wc_cd, in work_centers}
     for wc_cd, in work_centers:
         wc_orders = db.session.query(Production_Order, Item).join(
@@ -564,6 +559,10 @@ def assign_production_orders():
 
     for barcode_assign, barcode_product in barcodes:
         wc_cd = barcode_assign.WC_CD
+        # 70 공정은 판단 없이 진행되므로 추가하지 않음
+        if wc_cd == 'WSF70':
+            continue
+
         if wc_cd in orders and barcode_product in orders[wc_cd]:
             order_list = orders[wc_cd][barcode_product]
 
@@ -588,23 +587,19 @@ def assign_production_orders():
                 barcode_assign.INSRT_USR = g.user.USR_ID
                 barcode_assign.UPDT_USR = g.user.USR_ID
 
-                # PRODT_ORDER_NO가 있을 때만 assn_records에 추가
                 if barcode_assign.PRODT_ORDER_NO is not None:
                     assn_records.append(barcode_assign)
 
-                # PRODT_ORDER_NO가 할당된 경우 Production_Alpha의 REPORT_FLAG를 "Y"로 설정
                 alpha_record = Production_Alpha.query.filter_by(barcode=barcode_assign.barcode).first()
                 if alpha_record:
                     alpha_record.REPORT_FLAG = 'Y'
                     updated_alpha_records.append(alpha_record)
         else:
-            # PRODT_ORDER_NO가 할당되지 않은 경우 REPORT_FLAG를 "N"으로 유지
             alpha_record = Production_Alpha.query.filter_by(barcode=barcode_assign.barcode).first()
             if alpha_record:
                 alpha_record.REPORT_FLAG = 'N'
                 updated_alpha_records.append(alpha_record)
 
-    # null PRODT_ORDER_NO가 들어갔을 경우에 대한 삭제 처리
     db.session.query(Production_Barcode_Assign).filter(
         Production_Barcode_Assign.PRODT_ORDER_NO == None
     ).delete(synchronize_session=False)
@@ -620,11 +615,14 @@ def assign_production_orders():
 
 
 
-
 def insert_production_results(orders):
     result_records = []
 
     for wc_cd in orders.keys():
+        # 70 공정 제외
+        if wc_cd == 'WSF70':
+            continue
+
         for alpha_code in orders[wc_cd].keys():
             for order in orders[wc_cd][alpha_code]:
                 if isinstance(order, Production_Order):
@@ -682,12 +680,15 @@ def insert_production_results(orders):
 
     db.session.commit()
 
+
+
 @bp.route('/assign-orders', methods=['POST'])
 def assign_orders_route():
     assign_production_orders()
     return '<script>alert("생산 오더가 할당되었습니다."); window.location.href="/product/assign/";</script>'
 
 #60이 완료되면 70제조 오더는 mes에서만 따로 진행해야함 -> 60까지 양품이 계획수량까지 완성되면 제조오더를 자동생성해서 packing로직으로 넘어가게 하는 과정 구현 요구됨
+# -> 이렇게 안하고 그냥 기존 70 제조오더 생성하고 기준 정보 세팅해서 진행하기로 결정
 @bp.route('/register_result_packing/', methods=['GET', 'POST'])
 def product_register_packing():
     form_submitted = False
@@ -695,8 +696,8 @@ def product_register_packing():
     WC_CD = 'WSF70'  # 작업공정 고정 값
     ITEM_CD = ''  # 품목 고정 값
     ORDER_STATUS = ''
-    PLANT_START_DT = datetime.today()
-    PLANT_COMPT_DT = datetime.today() + timedelta(days=30)
+    RELEASE_START_DT = None  # Release 시작일
+    RELEASE_END_DT = None  # Release 종료일
     PRODT_ORDER_NO = ''
 
     plants = db.session.query(Production_Order.PLANT_CD).distinct().all()
@@ -706,22 +707,22 @@ def product_register_packing():
         form_submitted = True
         PLANT_CD = request.form.get('plant_code', '')
         ORDER_STATUS = request.form.get('order_status', '')
-        PLANT_START_DT = request.form.get('start_date', '')
-        PLANT_COMPT_DT = request.form.get('end_date', '')
+        RELEASE_START_DT = request.form.get('start_date', '')  # 시작일을 Release 날짜로 변경
+        RELEASE_END_DT = request.form.get('end_date', '')  # 종료일을 Release 날짜로 변경
         PRODT_ORDER_NO = request.form.get('prodt_order_no', '')
 
-        if PLANT_START_DT:
-            PLANT_START_DT = datetime.strptime(PLANT_START_DT, '%Y-%m-%d')
-        else:
-            PLANT_START_DT = datetime.today()
-
-        if PLANT_COMPT_DT:
-            PLANT_COMPT_DT = datetime.strptime(PLANT_COMPT_DT, '%Y-%m-%d')
-        else:
-            PLANT_COMPT_DT = datetime.today() + timedelta(days=30)
+        if RELEASE_START_DT:
+            RELEASE_START_DT = datetime.strptime(RELEASE_START_DT, '%Y-%m-%d')
+        if RELEASE_END_DT:
+            RELEASE_END_DT = datetime.strptime(RELEASE_END_DT, '%Y-%m-%d')
     else:
         if plants:
-            PLANT_CD = plants[0][0]  # 첫 번째 공장을 기본값으로 설정
+            PLANT_CD = plants[0].PLANT_CD
+
+    if not RELEASE_START_DT:
+        RELEASE_START_DT = datetime.today()
+    if not RELEASE_END_DT:
+        RELEASE_END_DT = datetime.today() + timedelta(days=30)
 
     # Packing_Hdr와 Production_Order, Item을 조인하여 주문 정보 조회
     query = db.session.query(Packing_Hdr).join(
@@ -739,10 +740,8 @@ def product_register_packing():
         query = query.filter(Production_Order.ITEM_CD == ITEM_CD)
     if ORDER_STATUS:
         query = query.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
-    if PLANT_START_DT:
-        query = query.filter(Production_Order.PLANT_START_DT >= PLANT_START_DT)
-    if PLANT_COMPT_DT:
-        query = query.filter(Production_Order.PLANT_COMPT_DT <= PLANT_COMPT_DT)
+    if RELEASE_START_DT and RELEASE_END_DT:
+        query = query.filter(Production_Order.RELEASE_DT.between(RELEASE_START_DT, RELEASE_END_DT))
     if PRODT_ORDER_NO:
         query = query.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
 
@@ -766,8 +765,8 @@ def product_register_packing():
                            items=items,
                            master_box_grouped=master_box_grouped,  # MasterBoxNo 데이터를 템플릿에 전달
                            PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS,
-                           PLANT_START_DT=PLANT_START_DT,
-                           PRODT_ORDER_NO=PRODT_ORDER_NO, PLANT_COMPT_DT=PLANT_COMPT_DT,
+                           RELEASE_START_DT=RELEASE_START_DT,
+                           PRODT_ORDER_NO=PRODT_ORDER_NO,  RELEASE_END_DT=RELEASE_END_DT,
                            form_submitted=form_submitted)
 
 
