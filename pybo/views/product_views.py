@@ -223,7 +223,7 @@ def convert_value(value):
         return value
     return value
 
-
+# ALPHA 테이블에 엑셀 데이터 INSERT
 def process_excel(filepath):
     df = pd.read_excel(filepath)
     new_records = []
@@ -423,6 +423,8 @@ def parse_datetime(datetime_str):
             continue
     raise ValueError(f'time data {datetime_str} does not match any known format')
 
+
+# BARCODE, BARCODE_ASSN 테이블에 엑셀 데이터 INSERT
 @bp.route('/register', methods=['POST'])
 def register():
     selected_records = request.form.getlist('chkRow')

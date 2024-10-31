@@ -34,6 +34,17 @@
     th, td {
         min-width: 120px;
     }
+
+    .report-good {
+        color: #4AA8D8;
+        font-weight: bold;
+    }
+
+    .report-bad {
+        color: red;
+        font-weight: bold;
+    }
+
 </style>
 
 <div>
@@ -109,8 +120,10 @@
                 <th class="sticky" style="width: 50px; font-weight: bord">Operation</th>
                 <th class="sticky" style="width: 50px; font-weight: bord">작업공정</th>
                 <th class="sticky" style="width: 50px; font-weight: bord">G/B</th>
+                <th class="sticky" style="width: 65px; font-weight: bord">실적처리날짜</th>
+                <th class="sticky" style="width: 65px; font-weight: bord">처리완료날짜</th>
                 <th class="sticky" style="width: 50px; font-weight: bord">Box번호</th>
-                <th class="sticky" style="width: 390px; font-weight: normal"></th>
+                <th class="sticky" style="width: 200px; font-weight: normal"></th>
             </tr>
             </thead>
             <tbody>
@@ -132,7 +145,11 @@
                         <td>{{ row[0].PRODT_ORDER_NO }}</td>
                         <td>{{ row[0].OPR_NO }}</td>
                         <td>{{ row[0].WC_CD }}</td>
-                        <td>{{ row[0].REPORT_TYPE }}</td>
+                        <td class="{% if row[0].REPORT_TYPE == 'G' %}report-good{% elif row[0].REPORT_TYPE == 'B' %}report-bad{% endif %}">
+                            {{ row[0].REPORT_TYPE }}
+                        </td>
+                        <td></td>
+                        <td></td>
                         <td><span class="badge bg-primary">{{ row[0].BOX_NUM | none_to_dash }}</span></td>
                         <td></td>
                     </tr>
