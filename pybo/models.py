@@ -284,12 +284,14 @@ class Production_Barcode(db.Model):
     UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
     REPORT_FLAG = db.Column(db.NVARCHAR(1), nullable=False, default='N')
 
-class Production_Barcode_Assign(db.Model):
-    __tablename__ = 'P_PRODUCTION_BARCODE_ASSN'
+class Barcode_Flow(db.Model):
+    __tablename__ = 'P_BARCODE_FLOW'
     __table_args__ = {'schema': 'dbo'}
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     barcode = db.Column(db.NVARCHAR(20), nullable=True)
+    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    CREDIT_DEBIT = db.Column(db.NVARCHAR(2), nullable=True)
     PRODT_ORDER_NO = db.Column(db.NVARCHAR(18), nullable=True)
     OPR_NO = db.Column(db.NVARCHAR(10), nullable=False, default='10')
     REPORT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
@@ -304,6 +306,33 @@ class Production_Barcode_Assign(db.Model):
     SO_NO = db.Column(db.NVARCHAR(18), nullable=True)
     SO_SEQ = db.Column(db.SMALLINT, nullable=True)
     WC_CD = db.Column(db.NVARCHAR(7), nullable=True)
+
+class Material_Doc(db.Model):
+    __tablename__ = 'P_MATERIAL_DOC'
+    __table_args__ = {'schema': 'dbo'}
+
+    DOC_NO = db.Column(db.NVARCHAR(20), primary_key=True)
+    SEQ = db.Column(db.NVARCHAR(2), primary_key=True)
+    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    QTY = db.Column(db.NUMERIC(18, 0), nullable=True)
+    CREDIT_DEBIT = db.Column(db.NVARCHAR(2), nullable=True)
+    PRODT_ORDER_NO = db.Column(db.NVARCHAR(50), nullable=True)
+    OPR_NO = db.Column(db.NVARCHAR(10), nullable=False, default='10')
+    REPORT_TYPE = db.Column(db.NVARCHAR(5), nullable=True)
+    BOX_NUM = db.Column(db.NVARCHAR(20), nullable=True)
+    INSRT_DT = db.Column(db.DateTime, default=kst_now)
+    INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+    UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
+    UPDT_USR = db.Column(db.NVARCHAR(13), nullable=True)
+    MOV_TYPE = db.Column(db.NVARCHAR(4), nullable=True)
+    PO_NO = db.Column(db.NVARCHAR(18), nullable=True)
+    PO_SEQ_NO = db.Column(db.SMALLINT, nullable=True)
+    SO_NO = db.Column(db.NVARCHAR(18), nullable=True)
+    SO_SEQ = db.Column(db.SMALLINT, nullable=True)
+    WC_CD = db.Column(db.NVARCHAR(7), nullable=True)
+    BP_CD = db.Column(db.NVARCHAR(7), nullable=True)
+    SL_CD = db.Column(db.NVARCHAR(7), nullable=True)
+
 
 
 class Production_Results(db.Model):

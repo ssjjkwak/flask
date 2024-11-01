@@ -10,7 +10,7 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Sales_Order,Biz_Partner
+    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Sales_Order, Biz_Partner
 from collections import defaultdict
 
 bp = Blueprint('sales', __name__, url_prefix='/sales')

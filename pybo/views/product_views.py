@@ -10,7 +10,7 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode,  \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location
+    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location
 from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
@@ -371,21 +371,21 @@ def product_register_result():
         INSRT_DT_END = datetime.today() + timedelta(days=30)
 
     query = db.session.query(
-        Production_Barcode_Assign,
+        Barcode_Flow,
         Production_Alpha.LOT,
         Production_Alpha.product
     ).join(
-        Production_Alpha, Production_Barcode_Assign.barcode == Production_Alpha.barcode
+        Production_Alpha, Barcode_Flow.barcode == Production_Alpha.barcode
     )
 
     if LOT_NO_START and LOT_NO_END:
         query = query.filter(Production_Alpha.LOT.between(LOT_NO_START, LOT_NO_END))
     if INSRT_DT_START:
-        query = query.filter(Production_Barcode_Assign.INSRT_DT >= INSRT_DT_START)
+        query = query.filter(Barcode_Flow.INSRT_DT >= INSRT_DT_START)
     if INSRT_DT_END:
-        query = query.filter(Production_Barcode_Assign.INSRT_DT <= INSRT_DT_END)
+        query = query.filter(Barcode_Flow.INSRT_DT <= INSRT_DT_END)
     if BARCODE_NO_START and BARCODE_NO_END:
-        query = query.filter(Production_Barcode_Assign.barcode.between(BARCODE_NO_START, BARCODE_NO_END))
+        query = query.filter(Barcode_Flow.barcode.between(BARCODE_NO_START, BARCODE_NO_END))
 
     all_results = query.all()
 
@@ -520,7 +520,7 @@ def register():
     if new_barcode_records:
         db.session.bulk_insert_mappings(Production_Barcode, new_barcode_records)
     if new_alpha_records:
-        db.session.bulk_insert_mappings(Production_Barcode_Assign, new_alpha_records)
+        db.session.bulk_insert_mappings(Barcode_Flow, new_alpha_records)
     if updated_alpha_records:
         db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
 
@@ -535,10 +535,10 @@ def register():
 def assign_production_orders():
     work_centers = db.session.query(Work_Center.WC_CD).all()
 
-    barcodes = db.session.query(Production_Barcode_Assign, Production_Barcode.product).join(
-        Production_Barcode, Production_Barcode_Assign.barcode == Production_Barcode.barcode
+    barcodes = db.session.query(Barcode_Flow, Production_Barcode.product).join(
+        Production_Barcode, Barcode_Flow.barcode == Production_Barcode.barcode
     ).filter(
-        Production_Barcode_Assign.PRODT_ORDER_NO == None
+        Barcode_Flow.PRODT_ORDER_NO == None
     ).all()
 
     orders = {wc_cd: {} for wc_cd, in work_centers}
@@ -602,12 +602,12 @@ def assign_production_orders():
                 alpha_record.REPORT_FLAG = 'N'
                 updated_alpha_records.append(alpha_record)
 
-    db.session.query(Production_Barcode_Assign).filter(
-        Production_Barcode_Assign.PRODT_ORDER_NO == None
+    db.session.query(Barcode_Flow).filter(
+        Barcode_Flow.PRODT_ORDER_NO == None
     ).delete(synchronize_session=False)
 
     if assn_records:
-        db.session.bulk_update_mappings(Production_Barcode_Assign, [record.__dict__ for record in assn_records])
+        db.session.bulk_update_mappings(Barcode_Flow, [record.__dict__ for record in assn_records])
 
     if updated_alpha_records:
         db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
@@ -780,10 +780,10 @@ def check_barcode():
         return jsonify({"status": "error", "message": "Barcode is required"}), 400
 
     # 기존 Production_Barcode_Assign 검증 로직 유지
-    barcode_data = db.session.query(Production_Barcode_Assign).filter(
-        Production_Barcode_Assign.barcode == barcode,
-        Production_Barcode_Assign.WC_CD == 'WSF60',
-        Production_Barcode_Assign.REPORT_TYPE == 'G'
+    barcode_data = db.session.query(Barcode_Flow).filter(
+        Barcode_Flow.barcode == barcode,
+        Barcode_Flow.WC_CD == 'WSF60',
+        Barcode_Flow.REPORT_TYPE == 'G'
     ).first()
     print(f"Received barcode: {barcode}")
 
@@ -902,7 +902,7 @@ def save_packing_data():
             logging.info(f"Added Packing Detail: {dtl}")
 
             # P_PRODUCTION_BARCODE_ASSN 테이블에 barcode로 데이터 삽입
-            barcode_assn = Production_Barcode_Assign(
+            barcode_assn = Barcode_Flow(
                 barcode=modified_barcode,  # 수정된 바코드 사용
                 PRODT_ORDER_NO=prodt_order_no,
                 BOX_NUM=master_box_no,

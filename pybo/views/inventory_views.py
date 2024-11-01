@@ -10,7 +10,7 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Storage_Location
+    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Storage_Location
 from collections import defaultdict
 from sqlalchemy.orm import aliased
 
@@ -39,10 +39,10 @@ def inventory():
             prodt_order_nos = [order.PRODT_ORDER_NO for order in prodt_order_nos]
 
             barcode_assignments = db.session.query(
-                Production_Barcode_Assign.barcode,
-                Production_Barcode_Assign.WC_CD,
-                Production_Barcode_Assign.PRODT_ORDER_NO
-            ).filter(Production_Barcode_Assign.PRODT_ORDER_NO.in_(prodt_order_nos)).all()
+                Barcode_Flow.barcode,
+                Barcode_Flow.WC_CD,
+                Barcode_Flow.PRODT_ORDER_NO
+            ).filter(Barcode_Flow.PRODT_ORDER_NO.in_(prodt_order_nos)).all()
 
             barcodes = [assignment.barcode for assignment in barcode_assignments]
 
@@ -127,10 +127,10 @@ def inventory():
                     Item.ITEM_CD.label("item_cd"),
                     Item.ITEM_NM.label("item_nm"),
                     Item.BASIC_UNIT.label("basic_unit"),
-                    func.count(Production_Barcode_Assign.barcode).label("total_qty")  # 품목별 바코드 개수 집계
+                    func.count(Barcode_Flow.barcode).label("total_qty")  # 품목별 바코드 개수 집계
                 )
-                .join(Production_Results, Production_Results.PRODT_ORDER_NO == Production_Barcode_Assign.PRODT_ORDER_NO)
-                .join(Production_Barcode, Production_Barcode.barcode == Production_Barcode_Assign.barcode)
+                .join(Production_Results, Production_Results.PRODT_ORDER_NO == Barcode_Flow.PRODT_ORDER_NO)
+                .join(Production_Barcode, Production_Barcode.barcode == Barcode_Flow.barcode)
                 .join(Item, Item.ALPHA_CODE == Production_Barcode.product)
                 .filter(Production_Results.REPORT_TYPE == 'G')  # 실적 데이터 기준
                 .group_by(Item.ITEM_CD, Item.ITEM_NM, Item.BASIC_UNIT)
