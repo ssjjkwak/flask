@@ -51,7 +51,6 @@ class UserRole(db.Model):
     role = db.relationship('Role', backref=db.backref('user_roles', cascade='all, delete-orphan'))
 
 
-
 # 기준정보
 class Item(db.Model):
     __tablename__ = 'B_ITEM'
@@ -81,8 +80,8 @@ class Item(db.Model):
     ITEM_PERMIT_NO = db.Column(db.NVARCHAR(100), nullable=True)
     MEDICAL_CARE_BENEFIT_FLAG = db.Column(db.NVARCHAR(3), nullable=True)
 
-class Item_Master(db.Model):
-    __tablename__ = 'B_ITEM_MASTER'
+class Item_Alpha(db.Model):
+    __tablename__ = 'B_ITEM_ALPHA'
     __table_args__ = {'schema': 'dbo'}
 
     ALPHA_CODE = db.Column(db.NVARCHAR(50), primary_key=True)
@@ -167,6 +166,7 @@ class Sales_Order(db.Model):
     CUST_PO_NO = db.Column(db.NVARCHAR(50), nullable=True)
     ITEM_ACCT = db.Column(db.NCHAR(2), nullable=True)
     SO_QTY = db.Column(db.NUMERIC(18,6), nullable=True)
+    DLVY_QTY = db.Column(db.NUMERIC(18, 6), nullable=True)
     BASE_UNIT = db.Column(db.NCHAR(3), nullable=True)
     IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
     IF_UPDT_DT = db.Column(db.DateTime, default=kst_now, onupdate=kst_now)
@@ -322,24 +322,6 @@ class Production_Results(db.Model):
     INSRT_USR = db.Column(db.NVARCHAR(13), nullable=True)
 
 # BOM
-class Bom(db.Model):
-    __tablename__ = 'P_BOM'
-    __table_args__ = {'schema': 'dbo'}
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    PRNT_ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
-    PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
-    CHILD_ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
-    CHILD_ITEM_UNIT = db.Column(db.NVARCHAR(3), nullable=True)
-    PRNT_ITEM_QTY = db.Column(db.NUMERIC(18,6),nullable=True)
-    CHILD_ITEM_QTY = db.Column(db.NUMERIC(18,6),nullable=True)
-    VALID_DT_FR = db.Column(db.DateTime, nullable=True)
-    VALID_DT_TO = db.Column(db.DateTime, nullable=True)
-    IF_INSRT_DT = db.Column(db.DateTime, default=kst_now)
-    IF_UPDT_DT = db.Column(db.DateTime, default=kst_now)
-
-    # Relationship to Item
-    child_item = relationship('Item', primaryjoin=foreign(CHILD_ITEM_CD) == Item.ITEM_CD, backref=backref('boms', lazy=True))
 
 class Bom_Header(db.Model):
     __tablename__ = 'P_BOM_HEADER'

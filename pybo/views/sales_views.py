@@ -9,7 +9,7 @@ from sqlalchemy import null, func
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
-from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
+from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode, \
     Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Sales_Order,Biz_Partner
 from collections import defaultdict
 
@@ -29,8 +29,8 @@ def sales_order():
     NET_AMT = ''
     SO_DT_START = datetime.today().strftime('%Y-%m-%d')  # 오늘 날짜
     SO_DT_END = (datetime.today() + timedelta(days=30)).strftime('%Y-%m-%d')  # 30일 후 날짜
-    REQ_DLVY_DT_START = SO_DT_START  # 납기 시작일도 오늘 날짜로 설정
-    REQ_DLVY_DT_END = SO_DT_END  # 납기 종료일도 30일 후로 설정
+    REQ_DLVY_DT_START = datetime.today().strftime('%Y-%m-%d')  # 오늘 날짜
+    REQ_DLVY_DT_END = (datetime.today() + timedelta(days=365)).strftime('%Y-%m-%d')  # 30일 후 날짜
     CUST_PO_NO = ''
 
     # 기본 Sales_Order 쿼리에 Biz_Partner와 Item 조인을 추가

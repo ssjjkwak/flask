@@ -9,8 +9,8 @@ from sqlalchemy import null, func
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
-from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Group, Item_Master, Bom_Header, Bom_Detail, Biz_Partner
+from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode, \
+    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Group, Item_Alpha, Bom_Header, Bom_Detail, Biz_Partner
 from collections import defaultdict
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -42,13 +42,13 @@ def item():
     # 모든 공장 목록, 품목그룹 목록, 알파코드 목록을 조회하여 화면에 표시
     plants = db.session.query(Plant).all()
     item_groups = db.session.query(Item_Group).all()
-    alpha_codes = db.session.query(Item_Master).all()
+    alpha_codes = db.session.query(Item_Alpha).all()
 
     # 아이템과 관련된 기본 쿼리
     items_query = db.session.query(Item).outerjoin(Item_Group, Item.ITEM_GROUP_CD == Item_Group.ITEM_GROUP_CD)
 
     # Item_Master와 Item의 ALPHA_CODE 조인을 추가하여 ALPHA_CODE가 NULL인 데이터도 포함
-    items_query = items_query.outerjoin(Item_Master, Item.ALPHA_CODE == Item_Master.ALPHA_CODE)
+    items_query = items_query.outerjoin(Item_Alpha, Item.ALPHA_CODE == Item_Alpha.ALPHA_CODE)
 
     if request.method == 'POST':
         form_submitted = True
@@ -84,7 +84,7 @@ def item():
         if ITEM_ACCT:
             items_query = items_query.filter(Item.ITEM_ACCT == ITEM_ACCT)
         if ALPHA_CODE:  # 알파코드 필터링 추가 (ALPHA_CODE가 선택된 경우만 필터링 적용)
-            items_query = items_query.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
+            items_query = items_query.filter(Item_Alpha.ALPHA_CODE == ALPHA_CODE)
 
         # BASIC_UNIT 필터링 추가, 없으면 모든 데이터 포함
         if BASIC_UNIT:

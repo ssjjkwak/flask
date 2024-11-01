@@ -56,13 +56,21 @@
                     <input type="text" class="form-control form-control-sm" id="bp_cd" name="bp_cd" value="{{ BP_CD }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
+                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">품목</label>
+                    <input type="text" class="form-control form-control-sm" id="item_cd" name="item_cd"
+                           value="{{ ITEM_CD }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+
+                <div class="mb-1 col-9 d-flex align-items-center">
                     <label for="so_no" class="form-label me-3" style="min-width: 110px;">수주번호</label>
                     <input type="text" class="form-control form-control-sm" id="so_no" name="so_no" value="{{ SO_NO }}">
                 </div>
                 <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">품목</label>
-                    <input type="text" class="form-control form-control-sm" id="item_cd" name="item_cd"
-                           value="{{ ITEM_CD }}">
+                    <label for="cust_po_no" class="form-label me-3" style="min-width: 110px;">고객주문번호</label>
+                    <input type="text" class="form-control form-control-sm" id="cust_po_no" name="cust_po_no"
+                           value="{{ CUST_PO_NO }}">
                 </div>
             </div>
             <div class="col-md-3">
@@ -85,11 +93,6 @@
                         <input type="date" class="form-control form-control-sm ms-2" id="req_dlvy_dt_end"
                                name="req_dlvy_dt_end" value="{{ REQ_DLVY_DT_END }}">
                     </div>
-                </div>
-                <div class="mb-1 col-9 d-flex align-items-center">
-                    <label for="cust_po_no" class="form-label me-3" style="min-width: 110px;">고객주문번호</label>
-                    <input type="text" class="form-control form-control-sm" id="cust_po_no" name="cust_po_no"
-                           value="{{ CUST_PO_NO }}">
                 </div>
             </div>
         </div>

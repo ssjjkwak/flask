@@ -9,8 +9,8 @@ from sqlalchemy import null, func
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
-from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode,  \
-    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Master, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location
+from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode,  \
+    Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location
 from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
@@ -66,7 +66,7 @@ def product_order():
     ).join(
         Item, Production_Order.ITEM_CD == Item.ITEM_CD
     ).join(
-        Item_Master, Item.ALPHA_CODE == Item_Master.ALPHA_CODE
+        Item_Alpha, Item.ALPHA_CODE == Item_Alpha.ALPHA_CODE
     ).join(
         Storage_Location, Production_Order.SL_CD == Storage_Location.SL_CD
     )
@@ -84,7 +84,7 @@ def product_order():
     if PRODT_ORDER_NO:
         orders_with_items = orders_with_items.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
     if ALPHA_CODE:  # ALPHA_CODE 필터링 추가
-        orders_with_items = orders_with_items.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
+        orders_with_items = orders_with_items.filter(Item_Alpha.ALPHA_CODE == ALPHA_CODE)
     if SL_CD:  # SL_CD 필터링 추가
         orders_with_items = orders_with_items.filter(Production_Order.SL_CD == SL_CD)
 
@@ -98,7 +98,7 @@ def product_order():
     ).join(
         Item, Production_Order.ITEM_CD == Item.ITEM_CD
     ).join(
-        Item_Master, Item.ALPHA_CODE == Item_Master.ALPHA_CODE
+        Item_Alpha, Item.ALPHA_CODE == Item_Alpha.ALPHA_CODE
     ).join(
         Storage_Location, Production_Order.SL_CD == Storage_Location.SL_CD
     )
@@ -116,7 +116,7 @@ def product_order():
     if PRODT_ORDER_NO:
         orders_with_wcs = orders_with_wcs.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
     if ALPHA_CODE:  # ALPHA_CODE 필터링 추가
-        orders_with_wcs = orders_with_wcs.filter(Item_Master.ALPHA_CODE == ALPHA_CODE)
+        orders_with_wcs = orders_with_wcs.filter(Item_Alpha.ALPHA_CODE == ALPHA_CODE)
     if SL_CD:  # SL_CD 필터링 추가
         orders_with_wcs = orders_with_wcs.filter(Production_Order.SL_CD == SL_CD)
 
@@ -124,7 +124,7 @@ def product_order():
 
     work_centers = db.session.query(Work_Center).all()
     items = db.session.query(Item).all()
-    alpha_codes = db.session.query(Item_Master.ALPHA_CODE).distinct().all()  # ALPHA_CODE 목록 가져오기
+    alpha_codes = db.session.query(Item_Alpha.ALPHA_CODE).distinct().all()  # ALPHA_CODE 목록 가져오기
     storage_locations = db.session.query(Storage_Location).all()  # 창고 목록 가져오기
 
     return render_template('product/product_order.html',
@@ -1048,8 +1048,6 @@ def reprint_label(box_no):
         return jsonify({'message': '라벨이 성공적으로 재프린트되었습니다.'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
 
 
 # 외주발주조회

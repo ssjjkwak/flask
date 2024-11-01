@@ -9,7 +9,7 @@ from sqlalchemy import null, func
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
-from pybo.models import Production_Order, Item, Work_Center, Plant, Bom, Production_Alpha, Production_Barcode, \
+from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode, \
     Production_Barcode_Assign, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Storage_Location
 from collections import defaultdict
 from sqlalchemy.orm import aliased
