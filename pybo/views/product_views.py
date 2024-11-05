@@ -2,16 +2,15 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
-
 import re
 import win32com.client
 from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g, flash
-from sqlalchemy import null, func
+from sqlalchemy import null, func, or_
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode,  \
-    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location, Barcode_Status
+    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location, Barcode_Status, Material_Doc
 from collections import defaultdict
 
 bp = Blueprint('product', __name__, url_prefix='/product')
@@ -556,6 +555,7 @@ def register():
 
     assign_production_orders()
     update_barcode_status_from_flow()  # 후처리 함수 호출
+    assign_doc_no_and_material_doc()
 
     flash('실적처리 완료.', 'success')
     logging.info("Redirecting to product_register page.")
@@ -748,6 +748,89 @@ def insert_production_results(orders):
     db.session.commit()
 
 
+def generate_doc_no():
+
+    today = datetime.now().strftime('%Y%m%d')
+    doc_prefix = f"DOC{today}"
+
+    # 해당 날짜에 대한 최대 DOC_NO 조회
+    max_doc_no = db.session.query(func.max(Barcode_Flow.DOC_NO)).filter(
+        Barcode_Flow.DOC_NO.like(f"{doc_prefix}%")).scalar()
+
+    # 새로운 DOC_NO 생성
+    if max_doc_no:
+        last_number = int(max_doc_no[-5:])  # 마지막 5자리 숫자 부분
+        new_number = last_number + 1
+    else:
+        new_number = 1  # 처음 생성되는 경우
+
+    new_doc_no = f"{doc_prefix}{new_number:05d}"  # 5자리 연속번호로 구성
+    return new_doc_no
+
+
+def assign_doc_no_and_material_doc():
+    doc_no = generate_doc_no()
+
+    # DOC_NO 및 ITEM_CD, PRODT_ORDER_NO, WC_CD, MOV_TYPE로 그룹화하여 QTY를 합산
+    grouped_entries = db.session.query(
+        Barcode_Flow.ITEM_CD,
+        Barcode_Flow.PRODT_ORDER_NO,
+        Barcode_Flow.WC_CD,
+        Barcode_Flow.MOV_TYPE,
+        func.count(Barcode_Flow.barcode).label("total_qty")
+    ).filter(
+        Barcode_Flow.DOC_NO == None  # DOC_NO가 없는 항목만 대상으로
+    ).group_by(
+        Barcode_Flow.ITEM_CD, Barcode_Flow.PRODT_ORDER_NO, Barcode_Flow.WC_CD, Barcode_Flow.MOV_TYPE
+    ).all()
+
+    new_material_docs = []
+    doc_seq = 10  # 초기 SEQ 값은 10
+
+    for entry in grouped_entries:
+        item_cd, prodt_order_no, wc_cd, mov_type, total_qty = entry
+
+        # Barcode_Flow 업데이트 (DOC_NO와 동일한 ITEM_CD에 대해 DOC_SEQ를 동일하게 설정)
+        db.session.query(Barcode_Flow).filter(
+            Barcode_Flow.ITEM_CD == item_cd,
+            Barcode_Flow.PRODT_ORDER_NO == prodt_order_no,
+            Barcode_Flow.WC_CD == wc_cd,
+            Barcode_Flow.MOV_TYPE == mov_type,
+            Barcode_Flow.DOC_NO == None
+        ).update(
+            {'DOC_NO': doc_no, 'DOC_SEQ': doc_seq}
+        )
+
+        # Material_Doc 생성
+        material_doc = {
+            'DOC_NO': doc_no,
+            'DOC_SEQ': f"{doc_seq:02}",  # DOC_SEQ는 두 자리로 고정
+            'ITEM_CD': item_cd,
+            'QTY': total_qty,  # 동일 ITEM_CD의 QTY 합산
+            'CREDIT_DEBIT': 'C',  # 기본값 설정
+            'OPR_NO': '10',
+            'REPORT_TYPE': 'G',
+            'PRODT_ORDER_NO': prodt_order_no,
+            'WC_CD': wc_cd,
+            'MOV_TYPE': mov_type,
+            'INSRT_DT': datetime.now(),
+            'INSRT_USR': g.user.USR_ID,
+            'UPDT_DT': datetime.now(),  # 업데이트 시각 설정
+            'UPDT_USR': g.user.USR_ID
+        }
+        new_material_docs.append(material_doc)
+
+        # 다음 ITEM_CD에 대해 DOC_SEQ를 10씩 증가
+        doc_seq += 10
+
+    # Material_Doc에 데이터 삽입
+    if new_material_docs:
+        db.session.bulk_insert_mappings(Material_Doc, new_material_docs)
+
+    db.session.commit()
+    logging.info("DOC_NO와 Material_Doc 데이터가 성공적으로 할당되었습니다.")
+
+
 
 @bp.route('/assign-orders', methods=['POST'])
 def assign_orders_route():
@@ -922,7 +1005,7 @@ def save_packing_data():
 
         # Packing_Dtl 및 Packing_Cs 테이블에 데이터 추가
         for row in data['rows']:
-            barcode = row['udi_qr']
+            barcode = row['udi_qr'][:-1]
             udi_code = row['barcode']
 
             # Packing_Dtl 생성

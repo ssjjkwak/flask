@@ -328,7 +328,7 @@ class Material_Doc(db.Model):
     __table_args__ = {'schema': 'dbo'}
 
     DOC_NO = db.Column(db.NVARCHAR(20), primary_key=True)
-    SEQ = db.Column(db.NVARCHAR(2), primary_key=True)
+    DOC_SEQ = db.Column(db.SMALLINT, primary_key=True)
     ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
     QTY = db.Column(db.NUMERIC(18, 0), nullable=True)
     CREDIT_DEBIT = db.Column(db.NVARCHAR(2), nullable=True)
