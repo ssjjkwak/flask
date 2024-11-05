@@ -99,7 +99,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > Packing 등록</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton" disabled>
+            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton">
                 <i class="bi bi-box-seam"></i> Packing 등록
             </button>
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
@@ -111,20 +111,10 @@
     <form method="POST" action="{{ url_for('product.product_register_packing') }}" class="px-4" id="searchForm">
         <input type="hidden" name="form_submitted" value="{{ form_submitted }}">
         <div class="row">
+            <!-- 품목 -->
             <div class="col-md-3">
                 <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="plant_code" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;&emsp;공장</label>
-                    <select class="form-select form-select-sm" id="plant_code" name="plant_code" disabled>
-                        <option value="">p710 인공신장기공장</option>
-                        {% for plant in plants %}
-                        <option value="{{ plant[0] }}" {% if plant[0]== PLANT_CD %}selected{% endif %}>
-                            {{ plant[0] }} 인공신장기공장
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;&emsp;품목</label>
+                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">품목</label>
                     <select class="form-select form-select-sm" id="item_cd" name="item_cd">
                         <option value="">-</option>
                         {% for item in items %}
@@ -137,37 +127,37 @@
             </div>
             <div class="col-md-3">
                 <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="start_date" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;계획일자</label>
+                    <label for="exp_start_date" class="form-label me-3" style="min-width: 110px;">유효일자</label>
                     <div class="d-flex">
-                        <input type="date" class="form-control form-control-sm me-2" id="start_date" name="start_date"
+                        <input type="date" class="form-control form-control-sm me-2" id="exp_start_date"
+                               name="exp_start_date">
+                        <span class="mx-2">~</span>
+                        <input type="date" class="form-control form-control-sm ms-2" id="exp_end_date"
+                               name="exp_end_date">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 생산일자 및 유효일자 -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-1 col-8 d-flex align-items-center">
+                    <label for="prod_start_date" class="form-label me-3" style="min-width: 110px;">생산일자</label>
+                    <div class="d-flex">
+                        <input type="date" class="form-control form-control-sm me-2" id="prod_start_date"
+                               name="prod_start_date"
                                value="{{ RELEASE_START_DT.strftime('%Y-%m-%d') if RELEASE_START_DT else '' }}">
                         <span class="mx-2">~</span>
-                        <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
+                        <input type="date" class="form-control form-control-sm ms-2" id="prod_end_date"
+                               name="prod_end_date"
                                value="{{ RELEASE_END_DT.strftime('%Y-%m-%d') if RELEASE_END_DT else '' }}">
                     </div>
                 </div>
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="prodt_order_no" class="form-label me-3" style="min-width: 110px;">제조오더번호</label>
-                    <input type="text" class="form-control form-control-sm flex-grow-1" id="prodt_order_no" name="prodt_order_no" value="{{ PRODT_ORDER_NO }}">
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">
-                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">EMPTYLABEL</label>
-                        <div class="d-flex">
-                        </div>
-                </div>
-<!--                <div class="mb-1 col-8 d-flex align-items-center">-->
-<!--                    <label for="order_status" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;오더상태</label>-->
-<!--                    <div class="form-group">-->
-<!--                        <select class="form-select form-select-sm" id="order_status" name="order_status">-->
-<!--                            <option value="RL" {% if ORDER_STATUS== 'RL' %}selected{% endif %}>RL</option>-->
-<!--                        </select>-->
-<!--                    </div>-->
-<!--                </div>-->
             </div>
         </div>
     </form>
+
 </div>
 
 <div class="gap" style="margin-top: 20px;"></div>
@@ -180,41 +170,30 @@
             <table class="table table-sm table-hover" style="text-align: center;" id="dataTable">
                 <thead class="table-light">
                 <tr>
-                    <th>No</th>
-                    <th>제조오더번호</th>
-                    <th>작업공정</th>
-                    <th>품목</th>
-                    <th>품목명</th>
-                    <th>계획지시일</th>
-                    <th>계획수량</th>
-                    <th>오더상태</th>
-                    <th class="sticky" style="width: 740px; font-weight: bold; text-align: left;">Master Box 번호</th>
+                    <th>Master Box 번호</th>
+                    <th>모델</th>
+                    <th>수량</th>
+                    <th>생산일자</th>
+                    <th>유통기한</th>
+                    <th>프린트 여부</th>
+                    <th class="sticky" style="width: 740px; font-weight: bold; text-align: left;"></th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for order in orders_with_hdr %}
-                <tr data-order-no="{{ order.prodt_order_no }}" class="{% if order.order_status == 'CL' %}completed-order{% endif %}">
-                    <td>{{ loop.index }}</td>
-                    <td>{{ order.prodt_order_no }}</td>
-                    <td>WSF70</td>
-                    <td>CHF70-120LR</td>
-                    <td>Packing</td>
-                    <td>{{ order.plant_start_dt.strftime('%Y-%m-%d') if order.plant_start_dt else '' }}</td>
-                    <td>{{ order.prodt_order_qty | int }}</td>
-                    <td>{{ order.order_status }}</td>
-                    <!-- 기존 박스 번호에 클릭 이벤트 추가 -->
+                {% for cs in packing_cs_data %}
+                <tr>
                     <td>
                         <div class="badge-container">
-                            {% if master_box_grouped[order.prodt_order_no] %}
-                                {% for m_box_no in master_box_grouped[order.prodt_order_no] %}
-                                    <span class="badge bg-primary master-box" data-box-no="{{ m_box_no }}">{{ m_box_no }}</span>
-                                {% endfor %}
-                            {% else %}
-                                <span class="badge bg-secondary">No Master Box</span>
-                            {% endif %}
+                            <span class="badge bg-primary master-box"
+                                  data-box-no="{{ cs.m_box_no }}">{{ cs.m_box_no }}</span>
                         </div>
                     </td>
-
+                    <td>{{ cs.cs_model }}</td>
+                    <td>{{ cs.cs_qty }}</td>
+                    <td>{{ cs.cs_prod_date.strftime('%Y-%m-%d') if cs.cs_prod_date else '' }}</td>
+                    <td>{{ cs.cs_exp_date.strftime('%Y-%m-%d') if cs.cs_exp_date else '' }}</td>
+                    <td>{{ cs.print_flag }}</td>
+                    <td></td>
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -235,9 +214,10 @@
 </div>
 
 <!-- Packing 실적등록 모달 -->
-<div class="modal fade" id="packingModal" tabindex="-1" role="dialog" aria-labelledby="packingModalLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content ">
+<div class="modal fade" id="packingModal" tabindex="-1" role="dialog" aria-labelledby="packingModalLabel"
+     aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="packingModalLabel">Packing 실적등록</h5>
             </div>
@@ -245,10 +225,6 @@
                 <form id="packingForm" class="px-5">
                     <div class="row">
                         <div class="col-md-3">
-                            <div class="mb-3 col-10">
-                                <label for="packing_order_no">제조오더번호</label>
-                                <input type="text" class="form-control" id="packing_order_no" disabled>
-                            </div>
                             <div class="mb-3 col-10">
                                 <label for="barcode_scan3">Packing일자</label>
                                 <input type="text" class="form-control" id="barcode_scan3" disabled>
@@ -270,13 +246,14 @@
                                 <input type="text" class="form-control" id="barcode_scan7" disabled>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <table class="table table-sm table-borderless ms-auto" style="text-align: center;" id="dataTable_modal">
+                        <div class="col-md-8">
+                            <table class="table table-sm table-borderless ms-auto" style="text-align: center;"
+                                   id="dataTable_modal">
                                 <thead class="table-sm">
                                 <tr>
                                     <th>UDI QR</th>
                                     <th>Barcode</th>
-                                    <th class="result">검사결과</th>
+                                    <th>검사결과</th>
                                 </tr>
                                 </thead>
                                 <tbody id="modalTableBody"></tbody>
@@ -287,11 +264,14 @@
             </div>
             <div class="modal-footer d-flex justify-content-between">
                 <div class="d-flex">
-                    <input type="text" id="udiInputFooter" class="form-control" placeholder="바코드 스캔" style="width: 370px; margin-right: 10px; border: none;">
+                    <input type="text" id="udiInputFooter" class="form-control" placeholder="바코드 스캔"
+                           style="width: 370px; margin-right: 10px; border: none;">
+                    <input type="text" id="barcodeInputFooter" class="form-control" placeholder="QR 스캔"
+                           style="width: 170px; margin-right: 10px; border: none;">
                 </div>
                 <div>
-                    <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="closeModalButton">닫기</button>
-                    <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="saveChangesButton">
+                    <button type="button" class="btn btn-light shadow-sm ms-3" id="closeModalButton">닫기</button>
+                    <button type="button" class="btn btn-light shadow-sm ms-3" id="saveChangesButton">
                         <i class="bi bi-printer"></i> 등록 및 label 인쇄
                     </button>
                 </div>
@@ -300,20 +280,27 @@
     </div>
 </div>
 
+
 <!-- 성공 메시지 모달 -->
-<div class="modal fade" id="successModalpacking" tabindex="-1" role="dialog" aria-labelledby="successModalLabelpacking" aria-hidden="true">
+<div class="modal fade" id="successModalpacking" tabindex="-1" role="dialog" aria-labelledby="successModalLabelpacking"
+     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 400px;">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="successModalLabelpacking"><i class="bi bi-check-circle-fill"></i> Success</h5>
+                <h5 class="modal-title" id="successModalLabelpacking"><i class="bi bi-check-circle-fill"></i> Success
+                </h5>
             </div>
             <div class="modal-body">
                 데이터가 성공적으로 저장되었습니다.<br>
                 라벨을 인쇄하시겠습니까?
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal" id="closeSuccessModalButton">닫기</button>
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="printLabelButton"><i class="bi bi-printer"></i> Label 인쇄</button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-bs-dismiss="modal"
+                        id="closeSuccessModalButton">닫기
+                </button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="printLabelButton"><i
+                        class="bi bi-printer"></i> Label 인쇄
+                </button>
             </div>
         </div>
     </div>
@@ -344,7 +331,8 @@
 </div>
 
 <!-- Master Box Details Modal -->
-<div class="modal fade" id="masterBoxDetailsModal" tabindex="-1" role="dialog" aria-labelledby="masterBoxDetailsModalLabel" aria-hidden="true" data-bs-backdrop="static">
+<div class="modal fade" id="masterBoxDetailsModal" tabindex="-1" role="dialog"
+     aria-labelledby="masterBoxDetailsModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -354,41 +342,42 @@
                 <!-- 추가된 상단 테이블 (Packing_Cs 데이터) -->
                 <table class="table table-sm table-bordered" style="text-align: center; margin-bottom: 20px;">
                     <thead>
-                        <tr>
-                            <th>모델명</th>
-                            <th>생산일자</th>
-                            <th>유효일자</th>
-                            <th>S/N</th>
-                            <th>Box Label QR 코드</th>
-                        </tr>
+                    <tr>
+                        <th>모델명</th>
+                        <th>생산일자</th>
+                        <th>유효일자</th>
+                        <th>S/N</th>
+                        <th>Box Label QR 코드</th>
+                    </tr>
                     </thead>
                     <tbody id="csDetailsBody">
-                        <!-- 여기서 서버에서 가져온 cs_data 데이터를 채울 예정 -->
+                    <!-- 여기서 서버에서 가져온 cs_data 데이터를 채울 예정 -->
                     </tbody>
                 </table>
 
                 <!-- 기존 하단 테이블 (Packing_Dtl 데이터) -->
                 <table class="table table-sm table-bordered" style="text-align: center;">
                     <thead>
-                        <tr>
-                            <th>Lot No</th>
-                            <th>제품 UDI QR</th>
-                            <th>Barcode</th>
-                        </tr>
+                    <tr>
+                        <th>Lot No</th>
+                        <th>제품 UDI QR</th>
+                        <th>Barcode</th>
+                    </tr>
                     </thead>
                     <tbody id="masterBoxDetailsBody">
-                        <!-- 여기서 서버에서 가져온 데이터를 채울 예정 -->
+                    <!-- 여기서 서버에서 가져온 데이터를 채울 예정 -->
                     </tbody>
                 </table>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="closeModalButton2">닫기</button>
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="printMasterBoxButton"><i class="bi bi-printer"></i> label 재인쇄</button>
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="printMasterBoxButton"><i
+                        class="bi bi-printer"></i> label 재인쇄
+                </button>
             </div>
         </div>
     </div>
 </div>
-
 
 
 <script>
@@ -414,22 +403,28 @@
         });
     });
 
+    // openModalButton 클릭 시 Packing 모달 표시 및 데이터 초기화
     document.getElementById('openModalButton').addEventListener('click', function() {
-        if (selectedOrderNo) {
-            document.getElementById('packing_order_no').value = selectedOrderNo;
-            $('#packingModal').modal('show');
+        // Master Box 번호 생성
+        fetch('/product/get_next_master_box_no/', {
+            method: 'GET'
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('barcode_scan4').value = data.next_master_box_no;  // 박스 번호 설정
 
+            // 모달 열기 및 포커스 설정
+            $('#packingModal').modal('show');
             setTimeout(function() {
                 var udiInputFooter = document.getElementById('udiInputFooter');
                 if (udiInputFooter) {
-                    udiInputFooter.focus(); // 포커스를 udiInputFooter로 설정
+                    udiInputFooter.focus();
                 }
             }, 500);
-        } else {
-            document.getElementById('errorModalBody').innerText = "등록할 제조오더를 선택해주세요.";
-            var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-            errorModal.show();
-        }
+        })
+        .catch(error => {
+            console.error('Error fetching next master box number:', error);
+        });
     });
 
     window.onload = function() {
@@ -641,8 +636,8 @@
         return null;
     }
 
-    // UDI 또는 바코드 검증 후 데이터를 할당하는 함수
-    function checkBarcode(udiQr, resultInput, rowIndex) {
+    // checkBarcode 함수 수정 - barcode_flow 업데이트 포함
+    function checkBarcode(udiQr) {
         var barcodeWithoutCheckDigit = udiQr.slice(0, -1);
         fetch('/product/check_barcode/', {
             method: 'POST',
@@ -664,19 +659,29 @@
                     barcodeInput.value = document.getElementById('udiInputFooter').value;
                     resultInput.value = 'PASS';
 
-                    // LOT 번호가 있으면 barcode_scan5에 값을 넣어줌
-                    if (data.lot) {
+                     if (data.lot) {
                         document.getElementById('barcode_scan5').value = data.lot;  // LOT 값 설정
                     }
 
+                    // barcode_flow 모델에 데이터 업데이트 요청
+                    fetch('/product/update_barcode_flow/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            barcode: barcodeWithoutCheckDigit,
+                            master_box_no: document.getElementById('barcode_scan4').value
+                        })
+                    }).then(response => response.json())
+                      .then(data => console.log('Barcode flow updated:', data))
+                      .catch(error => console.error('Error updating barcode flow:', error));
+
                     updateQuantityAndExpiryDate();
-
                     document.getElementById('udiInputFooter').focus();
-
                 } else {
                     alert('모든 필드가 이미 채워졌습니다.');
                 }
-
                 document.getElementById('udiInputFooter').value = '';
                 document.getElementById('barcodeInputFooter').value = '';
             } else {
@@ -687,7 +692,6 @@
         .catch(error => {
             console.error('Error during barcode check:', error);
         });
-        console.log('Sending barcode:', barcodeWithoutCheckDigit);
     }
 
 
@@ -716,15 +720,14 @@
 
     function savePackingData() {
         var packingData = {
-            prodt_order_no: document.getElementById('packing_order_no').value,
+            master_box_no: document.getElementById('barcode_scan4').value,
             lot_no: document.getElementById('barcode_scan5').value,
             quantity: document.getElementById('barcode_scan6').value,
             expiry_date: document.getElementById('barcode_scan7').value,
             rows: []
         };
 
-        // 테이블에 입력된 데이터를 rows 배열에 추가
-        document.querySelectorAll('#modalTableBody tr').forEach(function(row, index) {
+        document.querySelectorAll('#modalTableBody tr').forEach(function(row) {
             var udiQr = row.querySelector('input[id^="udi-qr-"]').value;
             var barcode = row.querySelector('input[id^="barcode-di-"]').value;
             var result = row.querySelector('input[id^="result-packing-"]').value;
@@ -738,30 +741,16 @@
             }
         });
 
-        // 마스터 박스 번호 생성 후 packingData에 추가
-        fetch('/product/get_next_master_box_no/', {
-            method: 'GET'
-        })
-        .then(response => response.json())
-        .then(data => {
-            packingData.master_box_no = data.next_master_box_no;  // 마스터 박스 번호 추가
-
-            document.getElementById('barcode_scan4').value = data.next_master_box_no;
-
-            // packingData를 서버에 저장
-            return fetch('/product/save_packing_data/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(packingData)
-            });
+        fetch('/product/save_packing_data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(packingData)
         })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                console.log('Packing data saved successfully');
-                // 성공 모달을 표시
                 $('#successModalpacking').modal('show');
             } else {
                 alert('Packing 데이터 저장에 실패했습니다.');
@@ -778,7 +767,6 @@
             input.value = '';
         });
     }
-
 
 
 </script>

@@ -108,9 +108,12 @@ class Storage_Location(db.Model):
     __tablename__ = 'B_STORAGE_LOCATION'
     __table_args__ = {'schema': 'dbo'}
 
-    SL_CD = db.Column(db.NVARCHAR(4), primary_key=True)
+    SL_CD = db.Column(db.NVARCHAR(10), primary_key=True)
+    SL_TYPE = db.Column(db.NVARCHAR(4), primary_key=True)
     SL_NM = db.Column(db.NVARCHAR(12), nullable=True)
+    EXT_SL_TYPE = db.Column(db.NVARCHAR(4), nullable=True)
     PLANT_CD = db.Column(db.NVARCHAR(4), nullable=True)
+    BP_CD = db.Column(db.NVARCHAR(12), nullable=True)
 
 # 수불유형
 class Movetype_Configuration(db.Model):
@@ -306,6 +309,19 @@ class Barcode_Flow(db.Model):
     SO_NO = db.Column(db.NVARCHAR(18), nullable=True)
     SO_SEQ = db.Column(db.SMALLINT, nullable=True)
     WC_CD = db.Column(db.NVARCHAR(7), nullable=True)
+    TO_SL_CD = db.Column(db.NVARCHAR(7), nullable=True)
+    FROM_SL_CD = db.Column(db.NVARCHAR(7), nullable=True)
+    DOC_NO = db.Column(db.NVARCHAR(18), nullable=True)
+    DOC_SEQ = db.Column(db.SMALLINT, nullable=True)
+
+class Barcode_Status(db.Model):
+    __tablename__ = 'P_BARCODE_STATUS'
+    __table_args__ = {'schema': 'dbo'}
+
+    barcode = db.Column(db.NVARCHAR(20), primary_key=True)
+    ITEM_CD = db.Column(db.NVARCHAR(50), nullable=True)
+    STATUS = db.Column(db.NVARCHAR(9), nullable=True)
+
 
 class Material_Doc(db.Model):
     __tablename__ = 'P_MATERIAL_DOC'
