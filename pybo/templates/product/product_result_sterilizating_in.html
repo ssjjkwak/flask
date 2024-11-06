@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    th, td {
+        padding: 8px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    th:first-child, td:first-child {
+        min-width: 50px;
+    }
+
+    .table-wrapper {
+        overflow: auto;
+        height: calc(100vh - 260px); /* 초기 높이 설정 */
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        min-width: 120px;
+    }
+</style>
+
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
+        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 멸균반제품 입고결과조회</h7>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
+                <i class="bi bi-search"></i> 조회
+            </button>
+        </div>
+    </div>
+    <div class="pd-3">
+        <form method="POST" action="" class="px-4 pd-6"
+              id="searchForm">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-1 col-8 d-flex align-items-center">
+                        <label for="plant_code" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;공장</label>
+                        <select class="form-select form-select-sm" id="plant_code" name="plant_code">
+                            <option value="">-</option>
+                            {% for plant in plants %}
+                            <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
+                                {{ plant.PLANT_CD }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-1 col-8 d-flex align-items-center">
+                        <label for="barcode_no_start" class="form-label me-3" style="min-width: 110px;">외주업체</label>
+                        <input type="text" class="form-control form-control-sm me-2" id="barcode_no_start"
+                               name="barcode_no_start" value="{{ BARCODE_NO_START }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-1 col-8 d-flex align-items-center">
+                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">입고일자</label>
+                        <div class="d-flex">
+                            <input type="date" class="form-control form-control-sm me-2" id="start_date"
+                                   name="start_date"
+                                   value="{{ INSRT_DT_START.strftime('%Y-%m-%d') if INSRT_DT_START else '' }}">
+                            <span class="mx-2">~</span>
+                            <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
+                                   value="{{ INSRT_DT_END.strftime('%Y-%m-%d') if INSRT_DT_END else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="gap" style="margin-top: 20px;"></div> <!-- 간격 추가 -->
+
+    <div class="table-wrapper ps-3 pe-3" id="tableWrapper">
+        <table class="table table-sm table-hover" style="table-layout:fixed;">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px;">전표번호</th>
+                    <th style="width: 50px;">SEQ</th>
+                    <th style="width: 90px;">품목</th>
+                    <th style="width: 90px;">품목명</th>
+                    <th style="width: 50px;">외주거래처</th>
+                    <th style="width: 80px;">거래처명</th>
+                    <th style="width: 90px;">창고</th>
+                    <th style="width: 50px;">단위</th>
+                    <th style="width: 82px;">수량</th>
+                    <th style="width: 82px;">발주번호</th>
+                    <th style="width: 82px;">SEQ</th>
+                    <th style="width: 60px;">박스번호</th>
+                    <th style="width: 75px;">수량</th>
+                    <th style="width: 50px;">입고일자</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function adjustTableHeight() {
+        var tableWrapper = document.getElementById('tableWrapper');
+        var headerHeight = document.querySelector('header').offsetHeight; // 헤더 높이
+        var footerHeight = document.querySelector('footer').offsetHeight; // 푸터 높이
+        var searchFormHeight = document.getElementById('searchForm').offsetHeight; // 검색 폼 높이
+        var availableHeight = window.innerHeight - headerHeight - footerHeight - searchFormHeight - 40; // 40은 여유 공간
+        tableWrapper.style.height = availableHeight + 'px';
+    }
+
+    window.addEventListener('resize', adjustTableHeight);
+    window.addEventListener('load', adjustTableHeight);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        {% if form_submitted and not grouped_results %}
+        document.getElementById('errorModalBody').innerText = "데이터 없음";
+        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+        {% endif %}
+    });
+</script>
+{% endblock %}

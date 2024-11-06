@@ -192,10 +192,17 @@
                             <a class="dropdown-item" href="{{ url_for('product.product_register_result') }}">제조실적조회</a>
                             {% endif %}
                             {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_e %}
-                            <a class="dropdown-item" href="{{ url_for('product.product_register_sterilizating') }}">멸균입반출조회</a>
+                            <a class="dropdown-item" href="{{ url_for('product.product_register_sterilizating_out') }}">외주반제품 반출등록</a>
                             {% endif %}
-<!--                            <a class="dropdown-item"-->
-<!--                               href="{{ url_for('product.product_register_sterilizating_result') }}">외주실적등록</a>-->
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_e %}
+                            <a class="dropdown-item" href="{{ url_for('product.product_result_sterilizating_out') }}">외주반제품 반출결과조회</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_e %}
+                            <a class="dropdown-item" href="{{ url_for('product.product_register_sterilizating_in') }}">외주제품 입고등록</a>
+                            {% endif %}
+                            {% if g.user_has_mesauth or g.user_has_b_ppmang or g.user_has_b_ppmang_e %}
+                            <a class="dropdown-item" href="{{ url_for('product.product_result_sterilizating_in') }}">외주제품 입고결과조회</a>
+                            {% endif %}
 
                         </div>
                     </li>
@@ -211,11 +218,11 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownSales">
                             {% if g.user_has_mesauth or g.user_has_b_sdmang or g.user_has_b_sdmang_a %}
-                            <a class="dropdown-item" href="{{ url_for('sales.sales_order') }}">수주정보조회</a>
+                            <a class="dropdown-item" href="{{ url_for('sales.sales_order') }}">제품출하등록</a>
                             {% endif %}
-<!--                            {% if g.user_has_mesauth or g.user_has_b_sdmang or g.user_has_b_sdmang_b %}-->
-<!--                            <a class="dropdown-item" href="{{ url_for('sales.supply_details') }}">공급내역등록</a>-->
-<!--                            {% endif %}-->
+                            {% if g.user_has_mesauth or g.user_has_b_sdmang or g.user_has_b_sdmang_b %}
+                            <a class="dropdown-item" href="{{ url_for('sales.supply_details') }}">제품출하결과조회</a>
+                            {% endif %}
                         </div>
                     </li>
                     {% endif %}

@@ -1,62 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
+    .table-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .table-wrapper {
+        flex: 1;
+        overflow: auto;
+        max-height: calc(100vh - 260px); /* 초기 높이 설정 */
+    }
+
+    .table-title {
+        font-weight: bold;
+        text-align: center;
+        background-color: #e0e0e0;
+        padding: 8px;
+        margin-bottom: 5px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
     th, td {
         padding: 8px;
         text-align: center;
         white-space: nowrap;
         text-overflow: ellipsis;
+        min-width: 80px;
     }
 
     th {
         background-color: #f8f9fa;
-        box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.4);
         position: sticky;
         top: 0;
         z-index: 20;
     }
 
-    th:first-child, td:first-child {
-        min-width: 50px;
-    }
-
-    .table-wrapper {
-        overflow: auto;
-        height: calc(100vh - 260px); /* 초기 높이 설정 */
-        width: 100%;
-        margin-bottom: 20px;
-    }
-
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-    th, td {
-        min-width: 120px;
-    }
-
-    .form-check-label {
-        line-height: 1.5; /* 라벨의 라인 높이를 조정하여 수평 정렬 */
-    }
-
-    .form-check-input {
-        margin-top: 2; /* 라디오 버튼의 마진을 조정 */
-    }
-
     .selected-row {
-        background-color: #D6EAF8 !important; /* 선택된 행의 스타일 */
+        background-color: #D6EAF8 !important;
     }
 </style>
 
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
-        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 멸균입반출조회</h7>
+        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 멸균반제품 반출등록</h7>
 
         <div style="display: flex; gap: 10px; align-items: center;">
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton" disabled>
-                    <i class="bi bi-boxes"></i> 외주반출 등록
+                <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton">
+                    <i class="bi bi-boxes"></i> 반출등록
                 </button>
             </div>
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
@@ -65,7 +62,7 @@
         </div>
     </div>
     <div class="pd-3">
-        <form method="POST" action="{{ url_for('product.product_register_sterilizating') }}" class="px-4 pd-6"
+        <form method="POST" action="{{ url_for('product.product_register_sterilizating_out') }}" class="px-4 pd-6"
               id="searchForm">
             <div class="row">
                 <div class="col-md-3">
@@ -80,37 +77,15 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="mb-1 col-8 d-flex align-items-center">
-                        <label for="item_cd" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;품목</label>
-                        <select class="form-select form-select-sm" id="item_cd" name="item_cd">
-                            <option value="">-</option>
-                            {% for item in items %}
-                            <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
-                                {{ item.ITEM_NM }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
                 </div>
                 <div class="col-md-4">
-<!--                    <div class="mb-1 col-8 d-flex align-items-center">-->
-<!--                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">납기일자</label>-->
-<!--                        <div class="d-flex">-->
-<!--                            <input type="date" class="form-control form-control-sm me-2" id="start_date"-->
-<!--                                   name="start_date"-->
-<!--                                   value="{{ INSRT_DT_START.strftime('%Y-%m-%d') if INSRT_DT_START else '' }}">-->
-<!--                            <span class="mx-2">~</span>-->
-<!--                            <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"-->
-<!--                                   value="{{ INSRT_DT_END.strftime('%Y-%m-%d') if INSRT_DT_END else '' }}">-->
-<!--                        </div>-->
-<!--                    </div>-->
                     <div class="mb-1 col-8 d-flex align-items-center">
-                        <label for="barcode_no_start" class="form-label me-3" style="min-width: 110px;">발주번호</label>
+                        <label for="barcode_no_start" class="form-label me-3" style="min-width: 110px;">사내창고</label>
                         <input type="text" class="form-control form-control-sm me-2" id="barcode_no_start"
                                name="barcode_no_start" value="{{ BARCODE_NO_START }}">
                     </div>
                     <div class="mb-1 col-6 d-flex align-items-center">
-                        <label for="bp_cd" class="form-label me-3" style="min-width: 110px;">외주업체</label>
+                        <label for="bp_cd" class="form-label me-3" style="min-width: 110px;">외주창고</label>
                         <select class="form-select form-select-sm" id="bp_cd" name="bp_cd">
                             <option value="">-</option>
                             {% for vendor in vendors %}
@@ -120,22 +95,10 @@
                             {% endfor %}
                         </select>
                     </div>
-<!--                    <div class="mb-1 col-8 d-flex align-items-center">-->
-<!--                        <label for="po_type" class="form-label me-3" style="min-width: 110px;">발주형태</label>-->
-<!--                        <div class="d-flex">-->
-<!--                            위탁가공(SC)-->
-<!--                        </div>-->
-<!--                    </div>-->
                 </div>
                 <div class="col-md-4">
-<!--                    <div class="mb-1 col-8 d-flex align-items-center" style="visibility: hidden;">-->
-<!--                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">EMPTYLABEL</label>-->
-<!--                        <div class="d-flex">-->
-
-<!--                        </div>-->
-<!--                    </div>-->
                     <div class="mb-1 col-8 d-flex align-items-center">
-                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">납기일자</label>
+                        <label for="start_date" class="form-label me-3" style="min-width: 110px;">반출일자</label>
                         <div class="d-flex">
                             <input type="date" class="form-control form-control-sm me-2" id="start_date"
                                    name="start_date"
@@ -145,38 +108,6 @@
                                    value="{{ INSRT_DT_END.strftime('%Y-%m-%d') if INSRT_DT_END else '' }}">
                         </div>
                     </div>
-                    <div class="mb-1 col-12 d-flex align-items-center">
-                        <label for="po_status" class="form-label me-3" style="min-width: 80px;">PO상태</label>
-                        <div class="d-flex">
-                            <!-- 미등록: PO_STATUS가 None 또는 빈 문자열일 때 선택 -->
-                            <div class="form-check me-3">
-                                <input class="form-check-input" type="radio" id="status1" name="po_status"
-                                       value="none" {% if PO_STATUS== 'none' %}checked{% endif %}>
-                                <label class="form-check-label" for="status1">미등록</label>
-                            </div>
-
-                            <!-- 반출 -->
-                            <div class="form-check me-3">
-                                <input class="form-check-input" type="radio" id="status2" name="po_status"
-                                       value="D" {% if PO_STATUS== 'D' %}checked{% endif %}>
-                                <label class="form-check-label" for="status2">반출</label>
-                            </div>
-
-                            <!-- 입고완료 -->
-                            <div class="form-check me-3">
-                                <input class="form-check-input" type="radio" id="status3" name="po_status"
-                                       value="R" {% if PO_STATUS== 'R' %}checked{% endif %}>
-                                <label class="form-check-label" for="status3">입고완료</label>
-                            </div>
-
-                            <!-- 전체: 모든 상태를 포함 -->
-                            <div class="form-check me-3">
-                                <input class="form-check-input" type="radio" id="status4" name="po_status"
-                                       value="all" {% if PO_STATUS== 'all' or PO_STATUS is none %}checked{% endif %}>
-                                <label class="form-check-label" for="status4">전체</label>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </form>
@@ -184,56 +115,60 @@
 
     <div class="gap" style="margin-top: 20px;"></div> <!-- 간격 추가 -->
 
-    <div class="table-wrapper ps-3 pe-3" id="tableWrapper">
-        <table class="table table-sm table-hover" style="table-layout:fixed;" id="dataTable">
-            <thead class="table-light">
-            <tr>
-                <th class="sticky" style="width: 50px;">No</th>
-                <th class="sticky" style="width: 100px;">발주번호</th>
-                <th class="sticky" style="width: 100px;">SEQ</th>
-                <th class="sticky" style="width: 70px;">외주업체</th>
-                <th class="sticky" style="width: 125px;">업체명</th>
-                <th class="sticky" style="width: 125px;">품목</th>
-                <th class="sticky" style="width: 110px;">품목명</th>
-                <th class="sticky" style="width: 100px;">품목규격</th>
-                <th class="sticky" style="width: 50px;">단위</th>
-                <th class="sticky" style="width: 82px;">발주수량</th>
-                <th class="sticky" style="width: 82px;">반출수량</th>
-                <th class="sticky" style="width: 82px;">입고수량</th>
-                <th class="sticky" style="width: 65px;">납기일자</th>
-                <th class="sticky" style="width: 82px;">단가</th>
-                <th class="sticky" style="width: 50px;">화폐</th>
-                <th class="sticky" style="width: 50px;">창고</th>
-                <th class="sticky" style="width: 100px;">창고명</th>
-                <th class="sticky" style="width: 80px;">상태</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for order in orders_with_hdr %}
-            <tr data-order-no="{{ order.PO_NO }}" data-item="{{ order.ITEM_NM }}" data-vendor="{{ order.bp_nm }}" data-POQty="{{ order.PO_QTY | int }}">
-                <td>{{ loop.index }}</td>
-                <td>{{ order.PO_NO }}</td>
-                <td>{{ order.PO_SEQ_NO }}</td>
-                <td>{{ order.bp_cd }}</td>
-                <td>{{ order.bp_nm }}</td>
-                <td>{{ order.ITEM_CD }}</td>
-                <td>{{ order.ITEM_NM }}</td>
-                <td>{{ order.SPEC }}</td>
-                <td>{{ order.BASIC_UNIT }}</td>
-                <td>{{ order.PO_QTY | int}}</td>
-                <td>{{ order.OUT_QTY or ''}}</td>
-                <td>{{ order.IN_QTY or ''}}</td>
-                <td>{{ order.DLVY_DT.strftime('%Y-%m-%d') if order.DLVY_DT else '' }}</td>
-                <td>{{ order.PO_PRC | int }}</td>
-                <td>{{ order.PO_CUR }}</td>
-                <td>{{ order.SL_CD }}</td>
-                <td>{{ order.SL_NM }}</td>
-                <td>{{ order.STATUS or ''}}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+   <div class="table-container">
+        <!-- 첫 번째 테이블 시작 -->
+        <div class="table-wrapper">
+            <div class="table-title">사내창고(SF40)</div>
+            <table class="table table-sm table-hover">
+                <thead>
+                <tr>
+                    <th>품목코드</th>
+                    <th>박스번호</th>
+                    <th>수량</th>
+                    <th>포장일자</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for order in orders_with_hdr %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ order.PO_NO }}</td>
+                    <td>{{ order.PO_SEQ_NO }}</td>
+                    <td>{{ order.bp_cd }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- 첫 번째 테이블 종료 -->
+
+        <!-- 두 번째 테이블 시작 -->
+        <div class="table-wrapper">
+            <div class="table-title">외주창고(WO00061)</div>
+            <table class="table table-sm table-hover">
+                <thead>
+                <tr>
+                    <th>품목코드</th>
+                    <th>박스번호</th>
+                    <th>수량</th>
+                    <th>포장일자</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for dispatch in dispatch_records %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ order.PO_NO }}</td>
+                    <td>{{ order.PO_SEQ_NO }}</td>
+                    <td>{{ order.bp_cd }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- 두 번째 테이블 종료 -->
     </div>
+    <!-- 두 번째 테이블 종료 -->
 </div>
 
 <!-- 멸균 외주 등록 modal -->

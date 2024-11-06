@@ -1281,8 +1281,8 @@ def reprint_label(box_no):
 
 
 # 외주발주조회
-@bp.route('/register_result_sterilizating/', methods=['GET', 'POST'])
-def product_register_sterilizating():
+@bp.route('/register_sterilizating_out/', methods=['GET', 'POST'])
+def product_register_sterilizating_out():
     form_submitted = False
     PLANT_CD = ''
     BP_CD = ''  # 외주업체
@@ -1374,7 +1374,7 @@ def product_register_sterilizating():
     # 결과 조회
     orders_with_hdr = query.all()
 
-    return render_template('product/product_register_sterilizating.html',
+    return render_template('product/product_register_sterilizating_out.html',
                            orders_with_hdr=orders_with_hdr,
                            plants=plants,
                            vendors=vendors,
@@ -1417,6 +1417,14 @@ def get_box_details(box_no):
 
 
 # 외주실적등록
-@bp.route('/register_result_sterilizating_result/', methods=['GET', 'POST'])
-def product_register_sterilizating_result():
-    return render_template('product/product_register_sterilizating_result.html')
+@bp.route('/result_sterilizating_out/', methods=['GET', 'POST'])
+def product_result_sterilizating_out():
+    return render_template('product/product_result_sterilizating_out.html')
+
+@bp.route('/register_sterilizating_in/', methods=['GET', 'POST'])
+def product_register_sterilizating_in():
+    return render_template('product/product_register_sterilizating_in.html')
+
+@bp.route('/result_sterilizating_in/', methods=['GET', 'POST'])
+def product_result_sterilizating_in():
+    return render_template('product/product_result_sterilizating_in.html')
