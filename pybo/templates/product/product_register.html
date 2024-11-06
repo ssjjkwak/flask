@@ -94,6 +94,15 @@
 
 
 <div>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px 15px;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 제조실적등록</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
@@ -135,14 +144,14 @@
     </div>
     <div class="flash">
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
     </div>
 
@@ -223,11 +232,14 @@
             {% if row.REPORT_FLAG == 'N' %}
             <tr>
                 <td class="fixed">{{ loop.index }}</td>
-                <td class="fixed-2"><input type="checkbox" name="chkRow" value="{{ row.barcode }}|{{ row.modified }}" checked></td>
+                <td class="fixed-2"><input type="checkbox" name="chkRow" value="{{ row.barcode }}|{{ row.modified }}"
+                                           checked></td>
                 <td class="fixed-3">{{ row.LOT }}</td>
                 <td class="fixed-4">{{ row.product }}</td>
                 <td class="fixed-5" style="background-color: #e0ffff;">{{ row.barcode }}</td>
-                <td class="fixed-6" style="background-color: #e0ffff;">{{ row.modified.strftime('%Y-%m-%d %H:%M:%S') if row.modified else '' }}</td>
+                <td class="fixed-6" style="background-color: #e0ffff;">{{ row.modified.strftime('%Y-%m-%d %H:%M:%S') if
+                    row.modified else '' }}
+                </td>
                 <td>{{ row.REPORT_FLAG }}</td>
                 <td>{{ row.err_code }}</td>
                 <td style="background-color: #fffacd;">{{ row.err_info }}</td>
@@ -256,7 +268,9 @@
                 <td style="background-color: #fff0f5;">{{ row.itest2_result }}</td>
                 <td>{{ row.itest2_value }}</td>
                 <td>{{ row.itest2_ptest }}</td>
-                <td style="background-color: #fff0f5;">{{ row.prodlabel_time.strftime('%Y-%m-%d %H:%M:%S') if row.prodlabel_time else '' }}</td>
+                <td style="background-color: #fff0f5;">{{ row.prodlabel_time.strftime('%Y-%m-%d %H:%M:%S') if
+                    row.prodlabel_time else '' }}
+                </td>
                 <td style="background-color: #fff0f5;">{{ row.prodlabel_cycles }}</td>
 
             </tr>

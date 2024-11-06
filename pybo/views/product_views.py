@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 import re
 import win32com.client
-from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g, flash
+from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g, flash, session
 from sqlalchemy import null, func, or_
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
@@ -12,6 +12,8 @@ from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode,  \
     Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location, Barcode_Status, Material_Doc
 from collections import defaultdict
+
+
 
 bp = Blueprint('product', __name__, url_prefix='/product')
 
@@ -563,7 +565,6 @@ def register():
 
 
 def update_barcode_status_from_flow():
-    """P_BARCODE_FLOW에서 최신의 유효한 바코드 데이터를 기반으로 Barcode_Status 테이블을 업데이트."""
 
     # 최신의 REPORT_TYPE이 'B'가 아닌 데이터만을 선택
     latest_flows = db.session.query(
@@ -599,7 +600,6 @@ def update_barcode_status_from_flow():
 
 def assign_production_orders():
     work_centers = db.session.query(Work_Center.WC_CD).all()
-
     barcodes = db.session.query(Barcode_Flow, Production_Barcode.product).join(
         Production_Barcode, Barcode_Flow.barcode == Production_Barcode.barcode
     ).filter(
@@ -607,6 +607,9 @@ def assign_production_orders():
     ).all()
 
     orders = {wc_cd: {} for wc_cd, in work_centers}
+    unmatched_barcodes = []  # 매칭되지 않은 바코드 수집
+
+    # 각 작업 센터별 오더 생성
     for wc_cd, in work_centers:
         wc_orders = db.session.query(Production_Order, Item).join(
             Item, Production_Order.ITEM_CD == Item.ITEM_CD
@@ -624,10 +627,10 @@ def assign_production_orders():
     assn_records = []
     updated_alpha_records = []
 
+    # 바코드 매칭
     for barcode_assign, barcode_product in barcodes:
         wc_cd = barcode_assign.WC_CD
-        # 70 공정은 판단 없이 진행되므로 추가하지 않음
-        if wc_cd == 'WSF70':
+        if wc_cd == 'WSF70':  # 'WSF70' 공정은 매칭 과정 제외
             continue
 
         if wc_cd in orders and barcode_product in orders[wc_cd]:
@@ -662,15 +665,19 @@ def assign_production_orders():
                     alpha_record.REPORT_FLAG = 'Y'
                     updated_alpha_records.append(alpha_record)
         else:
+            # 매칭되지 않은 바코드 수집
+            unmatched_barcodes.append(barcode_assign.barcode)
             alpha_record = Production_Alpha.query.filter_by(barcode=barcode_assign.barcode).first()
             if alpha_record:
                 alpha_record.REPORT_FLAG = 'N'
                 updated_alpha_records.append(alpha_record)
 
+    # 매칭되지 않은 바코드 삭제
     db.session.query(Barcode_Flow).filter(
         Barcode_Flow.PRODT_ORDER_NO == None
     ).delete(synchronize_session=False)
 
+    # 바코드와 alpha 기록 업데이트
     if assn_records:
         db.session.bulk_update_mappings(Barcode_Flow, [record.__dict__ for record in assn_records])
 
@@ -678,8 +685,14 @@ def assign_production_orders():
         db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
 
     db.session.commit()
-    insert_production_results(orders)
 
+    # 매칭되지 않은 바코드 정보를 세션에 저장하여 사용자에게 알림
+    if unmatched_barcodes:
+        session['unmatched_barcodes'] = unmatched_barcodes
+        flash(f"제조오더번호와 매칭되지 않은 바코드가 있습니다: {', '.join(unmatched_barcodes)}", "warning")
+
+    # 생산 결과 저장
+    insert_production_results(orders)
 
 
 def insert_production_results(orders):
@@ -749,23 +762,73 @@ def insert_production_results(orders):
 
 
 def generate_doc_no():
+    # 오늘 날짜에 기반한 doc_no 접두사 설정
+    today_prefix = datetime.now().strftime('%Y%m%d')
+    doc_prefix = f"DOC{today_prefix}"
 
-    today = datetime.now().strftime('%Y%m%d')
-    doc_prefix = f"DOC{today}"
+    # 가장 최근 doc_no 조회
+    max_doc_no = db.session.query(func.max(Material_Doc.DOC_NO)).filter(
+        Material_Doc.DOC_NO.like(f"{doc_prefix}%")
+    ).scalar()
 
-    # 해당 날짜에 대한 최대 DOC_NO 조회
-    max_doc_no = db.session.query(func.max(Barcode_Flow.DOC_NO)).filter(
-        Barcode_Flow.DOC_NO.like(f"{doc_prefix}%")).scalar()
-
-    # 새로운 DOC_NO 생성
+    # 새로운 doc_no 생성: 가장 최근 번호에 +1
     if max_doc_no:
-        last_number = int(max_doc_no[-5:])  # 마지막 5자리 숫자 부분
+        last_number = int(max_doc_no[-5:])  # doc_no의 마지막 5자리 숫자를 추출
         new_number = last_number + 1
     else:
-        new_number = 1  # 처음 생성되는 경우
+        new_number = 1  # 오늘 처음 생성되는 경우 1로 시작
 
     new_doc_no = f"{doc_prefix}{new_number:05d}"  # 5자리 연속번호로 구성
     return new_doc_no
+
+
+def update_barcode_status_after_packing(doc_no):
+    # DOC_NO에 해당하는 모든 바코드를 가져옵니다.
+    barcodes = db.session.query(Barcode_Flow.barcode).filter(
+        Barcode_Flow.DOC_NO == doc_no
+    ).distinct().all()
+
+    for barcode_tuple in barcodes:
+        barcode = barcode_tuple[0]
+
+        # 특정 바코드의 최신 레코드 가져오기 (가장 최근 INSRT_DT)
+        latest_flow = db.session.query(
+            Barcode_Flow.barcode,
+            Barcode_Flow.ITEM_CD,
+            Barcode_Flow.MOV_TYPE,
+            Barcode_Flow.BOX_NUM
+        ).filter(
+            Barcode_Flow.barcode == barcode
+        ).order_by(Barcode_Flow.INSRT_DT.desc()).first()
+
+        if latest_flow:
+            item_cd = latest_flow.ITEM_CD
+            mov_type = latest_flow.MOV_TYPE
+            box_num = latest_flow.BOX_NUM
+
+            # Barcode_Status에서 해당 barcode를 조회하여 존재 여부 확인
+            status_record = db.session.query(Barcode_Status).filter(
+                Barcode_Status.barcode == barcode
+            ).first()
+
+            if status_record:
+                # 기존 레코드가 있을 경우 STATUS, ITEM_CD, BOX_NUM 업데이트
+                status_record.STATUS = mov_type
+                status_record.ITEM_CD = item_cd
+                status_record.BOX_NUM = box_num
+                logging.info(
+                    f"Updated Barcode_Status for barcode={barcode} with STATUS={mov_type}, ITEM_CD={item_cd}, BOX_NUM={box_num}")
+            else:
+                # 새 레코드를 추가하는 경우
+                new_status_record = Barcode_Status(
+                    barcode=barcode, STATUS=mov_type, ITEM_CD=item_cd, BOX_NUM=box_num
+                )
+                db.session.add(new_status_record)
+                logging.info(
+                    f"Inserted new Barcode_Status for barcode={barcode} with STATUS={mov_type}, ITEM_CD={item_cd}, BOX_NUM={box_num}")
+
+    db.session.commit()
+    logging.info("Barcode_Status update after packing commit successful.")
 
 
 def assign_doc_no_and_material_doc():
@@ -777,18 +840,21 @@ def assign_doc_no_and_material_doc():
         Barcode_Flow.PRODT_ORDER_NO,
         Barcode_Flow.WC_CD,
         Barcode_Flow.MOV_TYPE,
+        Barcode_Flow.FROM_SL_CD,
+        Barcode_Flow.TO_SL_CD,
         func.count(Barcode_Flow.barcode).label("total_qty")
     ).filter(
         Barcode_Flow.DOC_NO == None  # DOC_NO가 없는 항목만 대상으로
     ).group_by(
-        Barcode_Flow.ITEM_CD, Barcode_Flow.PRODT_ORDER_NO, Barcode_Flow.WC_CD, Barcode_Flow.MOV_TYPE
+        Barcode_Flow.ITEM_CD, Barcode_Flow.PRODT_ORDER_NO, Barcode_Flow.WC_CD, Barcode_Flow.MOV_TYPE,
+        Barcode_Flow.FROM_SL_CD, Barcode_Flow.TO_SL_CD
     ).all()
 
     new_material_docs = []
     doc_seq = 10  # 초기 SEQ 값은 10
 
     for entry in grouped_entries:
-        item_cd, prodt_order_no, wc_cd, mov_type, total_qty = entry
+        item_cd, prodt_order_no, wc_cd, mov_type, from_sl_cd, to_sl_cd, total_qty = entry
 
         # Barcode_Flow 업데이트 (DOC_NO와 동일한 ITEM_CD에 대해 DOC_SEQ를 동일하게 설정)
         db.session.query(Barcode_Flow).filter(
@@ -796,6 +862,8 @@ def assign_doc_no_and_material_doc():
             Barcode_Flow.PRODT_ORDER_NO == prodt_order_no,
             Barcode_Flow.WC_CD == wc_cd,
             Barcode_Flow.MOV_TYPE == mov_type,
+            Barcode_Flow.FROM_SL_CD == from_sl_cd,
+            Barcode_Flow.TO_SL_CD == to_sl_cd,
             Barcode_Flow.DOC_NO == None
         ).update(
             {'DOC_NO': doc_no, 'DOC_SEQ': doc_seq}
@@ -813,6 +881,8 @@ def assign_doc_no_and_material_doc():
             'PRODT_ORDER_NO': prodt_order_no,
             'WC_CD': wc_cd,
             'MOV_TYPE': mov_type,
+            'FROM_SL_CD': from_sl_cd,  # FROM_SL_CD 추가
+            'TO_SL_CD': to_sl_cd,  # TO_SL_CD 추가
             'INSRT_DT': datetime.now(),
             'INSRT_USR': g.user.USR_ID,
             'UPDT_DT': datetime.now(),  # 업데이트 시각 설정
@@ -827,8 +897,10 @@ def assign_doc_no_and_material_doc():
     if new_material_docs:
         db.session.bulk_insert_mappings(Material_Doc, new_material_docs)
 
+
     db.session.commit()
     logging.info("DOC_NO와 Material_Doc 데이터가 성공적으로 할당되었습니다.")
+
 
 
 
@@ -841,82 +913,32 @@ def assign_orders_route():
 @bp.route('/register_result_packing/', methods=['GET', 'POST'])
 def product_register_packing():
     form_submitted = False
-    PLANT_CD = ''
-    WC_CD = 'WSF70'  # 작업공정 고정 값
-    ITEM_CD = ''  # 품목 고정 값
-    ORDER_STATUS = ''
-    RELEASE_START_DT = None  # Release 시작일
-    RELEASE_END_DT = None  # Release 종료일
-    PRODT_ORDER_NO = ''
-
-    plants = db.session.query(Production_Order.PLANT_CD).distinct().all()
-    items = db.session.query(Item.ITEM_CD).distinct().all()
+    m_box_no = ''
+    cs_model = ''
 
     if request.method == 'POST':
         form_submitted = True
-        PLANT_CD = request.form.get('plant_code', '')
-        ORDER_STATUS = request.form.get('order_status', '')
-        RELEASE_START_DT = request.form.get('start_date', '')  # 시작일을 Release 날짜로 변경
-        RELEASE_END_DT = request.form.get('end_date', '')  # 종료일을 Release 날짜로 변경
-        PRODT_ORDER_NO = request.form.get('prodt_order_no', '')
+        m_box_no = request.form.get('m_box_no', '')
+        cs_model = request.form.get('cs_model', '')
 
-        if RELEASE_START_DT:
-            RELEASE_START_DT = datetime.strptime(RELEASE_START_DT, '%Y-%m-%d')
-        if RELEASE_END_DT:
-            RELEASE_END_DT = datetime.strptime(RELEASE_END_DT, '%Y-%m-%d')
-    else:
-        if plants:
-            PLANT_CD = plants[0].PLANT_CD
+    # Packing_Cs 모델에서 데이터를 조회
+    query = db.session.query(Packing_Cs)
 
-    if not RELEASE_START_DT:
-        RELEASE_START_DT = datetime.today()
-    if not RELEASE_END_DT:
-        RELEASE_END_DT = datetime.today() + timedelta(days=30)
+    # 검색 조건 추가
+    if m_box_no:
+        query = query.filter(Packing_Cs.m_box_no == m_box_no)
+    if cs_model:
+        query = query.filter(Packing_Cs.cs_model == cs_model)
 
-    # Packing_Hdr와 Production_Order, Item을 조인하여 주문 정보 조회
-    query = db.session.query(Packing_Hdr).join(
-        Production_Order, Packing_Hdr.prodt_order_no == Production_Order.PRODT_ORDER_NO
-    ).join(
-        Item, Production_Order.ITEM_CD == Item.ITEM_CD
+    packing_cs_data = query.all()
+
+    return render_template(
+        'product/product_register_packing.html',
+        packing_cs_data=packing_cs_data,
+        form_submitted=form_submitted,
+        m_box_no=m_box_no,
+        cs_model=cs_model
     )
-
-    # 필터링 조건 추가
-    if PLANT_CD:
-        query = query.filter(Production_Order.PLANT_CD == PLANT_CD)
-    if WC_CD:
-        query = query.filter(Production_Order.WC_CD == WC_CD)
-    if ITEM_CD:
-        query = query.filter(Production_Order.ITEM_CD == ITEM_CD)
-    if ORDER_STATUS:
-        query = query.filter(Production_Order.ORDER_STATUS == ORDER_STATUS)
-    if RELEASE_START_DT and RELEASE_END_DT:
-        query = query.filter(Production_Order.RELEASE_DT.between(RELEASE_START_DT, RELEASE_END_DT))
-    if PRODT_ORDER_NO:
-        query = query.filter(Production_Order.PRODT_ORDER_NO == PRODT_ORDER_NO)
-
-    orders_with_hdr = query.all()
-
-    # Packing_Cs 모델에서 제조오더번호별로 MasterBoxNo를 조회
-    packing_cs_data = db.session.query(Packing_Cs.prodt_order_no, Packing_Cs.m_box_no).all()
-
-    # 제조오더번호별로 MasterBoxNo를 그룹화
-    master_box_grouped = defaultdict(list)
-    for order_no, m_box_no in packing_cs_data:
-        master_box_grouped[order_no].append(m_box_no)
-
-    work_centers = db.session.query(Work_Center).all()
-    items = db.session.query(Item).all()
-
-    return render_template('product/product_register_packing.html',
-                           orders_with_hdr=orders_with_hdr,
-                           plants=plants,
-                           work_centers=work_centers,
-                           items=items,
-                           master_box_grouped=master_box_grouped,  # MasterBoxNo 데이터를 템플릿에 전달
-                           PLANT_CD=PLANT_CD, WC_CD=WC_CD, ITEM_CD=ITEM_CD, ORDER_STATUS=ORDER_STATUS,
-                           RELEASE_START_DT=RELEASE_START_DT,
-                           PRODT_ORDER_NO=PRODT_ORDER_NO,  RELEASE_END_DT=RELEASE_END_DT,
-                           form_submitted=form_submitted)
 
 
 
@@ -935,6 +957,15 @@ def check_barcode():
     ).first()
     print(f"Received barcode: {barcode}")
 
+    # 이미 박스 번호와 매칭된 바코드인지 확인
+    existing_match = db.session.query(Barcode_Flow).filter(
+        Barcode_Flow.barcode == barcode,
+        Barcode_Flow.BOX_NUM.isnot(None)  # 이미 박스 번호와 매칭된 바코드인지 확인
+    ).first()
+
+    if existing_match:
+        return jsonify({"status": "error", "message": "Barcode is already assigned to a box"}), 400
+
     if barcode_data:
         # 바코드가 유효한 경우, Product_Alpha에서 LOT 값을 조회
         product_alpha = db.session.query(Production_Alpha).filter_by(barcode=barcode).first()
@@ -949,14 +980,31 @@ def check_barcode():
 
 
 
+
 # box 번호 자동으로 넘어가는 로직
 @bp.route('/get_next_master_box_no/', methods=['GET'])
 def get_next_master_box_no():
-    # 오늘 날짜를 기반으로 새로운 시리얼 번호 생성
+    # 오늘 날짜를 기반으로 새로운 박스 번호 생성
     today = datetime.today()
-    next_master_box_no = generate_new_serial(today)
+    date_hex = date_to_hex(today)
 
-    return jsonify({"status": "success", "next_master_box_no": next_master_box_no})
+    # 오늘 날짜에 해당하는 마스터 박스 번호 중 가장 큰 값 조회 및 증가 처리
+    max_master_box_no = db.session.query(func.max(Packing_Cs.m_box_no)).filter(
+        Packing_Cs.m_box_no.like(f"{date_hex}%")
+    ).scalar()
+
+    if max_master_box_no:
+        # 마지막 3자리 숫자 추출 후 +1 증가
+        last_sequence = int(max_master_box_no[-3:])
+        new_sequence = last_sequence + 1
+    else:
+        new_sequence = 1  # 처음 생성되는 경우 1로 시작
+
+    # 새로운 마스터 박스 번호 생성 (예: '7E912001')
+    new_master_box_no = f"{date_hex}{new_sequence:03}"
+
+    return jsonify({"status": "success", "next_master_box_no": new_master_box_no})
+
 
 
 def date_to_hex(date_obj):
@@ -964,27 +1012,6 @@ def date_to_hex(date_obj):
     month = date_obj.month
     day = date_obj.day
     return f"{year:02X}{month:02X}{day:02X}"  # 16진수로 변환
-
-def generate_new_serial(date_obj):
-    # 날짜를 16진수로 변환 (예: '7E912')
-    date_hex = date_to_hex(date_obj)
-
-    # 오늘 날짜에 해당하는 시리얼 번호 중 가장 큰 값 조회 (예: 7E9120001 형태)
-    max_serial = db.session.query(func.max(Packing_Cs.cs_udi_serial)).filter(
-        Packing_Cs.cs_udi_serial.like(f"{date_hex}%")
-    ).scalar()
-
-    if max_serial:
-        # 16진수 날짜 뒤의 숫자 부분 추출, 숫자로 변환 후 1 증가
-        last_sequence = int(max_serial[-3:])  # 마지막 3자리 숫자
-        new_sequence = last_sequence + 1
-    else:
-        # 처음 생성되는 시리얼 번호
-        new_sequence = 1
-
-    # 새로운 시리얼 번호 생성 (예: '7E912001')
-    new_serial = f"{date_hex}{new_sequence:03}"
-    return new_serial
 
 # 데이터 db에 insert
 @bp.route('/save_packing_data/', methods=['POST'])
@@ -997,8 +1024,12 @@ def save_packing_data():
         if not data or 'lot_no' not in data or 'quantity' not in data or 'expiry_date' not in data:
             return jsonify({"status": "error", "message": "Missing required data fields"}), 400
 
-        # 데이터 삽입 로직
-        master_box_no = generate_new_serial(datetime.now())
+        # Master Box 번호 생성
+        master_box_no_response = get_next_master_box_no()
+        master_box_no = master_box_no_response.json.get("next_master_box_no")
+        if not master_box_no:
+            return jsonify({"status": "error", "message": "Failed to generate master box number"}), 500
+
         lot_no = data['lot_no']
         quantity = data['quantity']
         expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d')
@@ -1019,25 +1050,59 @@ def save_packing_data():
             )
             db.session.add(packing_detail)
 
-        # Packing_Cs 생성
-        packing_cs = Packing_Cs(
-            prodt_order_no=None,
-            cs_model='특정모델',
-            m_box_no=master_box_no,
-            cs_qty=quantity,
-            cs_lot_no=lot_no,
-            cs_udi_di='08809931850003',  # 실제 SynoFlux120L 1개 짜리 DI
-            cs_udi_lotno=lot_no,
-            cs_udi_prod=datetime.now().strftime('%Y%m%d'),
-            cs_prod_date=datetime.now().strftime('%Y%m%d'),
-            cs_exp_date=expiry_date.strftime('%Y%m%d'),
-            cs_udi_qr=f"010880993185000310{lot_no}11{datetime.now().strftime('%Y%m%d')}17{expiry_date.strftime('%Y%m%d')}",
-            print_flag="N"  # 기본 프린트 상태
-        )
-        db.session.add(packing_cs)
+            # Barcode_Flow 로직 업데이트 (이전 데이터 기반으로 새 데이터 추가)
+            last_row = db.session.query(Barcode_Flow).filter_by(barcode=barcode).order_by(
+                Barcode_Flow.id.desc()).first()
+            if last_row and last_row.WC_CD == 'WSF60':
+                new_barcode_flow = Barcode_Flow(
+                    barcode=barcode,
+                    ITEM_CD=last_row.ITEM_CD,
+                    WC_CD=None,
+                    FROM_SL_CD=last_row.TO_SL_CD,
+                    TO_SL_CD='SF40',
+                    MOV_TYPE='T01',
+                    CREDIT_DEBIT='C',
+                    REPORT_TYPE='G',
+                    BOX_NUM=master_box_no,  # Master Box 번호 추가
+                    INSRT_DT=datetime.now(),
+                    INSRT_USR=g.user.USR_ID,
+                    UPDT_USR=g.user.USR_ID
+                )
+                db.session.add(new_barcode_flow)
 
-        # 데이터베이스에 커밋
+        # Barcode_Flow에서 ITEM_CD 조회
+        if last_row:
+            item_cd = last_row.ITEM_CD
+
+            # Item 모델에서 cs_model과 cs_udi_di 정보 조회
+            item_data = db.session.query(Item).filter_by(ITEM_CD=item_cd).first()
+            if item_data:
+                cs_model = item_cd
+                cs_udi_di = item_data.UDI_CODE
+            else:
+                return jsonify({"status": "error", "message": "Item data not found for the given ITEM_CD"}), 400
+
+            # Packing_Cs 생성
+            packing_cs = Packing_Cs(
+                prodt_order_no=None,
+                cs_model=cs_model,
+                m_box_no=master_box_no,
+                cs_qty=quantity,
+                cs_lot_no=lot_no,
+                cs_udi_di=cs_udi_di,
+                cs_udi_lotno=lot_no,
+                cs_udi_prod=datetime.now().strftime('%Y%m%d'),
+                cs_prod_date=datetime.now().strftime('%Y%m%d'),
+                cs_exp_date=expiry_date.strftime('%Y%m%d'),
+                cs_udi_qr=f"01{cs_udi_di}10{lot_no}11{datetime.now().strftime('%Y%m%d')}17{expiry_date.strftime('%Y%m%d')}",
+                print_flag="N"
+            )
+            db.session.add(packing_cs)
+
+        # 모든 데이터가 들어간 후 DOC_NO 및 Material_Doc 데이터 추가
         db.session.commit()
+        assign_doc_no_and_material_doc_packing(master_box_no)
+
         return jsonify({"status": "success", "message": "Packing data saved successfully"})
     except Exception as e:
         db.session.rollback()
@@ -1046,26 +1111,72 @@ def save_packing_data():
 
 
 
+def assign_doc_no_and_material_doc_packing(master_box_no):
+    # 새로운 DOC_NO 생성
+    doc_no = generate_doc_no()
 
-@bp.route('/update_barcode_flow/', methods=['POST'])
-def update_barcode_flow():
-    barcode = request.json.get('barcode')
-    master_box_no = request.json.get('master_box_no')
+    # DOC_NO 및 ITEM_CD, PRODT_ORDER_NO, MOV_TYPE로 그룹화하여 QTY를 합산
+    grouped_entries = db.session.query(
+        Barcode_Flow.ITEM_CD,
+        Barcode_Flow.PRODT_ORDER_NO,
+        Barcode_Flow.MOV_TYPE,
+        Barcode_Flow.FROM_SL_CD,
+        Barcode_Flow.TO_SL_CD,
+        func.count(Barcode_Flow.barcode).label("total_qty")
+    ).filter(
+        Barcode_Flow.DOC_NO == None
+    ).group_by(
+        Barcode_Flow.ITEM_CD, Barcode_Flow.PRODT_ORDER_NO, Barcode_Flow.MOV_TYPE,
+        Barcode_Flow.FROM_SL_CD, Barcode_Flow.TO_SL_CD
+    ).all()
 
-    if not barcode:
-        return jsonify({"status": "error", "message": "Barcode is required"}), 400
+    new_material_docs = []
+    doc_seq = 10
 
-    # Barcode_Flow 테이블에서 해당 바코드를 가진 모든 ROW를 찾음
-    barcode_rows = db.session.query(Barcode_Flow).filter(Barcode_Flow.barcode == barcode).all()
+    for entry in grouped_entries:
+        item_cd, prodt_order_no, mov_type, from_sl_cd, to_sl_cd, total_qty = entry
 
-    if barcode_rows:
-        # 모든 해당 ROW의 BOX_NUM을 업데이트
-        for barcode_data in barcode_rows:
-            barcode_data.BOX_NUM = master_box_no
-        db.session.commit()  # 변경 사항 저장
-        return jsonify({"status": "success", "message": "All barcode flow records updated successfully"})
-    else:
-        return jsonify({"status": "error", "message": "Barcode not found"}), 404
+        # Barcode_Flow 업데이트
+        db.session.query(Barcode_Flow).filter(
+            Barcode_Flow.ITEM_CD == item_cd,
+            Barcode_Flow.PRODT_ORDER_NO == prodt_order_no,
+            Barcode_Flow.MOV_TYPE == mov_type,
+            Barcode_Flow.FROM_SL_CD == from_sl_cd,
+            Barcode_Flow.TO_SL_CD == to_sl_cd,
+            Barcode_Flow.DOC_NO == None
+        ).update(
+            {'DOC_NO': doc_no, 'DOC_SEQ': doc_seq}
+        )
+
+        # Material_Doc 생성
+        material_doc = {
+            'DOC_NO': doc_no,
+            'DOC_SEQ': f"{doc_seq:02}",
+            'ITEM_CD': item_cd,
+            'QTY': total_qty,
+            'CREDIT_DEBIT': 'C',
+            'OPR_NO': None,
+            'REPORT_TYPE': 'G',
+            'PRODT_ORDER_NO': prodt_order_no,
+            'BOX_NUM': master_box_no,  # 박스 번호 전달
+            'MOV_TYPE': mov_type,
+            'FROM_SL_CD': from_sl_cd,  # FROM_SL_CD 추가
+            'TO_SL_CD': to_sl_cd,  # TO_SL_CD 추가
+            'INSRT_DT': datetime.now(),
+            'INSRT_USR': g.user.USR_ID,
+            'UPDT_DT': datetime.now(),
+            'UPDT_USR': g.user.USR_ID
+        }
+        new_material_docs.append(material_doc)
+        doc_seq += 10
+
+    # Material_Doc에 데이터 삽입
+    if new_material_docs:
+        db.session.bulk_insert_mappings(Material_Doc, new_material_docs)
+
+    db.session.commit()
+    update_barcode_status_after_packing(doc_no)
+    logging.info("Packing용 DOC_NO와 Material_Doc 데이터가 성공적으로 할당되었습니다.")
 
 
 # --------------------------------------------------------

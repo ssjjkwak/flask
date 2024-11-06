@@ -96,10 +96,11 @@
 </style>
 
 <div>
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px 0;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > Packing 등록</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton">
+            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-toggle="modal"
+                    data-target=".bd-example-modal-lg" id="openModalButton">
                 <i class="bi bi-box-seam"></i> Packing 등록
             </button>
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
@@ -107,109 +108,59 @@
             </button>
         </div>
     </div>
-
     <form method="POST" action="{{ url_for('product.product_register_packing') }}" class="px-4" id="searchForm">
         <input type="hidden" name="form_submitted" value="{{ form_submitted }}">
         <div class="row">
-            <!-- 품목 -->
             <div class="col-md-3">
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="item_cd" class="form-label me-3" style="min-width: 110px;">품목</label>
-                    <select class="form-select form-select-sm" id="item_cd" name="item_cd">
-                        <option value="">-</option>
-                        {% for item in items %}
-                        <option value="{{ item.ITEM_CD }}" {% if item.ITEM_CD== ITEM_CD %}selected{% endif %}>
-                            {{ item.ITEM_CD }} {{ item.ITEM_NM }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                <div class="mb-1 col-9 d-flex align-items-center">
+                    <label for="m_box_no" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;박스번호
+                    </label>
+                    <input type="text" class="form-control form-control-sm" id="m_box_no" name="m_box_no">
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="exp_start_date" class="form-label me-3" style="min-width: 110px;">유효일자</label>
-                    <div class="d-flex">
-                        <input type="date" class="form-control form-control-sm me-2" id="exp_start_date"
-                               name="exp_start_date">
-                        <span class="mx-2">~</span>
-                        <input type="date" class="form-control form-control-sm ms-2" id="exp_end_date"
-                               name="exp_end_date">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 생산일자 및 유효일자 -->
-        <div class="row">
-            <div class="col-md-3">
-                <div class="mb-1 col-8 d-flex align-items-center">
-                    <label for="prod_start_date" class="form-label me-3" style="min-width: 110px;">생산일자</label>
-                    <div class="d-flex">
-                        <input type="date" class="form-control form-control-sm me-2" id="prod_start_date"
-                               name="prod_start_date"
-                               value="{{ RELEASE_START_DT.strftime('%Y-%m-%d') if RELEASE_START_DT else '' }}">
-                        <span class="mx-2">~</span>
-                        <input type="date" class="form-control form-control-sm ms-2" id="prod_end_date"
-                               name="prod_end_date"
-                               value="{{ RELEASE_END_DT.strftime('%Y-%m-%d') if RELEASE_END_DT else '' }}">
-                    </div>
+                <div class="mb-1 col-9 d-flex align-items-center">
+                    <label for="cs_model" class="form-label me-3" style="min-width: 110px;">
+                        &emsp;&emsp;&emsp;&emsp;모델
+                    </label>
+                    <input type="text" class="form-control form-control-sm" id="cs_model" name="cs_model">
                 </div>
             </div>
         </div>
     </form>
-
 </div>
 
 <div class="gap" style="margin-top: 20px;"></div>
 
 <div>
     <!--데이터 테이블-->
-    <div>
-        {% if orders_with_hdr %}
-        <div class="table-wrapper">
-            <table class="table table-sm table-hover" style="text-align: center;" id="dataTable">
-                <thead class="table-light">
-                <tr>
-                    <th>Master Box 번호</th>
-                    <th>모델</th>
-                    <th>수량</th>
-                    <th>생산일자</th>
-                    <th>유통기한</th>
-                    <th>프린트 여부</th>
-                    <th class="sticky" style="width: 740px; font-weight: bold; text-align: left;"></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for cs in packing_cs_data %}
-                <tr>
-                    <td>
-                        <div class="badge-container">
-                            <span class="badge bg-primary master-box"
-                                  data-box-no="{{ cs.m_box_no }}">{{ cs.m_box_no }}</span>
-                        </div>
-                    </td>
-                    <td>{{ cs.cs_model }}</td>
-                    <td>{{ cs.cs_qty }}</td>
-                    <td>{{ cs.cs_prod_date.strftime('%Y-%m-%d') if cs.cs_prod_date else '' }}</td>
-                    <td>{{ cs.cs_exp_date.strftime('%Y-%m-%d') if cs.cs_exp_date else '' }}</td>
-                    <td>{{ cs.print_flag }}</td>
-                    <td></td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        {% if form_submitted %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                document.getElementById('errorModalBody').innerText = "데이터 없음";
-                var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-                errorModal.show();
-            });
-        </script>
-        {% endif %}
-        {% endif %}
+    <div class="table-wrapper">
+        <table class="table table-sm table-hover"
+                   style="text-align: center; border-collapse: collapse;" id="dataTable" width="100%" cellspacing="0">
+            <thead class="table-light">
+            <tr>
+                <th>박스번호</th>
+                <th>모델</th>
+                <th>수량</th>
+                <th>생산일자</th>
+                <th>유효일자</th>
+                <th>프린트 여부</th>
+                <th style="width: 550px; font-weight: normal"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for cs in packing_cs_data %}
+            <tr>
+                <td>{{ cs.m_box_no }}</td>
+                <td>{{ cs.cs_model }}</td>
+                <td>{{ cs.cs_qty }}</td>
+                <td>{{ cs.cs_prod_date }}</td>
+                <td>{{ cs.cs_exp_date }}</td>
+                <td>{{ cs.print_flag }}</td>
+                <td></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -685,7 +636,7 @@
                 document.getElementById('udiInputFooter').value = '';
                 document.getElementById('barcodeInputFooter').value = '';
             } else {
-                alert('검증에 실패했습니다.');
+                alert('해당 바코드는 이미 포장을 완료했습니다.');
                 document.getElementById('udiInputFooter').focus();
             }
         })

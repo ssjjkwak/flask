@@ -347,7 +347,8 @@ class Material_Doc(db.Model):
     SO_SEQ = db.Column(db.SMALLINT, nullable=True)
     WC_CD = db.Column(db.NVARCHAR(7), nullable=True)
     BP_CD = db.Column(db.NVARCHAR(7), nullable=True)
-    SL_CD = db.Column(db.NVARCHAR(7), nullable=True)
+    TO_SL_CD = db.Column(db.NVARCHAR(7), nullable=True)
+    FROM_SL_CD = db.Column(db.NVARCHAR(7), nullable=True)
 
 
 
