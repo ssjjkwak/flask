@@ -27,6 +27,7 @@
     th.fixed-2, td.fixed-2 {
         position: -webkit-sticky;
         position: sticky;
+        width: 20px;
         left: 50px;
         background-color: #fff;
         z-index: 50;
@@ -35,7 +36,8 @@
     th.fixed-3, td.fixed-3 {
         position: -webkit-sticky;
         position: sticky;
-        left: 150px;
+        width: 50px;
+        left: 70px;
         background-color: #fff;
         z-index: 50;
     }
@@ -43,7 +45,8 @@
     th.fixed-4, td.fixed-4 {
         position: -webkit-sticky;
         position: sticky;
-        left: 250px;
+        width: 70px;
+        left: 120px;
         background-color: #fff;
         z-index: 50;
     }
@@ -51,7 +54,8 @@
     th.fixed-5, td.fixed-5 {
         position: -webkit-sticky;
         position: sticky;
-        left: 350px;
+        width: 120px;
+        left: 190px;
         background-color: #fff;
         z-index: 50;
     }
@@ -59,7 +63,8 @@
     th.fixed-6, td.fixed-6 {
         position: -webkit-sticky;
         position: sticky;
-        left: 450px;
+        width: 120px;
+        left: 295px;
         background-color: #fff;
         z-index: 50;
     }
@@ -85,8 +90,10 @@
     }
 
     th, td {
-        min-width: 100px;
+        min-width: 50px;
     }
+
+
     .flash {
         display: none;
     }
@@ -189,9 +196,9 @@
             <thead class="table-light">
             <tr>
                 <th class="fixed" style="z-index: 100;"></th>
-                <th class="fixed-2" style="z-index: 100;"><input type="checkbox" name="" id="chkRowAll" checked></th>
-                <th class="fixed-3" style="z-index: 100;">LOT</th>
-                <th class="fixed-4" style="z-index: 100;">product</th>
+                <th class="fixed-2" style=" z-index: 100;"><input type="checkbox" name="" id="chkRowAll" checked></th>
+                <th class="fixed-3" style=" z-index: 100;">LOT</th>
+                <th class="fixed-4" style=" z-index: 100;">product</th>
                 <th class="fixed-5" style="background-color: #e0ffff; z-index: 100;">barcode</th>
                 <th class="fixed-6" style="background-color: #e0ffff; z-index: 100;">modified</th>
                 <th>실적처리</th>

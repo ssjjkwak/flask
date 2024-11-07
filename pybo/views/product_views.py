@@ -12,6 +12,7 @@ from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode,  \
     Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location, Barcode_Status, Material_Doc
 from collections import defaultdict
+from sqlalchemy.orm import load_only
 
 
 
@@ -185,7 +186,6 @@ def get_bom_data():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 @bp.route('/upload_excel', methods=['POST'])
 def upload_excel():
@@ -435,21 +435,28 @@ def register():
 
     logging.info(f"Selected records: {selected_records}")
 
-    work_centers = db.session.query(Work_Center.WC_CD, Work_Center.PASS_CONDITION).all()
+    # 미리 필요한 데이터를 한 번에 로드하여 메모리에서 작업
+    work_centers = {wc.WC_CD: wc.PASS_CONDITION for wc in db.session.query(Work_Center).all()}
     logging.info(f"Retrieved work centers: {work_centers}")
 
+    # 데이터를 캐싱하기 위해 필요한 바코드를 미리 가져옴
+    barcodes_data = db.session.query(Production_Alpha).filter(
+        Production_Alpha.barcode.in_([record_id.split('|')[0] for record_id in selected_records])
+    ).all()
+
+    # 필요한 데이터 저장용
     new_alpha_records = []
     new_barcode_records = []
     updated_alpha_records = []
 
+    # 루프 내에서 db 조회를 줄이기 위해 데이터 미리 준비
     for record_id in selected_records:
         barcode, modified_str = record_id.split('|')
         modified = parse_datetime(modified_str)
-        logging.info(f"Processing record: barcode={barcode}, modified={modified}")
-
-        alpha_record = Production_Alpha.query.filter_by(barcode=barcode).first()
+        alpha_record = next((alpha for alpha in barcodes_data if alpha.barcode == barcode), None)
 
         if alpha_record:
+            # 새로운 Production_Barcode 생성
             barcode_record = {
                 'LOT': alpha_record.LOT,
                 'product': alpha_record.product,
@@ -457,33 +464,6 @@ def register():
                 'modified': alpha_record.modified,
                 'err_code': alpha_record.err_code,
                 'err_info': alpha_record.err_info,
-                'print_time': alpha_record.print_time,
-                'inweight_time': alpha_record.inweight_time,
-                'inweight_cycles': alpha_record.inweight_cycles,
-                'inweight_station': alpha_record.inweight_station,
-                'inweight_result': alpha_record.inweight_result,
-                'inweight_value': alpha_record.inweight_value,
-                'leaktest_cycles': alpha_record.leaktest_cycles,
-                'leaktest_entry': alpha_record.leaktest_entry,
-                'leaktest_exit': alpha_record.leaktest_exit,
-                'leaktest_station': alpha_record.leaktest_station,
-                'leaktest_value': alpha_record.leaktest_value,
-                'leaktest_ptest': alpha_record.leaktest_ptest,
-                'leaktest_duration': alpha_record.leaktest_duration,
-                'leaktest_result': alpha_record.leaktest_result,
-                'outweight_time': alpha_record.outweight_time,
-                'outweight_station': alpha_record.outweight_station,
-                'outweight_cycles': alpha_record.outweight_cycles,
-                'outweight_result': alpha_record.outweight_result,
-                'outweight_value': alpha_record.outweight_value,
-                'itest2_time': alpha_record.itest2_time,
-                'itest2_station': alpha_record.itest2_station,
-                'itest2_cycles': alpha_record.itest2_cycles,
-                'itest2_result': alpha_record.itest2_result,
-                'itest2_value': alpha_record.itest2_value,
-                'itest2_ptest': alpha_record.itest2_ptest,
-                'prodlabel_time': alpha_record.prodlabel_time,
-                'prodlabel_cycles': alpha_record.prodlabel_cycles,
                 'INSRT_DT': alpha_record.INSRT_DT,
                 'INSRT_USR': g.user.USR_ID,
                 'UPDT_DT': alpha_record.UPDT_DT,
@@ -491,24 +471,18 @@ def register():
                 'REPORT_FLAG': alpha_record.REPORT_FLAG
             }
             new_barcode_records.append(barcode_record)
-            logging.info(f"Created barcode record for {barcode}: {barcode_record}")
 
+            # 공정에 따른 데이터 설정
             processes = []
-            for wc_cd, pass_condition in work_centers:
+            for wc_cd, pass_condition in work_centers.items():
                 if wc_cd == 'WSF70':
                     continue
-
-                result_value = getattr(alpha_record, pass_condition, None) if pass_condition else None
-                report_type = 'B' if (
-                            wc_cd == '60' and pass_condition == 'prodlabel_cycles' and result_value == 0) else (
-                    'G' if result_value and result_value >= 1 else 'B')
-
+                result_value = getattr(alpha_record, pass_condition, None)
+                report_type = 'G' if result_value else 'B'
                 processes.append((wc_cd, report_type))
-                logging.info(f"Process step added for wc_cd={wc_cd}: report_type={report_type}")
 
             for wc_cd, report_type in processes:
-                step_number = re.sub(r'\D', '', wc_cd)  # 숫자만 추출
-
+                step_number = re.sub(r'\D', '', wc_cd)
                 item = db.session.query(Item).filter(
                     Item.ALPHA_CODE == alpha_record.product,
                     Item.SPEC.like(f'%{step_number}Step%')
@@ -524,44 +498,111 @@ def register():
                         'OPR_NO': '10',
                         'REPORT_TYPE': report_type,
                         'WC_CD': wc_cd,
-                        'INSRT_USR': g.user.USR_ID,
-                        'UPDT_USR': g.user.USR_ID,
                         'ITEM_CD': item.ITEM_CD,
                         'CREDIT_DEBIT': 'C',
                         'MOV_TYPE': 'I01',
                         'TO_SL_CD': sl_cd,
-                        'FROM_SL_CD': sl_cd
+                        'FROM_SL_CD': sl_cd,
+                        'INSRT_USR': g.user.USR_ID,
+                        'UPDT_USR': g.user.USR_ID
                     }
                     new_alpha_records.append(assn_record)
-                    logging.info(f"Assigned record for wc_cd={wc_cd} with ITEM_CD={item.ITEM_CD}: {assn_record}")
-                else:
-                    logging.warning(
-                        f"No matching item found for product={alpha_record.product} with step_number={step_number} spec requirement.")
 
+            # alpha 기록 업데이트 준비
             alpha_record.REPORT_FLAG = 'N'
             updated_alpha_records.append(alpha_record)
-            logging.info(f"Updated REPORT_FLAG for alpha record with barcode={barcode}")
 
+    # 데이터 일괄 삽입 및 업데이트
     if new_barcode_records:
         db.session.bulk_insert_mappings(Production_Barcode, new_barcode_records)
-        logging.info(f"Inserted new barcode records: {len(new_barcode_records)}")
     if new_alpha_records:
         db.session.bulk_insert_mappings(Barcode_Flow, new_alpha_records)
-        logging.info(f"Inserted new alpha records: {len(new_alpha_records)}")
     if updated_alpha_records:
         db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
-        logging.info(f"Updated alpha records: {len(updated_alpha_records)}")
 
     db.session.commit()
     logging.info("Database commit successful.")
 
+    # 후속 처리 함수
     assign_production_orders()
-    update_barcode_status_from_flow()  # 후처리 함수 호출
+    update_barcode_status_from_flow()
     assign_doc_no_and_material_doc()
 
     flash('실적처리 완료.', 'success')
     logging.info("Redirecting to product_register page.")
     return redirect(url_for('product.product_register'))
+
+
+
+def assign_doc_no_and_material_doc():
+    doc_no = generate_doc_no()
+
+    # DOC_NO 및 ITEM_CD, PRODT_ORDER_NO, WC_CD, MOV_TYPE로 그룹화하여 QTY를 합산
+    grouped_entries = db.session.query(
+        Barcode_Flow.ITEM_CD,
+        Barcode_Flow.PRODT_ORDER_NO,
+        Barcode_Flow.WC_CD,
+        Barcode_Flow.MOV_TYPE,
+        Barcode_Flow.FROM_SL_CD,
+        Barcode_Flow.TO_SL_CD,
+        func.count(Barcode_Flow.barcode).label("total_qty")
+    ).filter(
+        Barcode_Flow.DOC_NO == None  # DOC_NO가 없는 항목만 대상으로
+    ).group_by(
+        Barcode_Flow.ITEM_CD, Barcode_Flow.PRODT_ORDER_NO, Barcode_Flow.WC_CD, Barcode_Flow.MOV_TYPE,
+        Barcode_Flow.FROM_SL_CD, Barcode_Flow.TO_SL_CD
+    ).all()
+
+    new_material_docs = []
+    doc_seq = 10  # 초기 SEQ 값은 10
+
+    for entry in grouped_entries:
+        item_cd, prodt_order_no, wc_cd, mov_type, from_sl_cd, to_sl_cd, total_qty = entry
+
+        # Barcode_Flow 업데이트 (DOC_NO와 동일한 ITEM_CD에 대해 DOC_SEQ를 동일하게 설정)
+        db.session.query(Barcode_Flow).filter(
+            Barcode_Flow.ITEM_CD == item_cd,
+            Barcode_Flow.PRODT_ORDER_NO == prodt_order_no,
+            Barcode_Flow.WC_CD == wc_cd,
+            Barcode_Flow.MOV_TYPE == mov_type,
+            Barcode_Flow.FROM_SL_CD == from_sl_cd,
+            Barcode_Flow.TO_SL_CD == to_sl_cd,
+            Barcode_Flow.DOC_NO == None
+        ).update(
+            {'DOC_NO': doc_no, 'DOC_SEQ': doc_seq}
+        )
+
+        # Material_Doc 생성
+        material_doc = {
+            'DOC_NO': doc_no,
+            'DOC_SEQ': f"{doc_seq:02}",  # DOC_SEQ는 두 자리로 고정
+            'ITEM_CD': item_cd,
+            'QTY': total_qty,  # 동일 ITEM_CD의 QTY 합산
+            'CREDIT_DEBIT': 'C',  # 기본값 설정
+            'OPR_NO': '10',
+            'REPORT_TYPE': 'G',
+            'PRODT_ORDER_NO': prodt_order_no,
+            'WC_CD': wc_cd,
+            'MOV_TYPE': mov_type,
+            'FROM_SL_CD': from_sl_cd,  # FROM_SL_CD 추가
+            'TO_SL_CD': to_sl_cd,  # TO_SL_CD 추가
+            'INSRT_DT': datetime.now(),
+            'INSRT_USR': g.user.USR_ID,
+            'UPDT_DT': datetime.now(),  # 업데이트 시각 설정
+            'UPDT_USR': g.user.USR_ID
+        }
+        new_material_docs.append(material_doc)
+
+        # 다음 ITEM_CD에 대해 DOC_SEQ를 10씩 증가
+        doc_seq += 10
+
+    # Material_Doc에 데이터 삽입
+    if new_material_docs:
+        db.session.bulk_insert_mappings(Material_Doc, new_material_docs)
+
+
+    db.session.commit()
+    logging.info("DOC_NO와 Material_Doc 데이터가 성공적으로 할당되었습니다.")
 
 
 def update_barcode_status_from_flow():
@@ -831,76 +872,6 @@ def update_barcode_status_after_packing(doc_no):
     logging.info("Barcode_Status update after packing commit successful.")
 
 
-def assign_doc_no_and_material_doc():
-    doc_no = generate_doc_no()
-
-    # DOC_NO 및 ITEM_CD, PRODT_ORDER_NO, WC_CD, MOV_TYPE로 그룹화하여 QTY를 합산
-    grouped_entries = db.session.query(
-        Barcode_Flow.ITEM_CD,
-        Barcode_Flow.PRODT_ORDER_NO,
-        Barcode_Flow.WC_CD,
-        Barcode_Flow.MOV_TYPE,
-        Barcode_Flow.FROM_SL_CD,
-        Barcode_Flow.TO_SL_CD,
-        func.count(Barcode_Flow.barcode).label("total_qty")
-    ).filter(
-        Barcode_Flow.DOC_NO == None  # DOC_NO가 없는 항목만 대상으로
-    ).group_by(
-        Barcode_Flow.ITEM_CD, Barcode_Flow.PRODT_ORDER_NO, Barcode_Flow.WC_CD, Barcode_Flow.MOV_TYPE,
-        Barcode_Flow.FROM_SL_CD, Barcode_Flow.TO_SL_CD
-    ).all()
-
-    new_material_docs = []
-    doc_seq = 10  # 초기 SEQ 값은 10
-
-    for entry in grouped_entries:
-        item_cd, prodt_order_no, wc_cd, mov_type, from_sl_cd, to_sl_cd, total_qty = entry
-
-        # Barcode_Flow 업데이트 (DOC_NO와 동일한 ITEM_CD에 대해 DOC_SEQ를 동일하게 설정)
-        db.session.query(Barcode_Flow).filter(
-            Barcode_Flow.ITEM_CD == item_cd,
-            Barcode_Flow.PRODT_ORDER_NO == prodt_order_no,
-            Barcode_Flow.WC_CD == wc_cd,
-            Barcode_Flow.MOV_TYPE == mov_type,
-            Barcode_Flow.FROM_SL_CD == from_sl_cd,
-            Barcode_Flow.TO_SL_CD == to_sl_cd,
-            Barcode_Flow.DOC_NO == None
-        ).update(
-            {'DOC_NO': doc_no, 'DOC_SEQ': doc_seq}
-        )
-
-        # Material_Doc 생성
-        material_doc = {
-            'DOC_NO': doc_no,
-            'DOC_SEQ': f"{doc_seq:02}",  # DOC_SEQ는 두 자리로 고정
-            'ITEM_CD': item_cd,
-            'QTY': total_qty,  # 동일 ITEM_CD의 QTY 합산
-            'CREDIT_DEBIT': 'C',  # 기본값 설정
-            'OPR_NO': '10',
-            'REPORT_TYPE': 'G',
-            'PRODT_ORDER_NO': prodt_order_no,
-            'WC_CD': wc_cd,
-            'MOV_TYPE': mov_type,
-            'FROM_SL_CD': from_sl_cd,  # FROM_SL_CD 추가
-            'TO_SL_CD': to_sl_cd,  # TO_SL_CD 추가
-            'INSRT_DT': datetime.now(),
-            'INSRT_USR': g.user.USR_ID,
-            'UPDT_DT': datetime.now(),  # 업데이트 시각 설정
-            'UPDT_USR': g.user.USR_ID
-        }
-        new_material_docs.append(material_doc)
-
-        # 다음 ITEM_CD에 대해 DOC_SEQ를 10씩 증가
-        doc_seq += 10
-
-    # Material_Doc에 데이터 삽입
-    if new_material_docs:
-        db.session.bulk_insert_mappings(Material_Doc, new_material_docs)
-
-
-    db.session.commit()
-    logging.info("DOC_NO와 Material_Doc 데이터가 성공적으로 할당되었습니다.")
-
 
 
 
@@ -941,7 +912,6 @@ def product_register_packing():
     )
 
 
-
 # 바코드 스캔 데이터 검증 로직
 @bp.route('/check_barcode/', methods=['POST'])
 def check_barcode():
@@ -979,8 +949,6 @@ def check_barcode():
         return jsonify({"status": "fail", "message": "FAIL"})
 
 
-
-
 # box 번호 자동으로 넘어가는 로직
 @bp.route('/get_next_master_box_no/', methods=['GET'])
 def get_next_master_box_no():
@@ -1004,8 +972,6 @@ def get_next_master_box_no():
     new_master_box_no = f"{date_hex}{new_sequence:03}"
 
     return jsonify({"status": "success", "next_master_box_no": new_master_box_no})
-
-
 
 def date_to_hex(date_obj):
     year = date_obj.year % 100  # 마지막 두 자리만 사용
@@ -1237,8 +1203,6 @@ def print_label():
         logging.error(f"Error occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-
-
 # --------------------------------------------------------
 # 재프린트 로직 Y를 다시 N으로 바꿔서 프린트로직 똑같이 태우고 프린트 완료되면 다시 Y로 바꾸는 방식
 @bp.route('/reprint_label/<box_no>', methods=['POST'])
@@ -1421,9 +1385,11 @@ def get_box_details(box_no):
 def product_result_sterilizating_out():
     return render_template('product/product_result_sterilizating_out.html')
 
+
 @bp.route('/register_sterilizating_in/', methods=['GET', 'POST'])
 def product_register_sterilizating_in():
     return render_template('product/product_register_sterilizating_in.html')
+
 
 @bp.route('/result_sterilizating_in/', methods=['GET', 'POST'])
 def product_result_sterilizating_in():

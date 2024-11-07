@@ -2,26 +2,37 @@
 {% block content %}
 
 <style>
-    .selected-row {
-        background-color: #D6EAF8 !important;
+    .table-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
     }
 
     .table-wrapper {
+        flex: 1;
         overflow: auto;
-        height: calc(100vh - 300px); /* 화면 높이에 따라 조절 */
-        width: 100%;
+        max-height: calc(100vh - 260px); /* 초기 높이 설정 */
+    }
+
+    .table-title {
+        font-weight: bold;
+        text-align: center;
+        background-color: #e0e0e0;
+        padding: 8px;
+        margin-bottom: 5px;
     }
 
     table {
-        border-collapse: collapse;
         width: 100%;
+        border-collapse: collapse;
     }
 
     th, td {
-        min-width: 50px;
-        text-align: center;
         padding: 8px;
-        border-bottom: 1px solid #ddd;
+        text-align: center;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        min-width: 80px;
     }
 
     th {
@@ -30,6 +41,10 @@
         top: 0;
         z-index: 20;
     }
+
+    .selected-row {
+        background-color: #D6EAF8 !important;
+    }
 </style>
 
 <!-- 조회조건 -->
@@ -37,7 +52,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 15px 0;">
         <h7 class="m-0 font-weight-bold text-primary mb-3">영업관리 > 제품출하등록</h7>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton" disabled><i
+            <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton"><i
                     class="bi bi-truck"></i>
                 출하처리
             </button>
@@ -86,56 +101,69 @@
 <div class="gap" style="margin-top: 20px;"></div>
 
 <!-- 수주정보 테이블 -->
-{% if form_submitted %}
-<div class="table-wrapper">
-    <table class="table table-sm table-hover" id="dataTable">
-        <thead class="table-light">
-        <tr>
-            <th>수주번호</th>
-            <th>SEQ</th>
-            <th>주문처</th>
-            <th>주문처명</th> <!-- Biz_Partner 모델에서 bp_nm 가져오기 -->
-            <th>품목</th>
-            <th>품목명</th> <!-- Item 모델에서 ITEM_NM 가져오기 -->
-            <th>규격</th> <!-- Item 모델에서 SPEC 가져오기 -->
-            <th>단위</th> <!-- Item 모델에서 BASIC_UNIT 가져오기 -->
-            <th>공장</th>
-            <th>창고</th>
-            <th>단가(KRW)</th>
-            <th>수량</th>
-            <th>수주금액(KRW)</th>
-            <th>수주일자</th>
-            <th>납기일자</th>
-            <th>고객주문번호</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for order, bp_nm, item_nm, spec, basic_unit in sales_orders %}
-        <tr data-bp-cd="{{ order.BP_CD }}" data-so-no="{{ order.SO_NO }}" data-item-cd="{{ order.ITEM_CD }}"
-            data-so-dt="{{ order.SO_DT }}" data-req-dlvy-dt="{{ order.REQ_DLVY_DT }}" data-bp-nm="{{ bp_nm }}" data-so-qty="{{ order.SO_QTY | int }}"
-            data-cust-po-no="{{ order.CUST_PO_NO }}">
-            <td>{{ order.SO_NO }}</td>
-            <td>{{ order.SO_SEQ }}</td>
-            <td>{{ order.BP_CD }}</td>
-            <td>{{ bp_nm }}</td> <!-- Biz_Partner의 bp_nm -->
-            <td>{{ order.ITEM_CD }}</td>
-            <td>{{ item_nm }}</td> <!-- Item의 ITEM_NM -->
-            <td>{{ spec }}</td> <!-- Item의 SPEC -->
-            <td>{{ basic_unit }}</td> <!-- Item의 BASIC_UNIT -->
-            <td>{{ order.PLANT_CD }}</td>
-            <td>{{ order.SL_CD }}</td>
-            <td>{{ order.SO_PRICE | int }}</td>
-            <td>{{ order.SO_QTY | int }}</td>
-            <td>{{ order.NET_AMT | int }}</td>
-            <td>{{ order.SO_DT.strftime('%Y-%m-%d') if order.SO_DT else '' }}</td>
-            <td>{{ order.REQ_DLVY_DT.strftime('%Y-%m-%d') if order.REQ_DLVY_DT else '' }}</td>
-            <td>{{ order.CUST_PO_NO or '' }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
+
+<div class="table-container">
+        <!-- 첫 번째 테이블 시작 -->
+        <div class="table-wrapper">
+            <div class="table-title">제품창고(SF50)</div>
+            <table class="table table-sm table-hover">
+                <thead>
+                <tr>
+                    <th>품목코드</th>
+                    <th>박스번호</th>
+                    <th>수량</th>
+                    <th>포장일자</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for order in orders_with_hdr %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ order.PO_NO }}</td>
+                    <td>{{ order.PO_SEQ_NO }}</td>
+                    <td>{{ order.bp_cd }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- 첫 번째 테이블 종료 -->
+
+        <!-- 두 번째 테이블 시작 -->
+        <div class="table-wrapper">
+            <div class="table-title">고객주문(O00368)</div>
+            <table class="table table-sm table-hover">
+                <thead>
+                <tr>
+                    <th>발주번호</th>
+                    <th>SEQ</th>
+                    <th>품목코드</th>
+                    <th>품목명</th>
+                    <th>창고</th>
+                    <th>주문수량</th>
+                    <th>출하수량</th>
+                    <th>주문잔량</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for dispatch in dispatch_records %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ order.PO_NO }}</td>
+                    <td>{{ order.PO_SEQ_NO }}</td>
+                    <td>{{ order.bp_cd }}</td>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ order.PO_NO }}</td>
+                    <td>{{ order.PO_SEQ_NO }}</td>
+                    <td>{{ order.bp_cd }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- 두 번째 테이블 종료 -->
+    </div>
+
 
 <!-- 공급 내역 등록 모달 -->
 <div class="modal fade" id="supplyModal" tabindex="-1" aria-labelledby="supplyModalLabel" role="dialog"
