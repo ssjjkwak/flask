@@ -314,11 +314,17 @@ def product_excel_result():
     # 기본 조회 화면으로 이동
     query = db.session.query(Production_Alpha)
 
-    # 조건이 추가될 경우 필터링 처리 가능
+    # barcode, product, lot 데이터를 쿼리하여 리스트로 가져옵니다.
+    barcodes = db.session.query(Production_Alpha.barcode).distinct().all()
+    products = db.session.query(Production_Alpha.product).distinct().all()
+    lots = db.session.query(Production_Alpha.LOT).distinct().all()
+
+    # 선택된 필터 조건 가져오기
     barcode = request.form.get('barcode', '').strip()
     product = request.form.get('product', '').strip()
     lot = request.form.get('lot', '').strip()
 
+    # 필터 적용
     if barcode:
         query = query.filter(Production_Alpha.barcode.like(f'%{barcode}%'))
     if product:
@@ -328,7 +334,17 @@ def product_excel_result():
 
     # 쿼리 실행
     alpha_data = query.all()
-    return render_template('product/product_excel_result.html', alpha_data=alpha_data, barcode=barcode, product=product, lot=lot)
+
+    # 쿼리 결과와 선택 목록 전달
+    return render_template('product/product_excel_result.html',
+                           alpha_data=alpha_data,
+                           barcodes=barcodes,
+                           products=products,
+                           lots=lots,
+                           barcode=barcode,
+                           product=product,
+                           lot=lot)
+
 
 
 # 여기에 조회조건 걸어서 register 화면에 데이터 렌더링
@@ -439,7 +455,7 @@ def register():
     work_centers = {wc.WC_CD: wc.PASS_CONDITION for wc in db.session.query(Work_Center).all()}
     logging.info(f"Retrieved work centers: {work_centers}")
 
-    # 데이터를 캐싱하기 위해 필요한 바코드를 미리 가져옴
+    # 필요한 데이터를 캐싱하기 위해 바코드 데이터를 미리 가져옴
     barcodes_data = db.session.query(Production_Alpha).filter(
         Production_Alpha.barcode.in_([record_id.split('|')[0] for record_id in selected_records])
     ).all()
@@ -449,7 +465,7 @@ def register():
     new_barcode_records = []
     updated_alpha_records = []
 
-    # 루프 내에서 db 조회를 줄이기 위해 데이터 미리 준비
+    # 루프 내에서 DB 조회를 줄이기 위해 데이터 미리 준비
     for record_id in selected_records:
         barcode, modified_str = record_id.split('|')
         modified = parse_datetime(modified_str)
@@ -464,6 +480,33 @@ def register():
                 'modified': alpha_record.modified,
                 'err_code': alpha_record.err_code,
                 'err_info': alpha_record.err_info,
+                'print_time': alpha_record.print_time,
+                'inweight_time': alpha_record.inweight_time,
+                'inweight_cycles': alpha_record.inweight_cycles,
+                'inweight_station': alpha_record.inweight_station,
+                'inweight_result': alpha_record.inweight_result,
+                'inweight_value': alpha_record.inweight_value,
+                'leaktest_cycles': alpha_record.leaktest_cycles,
+                'leaktest_entry': alpha_record.leaktest_entry,
+                'leaktest_exit': alpha_record.leaktest_exit,
+                'leaktest_station': alpha_record.leaktest_station,
+                'leaktest_value': alpha_record.leaktest_value,
+                'leaktest_ptest': alpha_record.leaktest_ptest,
+                'leaktest_duration': alpha_record.leaktest_duration,
+                'leaktest_result': alpha_record.leaktest_result,
+                'outweight_time': alpha_record.outweight_time,
+                'outweight_station': alpha_record.outweight_station,
+                'outweight_cycles': alpha_record.outweight_cycles,
+                'outweight_result': alpha_record.outweight_result,
+                'outweight_value': alpha_record.outweight_value,
+                'itest2_time': alpha_record.itest2_time,
+                'itest2_station': alpha_record.itest2_station,
+                'itest2_cycles': alpha_record.itest2_cycles,
+                'itest2_result': alpha_record.itest2_result,
+                'itest2_value': alpha_record.itest2_value,
+                'itest2_ptest': alpha_record.itest2_ptest,
+                'prodlabel_time': alpha_record.prodlabel_time,
+                'prodlabel_cycles': alpha_record.prodlabel_cycles,
                 'INSRT_DT': alpha_record.INSRT_DT,
                 'INSRT_USR': g.user.USR_ID,
                 'UPDT_DT': alpha_record.UPDT_DT,
@@ -474,11 +517,24 @@ def register():
 
             # 공정에 따른 데이터 설정
             processes = []
+            stop_next_processes = False  # 이후 공정으로의 진행 여부를 결정하는 플래그
+
             for wc_cd, pass_condition in work_centers.items():
                 if wc_cd == 'WSF70':
                     continue
+
+                # 이전 공정에서 불량이 발생했을 경우 이후 공정을 추가하지 않음
+                if stop_next_processes:
+                    break
+
+                # 현재 공정 데이터 생성
                 result_value = getattr(alpha_record, pass_condition, None)
                 report_type = 'G' if result_value else 'B'
+
+                # 불량이면 이후 공정 중단 플래그를 설정
+                if report_type == 'B':
+                    stop_next_processes = True
+
                 processes.append((wc_cd, report_type))
 
             for wc_cd, report_type in processes:
@@ -531,7 +587,6 @@ def register():
     flash('실적처리 완료.', 'success')
     logging.info("Redirecting to product_register page.")
     return redirect(url_for('product.product_register'))
-
 
 
 def assign_doc_no_and_material_doc():

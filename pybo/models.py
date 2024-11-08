@@ -480,3 +480,6 @@ class Biz_Partner(db.Model):
     insrt_usr = Column(db.String(13), nullable=True)
     updt_dt = Column(db.DateTime, nullable=True)
     updt_usr = Column(db.String(13), nullable=True)
+
+
+

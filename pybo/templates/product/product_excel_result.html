@@ -99,22 +99,40 @@
     <div class="row">
         <div class="col-md-3">
             <div class="mb-1 col-9 d-flex align-items-center">
-                <label for="barcode" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;바코드</label>
-                <input type="text" name="barcode" id="barcode" value="{{ barcode }}" class="form-control form-control-sm flex-grow-1">
-            </div>
-            <div class="mb-1 col-9 d-flex align-items-center">
-                <label for="product" class="form-label me-3" style="min-width: 110px;">알파코드(제품)</label>
-                <input type="text" name="product" id="product" value="{{ product }}" class="form-control form-control-sm flex-grow-1">
+                <label for="barcode" class="form-label me-3" style="min-width: 110px;">바코드</label>
+                <select name="barcode" id="barcode" class="form-select form-select-sm">
+                    <option value="">-</option>
+                    {% for b in barcodes %}
+                    <option value="{{ b.barcode }}" {% if b.barcode == barcode %}selected{% endif %}>{{ b.barcode }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
         <div class="col-md-3">
             <div class="mb-1 col-9 d-flex align-items-center">
-                <label for="lot" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;Lot 번호</label>
-                <input type="text" name="lot" id="lot" value="{{ lot }}" class="form-control form-control-sm flex-grow-1">
+                <label for="lot" class="form-label me-3" style="min-width: 110px;">Lot 번호</label>
+                <select name="lot" id="lot" class="form-select form-select-sm">
+                    <option value="">-</option>
+                    {% for l in lots %}
+                    <option value="{{ l.LOT }}" {% if l.LOT == lot %}selected{% endif %}>{{ l.LOT }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="mb-1 col-9 d-flex align-items-center">
+                <label for="product" class="form-label me-3" style="min-width: 110px;">알파코드(제품)</label>
+                <select name="product" id="product" class="form-select form-select-sm">
+                    <option value="">-</option>
+                    {% for p in products %}
+                    <option value="{{ p.product }}" {% if p.product == product %}selected{% endif %}>{{ p.product }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
     </div>
 </form>
+
 
 <!-- 조회 결과 테이블 -->
 <div class="table-wrapper">

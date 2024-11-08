@@ -19,6 +19,7 @@
     th.fixed, td.fixed {
         position: -webkit-sticky;
         position: sticky;
+        width: 20px;
         left: 0;
         background-color: #fff;
         z-index: 50; /* 고정 열의 z-index를 높임 */
@@ -92,7 +93,6 @@
     th, td {
         min-width: 50px;
     }
-
 
     .flash {
         display: none;
@@ -190,12 +190,12 @@
 </div>
 
 <form id="registerForm" method="post" action="{{ url_for('product.register') }}">
-    <div class="table-wrapper">
+    <div class="table-wrapper" style="background-color: white;">
         <table class="table table-sm table-hover" style="border-collapse: collapse;" id="dataTable1"
                width="100%" cellspacing="0">
             <thead class="table-light">
             <tr>
-                <th class="fixed" style="z-index: 100;"></th>
+                <th class="fixed" style="z-index: 100; text-align: center;"></th>
                 <th class="fixed-2" style=" z-index: 100;"><input type="checkbox" name="" id="chkRowAll" checked></th>
                 <th class="fixed-3" style=" z-index: 100;">LOT</th>
                 <th class="fixed-4" style=" z-index: 100;">product</th>
