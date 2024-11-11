@@ -123,6 +123,17 @@ class Movetype_Configuration(db.Model):
     MOV_TYPE = db.Column(db.NVARCHAR(3), primary_key=True)
     MOV_TYPE_NM = db.Column(db.NVARCHAR(30), nullable=True)
 
+# 바코드 상태
+class Status(db.Model):
+    __tablename__ = 'B_STATUS'
+    __table_args__ = {'schema': 'dbo'}
+
+    STATUS_CD = db.Column(db.NVARCHAR(10), primary_key=True)
+    STATUS_NM = db.Column(db.NVARCHAR(50), nullable=True)
+    STATUS_CATEGORY_CD = db.Column(db.NVARCHAR(10), nullable=True)
+    STATUS_CATEGORY_NM = db.Column(db.NVARCHAR(50), nullable=True)
+
+
 # 발주정보
 class Purchase_Order(db.Model):
     __tablename__ = 'M_PUR_ORD'

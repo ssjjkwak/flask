@@ -10,7 +10,8 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode,  \
-    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, Storage_Location, Packing_Cs, Bom_Detail, Storage_Location, Barcode_Status, Material_Doc
+    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, \
+    Storage_Location, Packing_Cs, Bom_Detail, Storage_Location, Barcode_Status, Material_Doc, Status
 from collections import defaultdict
 from sqlalchemy.orm import load_only
 
@@ -661,37 +662,49 @@ def assign_doc_no_and_material_doc():
 
 
 def update_barcode_status_from_flow():
-
-    # 최신의 REPORT_TYPE이 'B'가 아닌 데이터만을 선택
+    # 최신의 REPORT_TYPE을 기반으로 데이터 가져옴
     latest_flows = db.session.query(
         Barcode_Flow.barcode,
         Barcode_Flow.ITEM_CD,
-        Barcode_Flow.MOV_TYPE,
+        Barcode_Flow.WC_CD,
+        Barcode_Flow.REPORT_TYPE,
         func.max(Barcode_Flow.INSRT_DT).label("latest_insert")
-    ).filter(Barcode_Flow.REPORT_TYPE != 'B').group_by(Barcode_Flow.barcode, Barcode_Flow.ITEM_CD, Barcode_Flow.MOV_TYPE).all()
-
+    ).group_by(Barcode_Flow.barcode, Barcode_Flow.ITEM_CD, Barcode_Flow.WC_CD, Barcode_Flow.REPORT_TYPE).all()
 
     for flow in latest_flows:
         barcode = flow.barcode
         item_cd = flow.ITEM_CD
-        mov_type = flow.MOV_TYPE
+        wc_cd = flow.WC_CD
+        report_type = flow.REPORT_TYPE
+
+        # Status 코드 매핑
+        if wc_cd == 'WSF40':
+            status_cd = 'P4' if report_type == 'G' else 'E4'
+        elif wc_cd == 'WSF50':
+            status_cd = 'P5' if report_type == 'G' else 'E5'
+        elif wc_cd == 'WSF60':
+            status_cd = 'P6' if report_type == 'G' else 'E6'
+        else:
+            # 해당하는 작업 센터 코드가 없는 경우는 건너뜀
+            continue
 
         # Barcode_Status에서 해당 barcode를 조회하여 존재 여부 확인
         status_record = db.session.query(Barcode_Status).filter(Barcode_Status.barcode == barcode).first()
 
         if status_record:
             # 기존 레코드가 있을 경우 STATUS와 ITEM_CD 업데이트
-            status_record.STATUS = mov_type
+            status_record.STATUS = status_cd
             status_record.ITEM_CD = item_cd
-            logging.info(f"Updated Barcode_Status for barcode={barcode} with STATUS={mov_type}, ITEM_CD={item_cd}")
+            logging.info(f"Updated Barcode_Status for barcode={barcode} with STATUS={status_cd}, ITEM_CD={item_cd}")
         else:
             # 새 레코드를 추가하는 경우
-            new_status_record = Barcode_Status(barcode=barcode, STATUS=mov_type, ITEM_CD=item_cd)
+            new_status_record = Barcode_Status(barcode=barcode, STATUS=status_cd, ITEM_CD=item_cd)
             db.session.add(new_status_record)
-            logging.info(f"Inserted new Barcode_Status for barcode={barcode} with STATUS={mov_type}, ITEM_CD={item_cd}")
+            logging.info(f"Inserted new Barcode_Status for barcode={barcode} with STATUS={status_cd}, ITEM_CD={item_cd}")
 
     db.session.commit()
     logging.info("Barcode_Status update commit successful.")
+
 
 
 def assign_production_orders():
@@ -891,7 +904,7 @@ def update_barcode_status_after_packing(doc_no):
         latest_flow = db.session.query(
             Barcode_Flow.barcode,
             Barcode_Flow.ITEM_CD,
-            Barcode_Flow.MOV_TYPE,
+            Barcode_Flow.WC_CD,
             Barcode_Flow.BOX_NUM
         ).filter(
             Barcode_Flow.barcode == barcode
@@ -899,8 +912,22 @@ def update_barcode_status_after_packing(doc_no):
 
         if latest_flow:
             item_cd = latest_flow.ITEM_CD
-            mov_type = latest_flow.MOV_TYPE
             box_num = latest_flow.BOX_NUM
+
+            # BOX_NUM이 존재하면 상태 코드를 'S7'로 설정
+            if box_num:
+                status_cd = 'S7'
+            else:
+                # WC_CD에 따라 상태 코드를 설정
+                if latest_flow.WC_CD == 'WSF40':
+                    status_cd = 'p4'
+                elif latest_flow.WC_CD == 'WSF50':
+                    status_cd = 'p5'
+                elif latest_flow.WC_CD == 'WSF60':
+                    status_cd = 'p6'
+                else:
+                    # 해당 공정 코드가 없는 경우 건너뜀
+                    continue
 
             # Barcode_Status에서 해당 barcode를 조회하여 존재 여부 확인
             status_record = db.session.query(Barcode_Status).filter(
@@ -909,22 +936,25 @@ def update_barcode_status_after_packing(doc_no):
 
             if status_record:
                 # 기존 레코드가 있을 경우 STATUS, ITEM_CD, BOX_NUM 업데이트
-                status_record.STATUS = mov_type
+                status_record.STATUS = status_cd
                 status_record.ITEM_CD = item_cd
                 status_record.BOX_NUM = box_num
                 logging.info(
-                    f"Updated Barcode_Status for barcode={barcode} with STATUS={mov_type}, ITEM_CD={item_cd}, BOX_NUM={box_num}")
+                    f"Updated Barcode_Status for barcode={barcode} with STATUS={status_cd}, ITEM_CD={item_cd}, BOX_NUM={box_num}"
+                )
             else:
                 # 새 레코드를 추가하는 경우
                 new_status_record = Barcode_Status(
-                    barcode=barcode, STATUS=mov_type, ITEM_CD=item_cd, BOX_NUM=box_num
+                    barcode=barcode, STATUS=status_cd, ITEM_CD=item_cd, BOX_NUM=box_num
                 )
                 db.session.add(new_status_record)
                 logging.info(
-                    f"Inserted new Barcode_Status for barcode={barcode} with STATUS={mov_type}, ITEM_CD={item_cd}, BOX_NUM={box_num}")
+                    f"Inserted new Barcode_Status for barcode={barcode} with STATUS={status_cd}, ITEM_CD={item_cd}, BOX_NUM={box_num}"
+                )
 
     db.session.commit()
     logging.info("Barcode_Status update after packing commit successful.")
+
 
 
 
