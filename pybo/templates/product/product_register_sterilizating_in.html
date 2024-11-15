@@ -5,6 +5,7 @@
         display: flex;
         justify-content: space-between;
         gap: 20px;
+
     }
 
     .table-wrapper {
@@ -16,8 +17,8 @@
     .table-title {
         font-weight: bold;
         text-align: center;
-        background-color: #e0e0e0;
-        padding: 8px;
+        background-color: #D6EAF8;
+        padding: 4px;
         margin-bottom: 5px;
     }
 
@@ -48,12 +49,12 @@
 
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px;">
-        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 멸균제품 입고등록</h7>
+        <h7 class="m-0 font-weight-bold text-primary mb-3">생산관리 > 외주제품 입고등록</h7>
 
         <div style="display: flex; gap: 10px; align-items: center;">
             <div style="display: flex; gap: 10px; align-items: center;">
                 <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" id="openModalButton">
-                    <i class="bi bi-boxes"></i> 입고등록
+                    <i class="bi bi-box2-fill"></i> 입고등록
                 </button>
             </div>
             <button type="submit" form="searchForm" class="btn btn-light btn-sm shadow-sm ms-3">
@@ -112,20 +113,44 @@
                 <thead>
                 <tr>
                     <th>품목코드</th>
+                    <th>품목명</th>
                     <th>박스번호</th>
                     <th>수량</th>
                     <th>반출일자</th>
+
                 </tr>
                 </thead>
                 <tbody>
-                {% for order in orders_with_hdr %}
+
                 <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ order.PO_NO }}</td>
-                    <td>{{ order.PO_SEQ_NO }}</td>
-                    <td>{{ order.bp_cd }}</td>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>PO20241114000001</td>
+                    <td style="text-align: right;">1</td>
+                    <td>20241201</td>
                 </tr>
-                {% endfor %}
+                <tr>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>PO20241114000001</td>
+                    <td style="text-align: right;">1</td>
+                    <td>20241201</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>PO20241114000001</td>
+                    <td style="text-align: right;">1</td>
+                    <td>20241201</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>PO20241114000001</td>
+                    <td style="text-align: right;">1</td>
+                    <td>20241201</td>
+                </tr>
+
                 </tbody>
             </table>
         </div>
@@ -148,18 +173,58 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for dispatch in dispatch_records %}
+
                 <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ order.PO_NO }}</td>
-                    <td>{{ order.PO_SEQ_NO }}</td>
-                    <td>{{ order.bp_cd }}</td>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ order.PO_NO }}</td>
-                    <td>{{ order.PO_SEQ_NO }}</td>
-                    <td>{{ order.bp_cd }}</td>
+                    <td>PO20241114000001</td>
+                    <td>10</td>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>SL_CD</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
                 </tr>
-                {% endfor %}
+                <tr>
+                    <td>PO20241114000001</td>
+                    <td>10</td>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>SL_CD</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                </tr>
+                <tr>
+                    <td>PO20241114000001</td>
+                    <td>10</td>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>SL_CD</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                </tr>
+                <tr>
+                    <td>PO20241114000001</td>
+                    <td>10</td>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>SL_CD</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                </tr>
+                <tr>
+                    <td>PO20241114000001</td>
+                    <td>10</td>
+                    <td style="text-align: left;">item_cd</td>
+                    <td style="text-align: left;">120H 60Step 반제품_test</td>
+                    <td>SL_CD</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                    <td style="text-align: right;">200</td>
+                </tr>
+
                 </tbody>
             </table>
         </div>

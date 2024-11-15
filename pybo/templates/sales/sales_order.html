@@ -4,21 +4,28 @@
 <style>
     .table-container {
         display: flex;
-        justify-content: space-between;
         gap: 20px;
+
     }
 
     .table-wrapper {
-        flex: 1;
         overflow: auto;
-        max-height: calc(100vh - 260px); /* 초기 높이 설정 */
+        max-height: calc(100vh - 260px);
+    }
+
+    .table-wrapper:first-child {
+        flex: 3.7; /* 첫 번째 테이블을 3 비율로 설정 */
+    }
+
+    .table-wrapper:last-child {
+        flex: 6.3; /* 두 번째 테이블을 7 비율로 설정 */
     }
 
     .table-title {
         font-weight: bold;
         text-align: center;
-        background-color: #e0e0e0;
-        padding: 8px;
+        background-color: #D6EAF8;
+        padding: 4px;
         margin-bottom: 5px;
     }
 

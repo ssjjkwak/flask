@@ -297,20 +297,52 @@
         var loadingModal2 = new bootstrap.Modal(document.getElementById('loadingModal2'));
         loadingModal2.show();
 
-
     }
 
     function handleSubmit() {
         var checkboxes = document.querySelectorAll('input[name="chkRow"]:checked');
         if (checkboxes.length === 0) {
-           document.getElementById('errorModalBody').innerText = "실적 등록할 데이터를 선택해주세요.";
-        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show();
+            document.getElementById('errorModalBody').innerText = "실적 등록할 데이터를 선택해주세요.";
+            var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
         } else {
+            // 실적 등록 모달 표시
             showLoadingModal2();
-            document.getElementById('registerForm').submit();
+
+            // 선택된 데이터로 Ajax 요청
+            var formData = new FormData(document.getElementById('registerForm'));
+
+            fetch("{{ url_for('product.register') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    document.getElementById('completeModalBody').innerText = data.message;
+                    var completeModal = new bootstrap.Modal(document.getElementById('completeModal'));
+                    completeModal.show();
+
+                    // 성공 응답 시 2초 후 페이지 이동
+                    setTimeout(function() {
+                        window.location.href = "{{ url_for('product.product_excel_result') }}";
+                    }, 2000);
+                } else {
+                    // 오류 발생 시 메시지 표시
+                    document.getElementById('errorModalBody').innerText = data.message;
+                    var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                    errorModal.show();
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                document.getElementById('errorModalBody').innerText = "요청 중 오류가 발생했습니다.";
+                var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                errorModal.show();
+            });
         }
     }
+
 
     // Select All functionality
     document.getElementById('chkRowAll').addEventListener('change', function() {

@@ -452,142 +452,147 @@ def register():
 
     logging.info(f"Selected records: {selected_records}")
 
-    # 미리 필요한 데이터를 한 번에 로드하여 메모리에서 작업
-    work_centers = {wc.WC_CD: wc.PASS_CONDITION for wc in db.session.query(Work_Center).all()}
-    logging.info(f"Retrieved work centers: {work_centers}")
+    try:
+        # 미리 필요한 데이터를 한 번에 로드하여 메모리에서 작업
+        work_centers = {wc.WC_CD: wc.PASS_CONDITION for wc in db.session.query(Work_Center).all()}
+        logging.info(f"Retrieved work centers: {work_centers}")
 
-    # 필요한 데이터를 캐싱하기 위해 바코드 데이터를 미리 가져옴
-    barcodes_data = db.session.query(Production_Alpha).filter(
-        Production_Alpha.barcode.in_([record_id.split('|')[0] for record_id in selected_records])
-    ).all()
+        # 필요한 데이터를 캐싱하기 위해 바코드 데이터를 미리 가져옴
+        barcodes_data = db.session.query(Production_Alpha).filter(
+            Production_Alpha.barcode.in_([record_id.split('|')[0] for record_id in selected_records])
+        ).all()
 
-    # 필요한 데이터 저장용
-    new_alpha_records = []
-    new_barcode_records = []
-    updated_alpha_records = []
+        # 필요한 데이터 저장용
+        new_alpha_records = []
+        new_barcode_records = []
+        updated_alpha_records = []
 
-    # 루프 내에서 DB 조회를 줄이기 위해 데이터 미리 준비
-    for record_id in selected_records:
-        barcode, modified_str = record_id.split('|')
-        modified = parse_datetime(modified_str)
-        alpha_record = next((alpha for alpha in barcodes_data if alpha.barcode == barcode), None)
+        # 루프 내에서 DB 조회를 줄이기 위해 데이터 미리 준비
+        for record_id in selected_records:
+            barcode, modified_str = record_id.split('|')
+            modified = parse_datetime(modified_str)
+            alpha_record = next((alpha for alpha in barcodes_data if alpha.barcode == barcode), None)
 
-        if alpha_record:
-            # 새로운 Production_Barcode 생성
-            barcode_record = {
-                'LOT': alpha_record.LOT,
-                'product': alpha_record.product,
-                'barcode': alpha_record.barcode,
-                'modified': alpha_record.modified,
-                'err_code': alpha_record.err_code,
-                'err_info': alpha_record.err_info,
-                'print_time': alpha_record.print_time,
-                'inweight_time': alpha_record.inweight_time,
-                'inweight_cycles': alpha_record.inweight_cycles,
-                'inweight_station': alpha_record.inweight_station,
-                'inweight_result': alpha_record.inweight_result,
-                'inweight_value': alpha_record.inweight_value,
-                'leaktest_cycles': alpha_record.leaktest_cycles,
-                'leaktest_entry': alpha_record.leaktest_entry,
-                'leaktest_exit': alpha_record.leaktest_exit,
-                'leaktest_station': alpha_record.leaktest_station,
-                'leaktest_value': alpha_record.leaktest_value,
-                'leaktest_ptest': alpha_record.leaktest_ptest,
-                'leaktest_duration': alpha_record.leaktest_duration,
-                'leaktest_result': alpha_record.leaktest_result,
-                'outweight_time': alpha_record.outweight_time,
-                'outweight_station': alpha_record.outweight_station,
-                'outweight_cycles': alpha_record.outweight_cycles,
-                'outweight_result': alpha_record.outweight_result,
-                'outweight_value': alpha_record.outweight_value,
-                'itest2_time': alpha_record.itest2_time,
-                'itest2_station': alpha_record.itest2_station,
-                'itest2_cycles': alpha_record.itest2_cycles,
-                'itest2_result': alpha_record.itest2_result,
-                'itest2_value': alpha_record.itest2_value,
-                'itest2_ptest': alpha_record.itest2_ptest,
-                'prodlabel_time': alpha_record.prodlabel_time,
-                'prodlabel_cycles': alpha_record.prodlabel_cycles,
-                'INSRT_DT': alpha_record.INSRT_DT,
-                'INSRT_USR': g.user.USR_ID,
-                'UPDT_DT': alpha_record.UPDT_DT,
-                'UPDT_USR': g.user.USR_ID,
-                'REPORT_FLAG': alpha_record.REPORT_FLAG
-            }
-            new_barcode_records.append(barcode_record)
+            if alpha_record:
+                # 새로운 Production_Barcode 생성
+                barcode_record = {
+                    'LOT': alpha_record.LOT,
+                    'product': alpha_record.product,
+                    'barcode': alpha_record.barcode,
+                    'modified': alpha_record.modified,
+                    'err_code': alpha_record.err_code,
+                    'err_info': alpha_record.err_info,
+                    'print_time': alpha_record.print_time,
+                    'inweight_time': alpha_record.inweight_time,
+                    'inweight_cycles': alpha_record.inweight_cycles,
+                    'inweight_station': alpha_record.inweight_station,
+                    'inweight_result': alpha_record.inweight_result,
+                    'inweight_value': alpha_record.inweight_value,
+                    'leaktest_cycles': alpha_record.leaktest_cycles,
+                    'leaktest_entry': alpha_record.leaktest_entry,
+                    'leaktest_exit': alpha_record.leaktest_exit,
+                    'leaktest_station': alpha_record.leaktest_station,
+                    'leaktest_value': alpha_record.leaktest_value,
+                    'leaktest_ptest': alpha_record.leaktest_ptest,
+                    'leaktest_duration': alpha_record.leaktest_duration,
+                    'leaktest_result': alpha_record.leaktest_result,
+                    'outweight_time': alpha_record.outweight_time,
+                    'outweight_station': alpha_record.outweight_station,
+                    'outweight_cycles': alpha_record.outweight_cycles,
+                    'outweight_result': alpha_record.outweight_result,
+                    'outweight_value': alpha_record.outweight_value,
+                    'itest2_time': alpha_record.itest2_time,
+                    'itest2_station': alpha_record.itest2_station,
+                    'itest2_cycles': alpha_record.itest2_cycles,
+                    'itest2_result': alpha_record.itest2_result,
+                    'itest2_value': alpha_record.itest2_value,
+                    'itest2_ptest': alpha_record.itest2_ptest,
+                    'prodlabel_time': alpha_record.prodlabel_time,
+                    'prodlabel_cycles': alpha_record.prodlabel_cycles,
+                    'INSRT_DT': alpha_record.INSRT_DT,
+                    'INSRT_USR': g.user.USR_ID,
+                    'UPDT_DT': alpha_record.UPDT_DT,
+                    'UPDT_USR': g.user.USR_ID,
+                    'REPORT_FLAG': alpha_record.REPORT_FLAG
+                }
+                new_barcode_records.append(barcode_record)
 
-            # 공정에 따른 데이터 설정
-            processes = []
-            stop_next_processes = False  # 이후 공정으로의 진행 여부를 결정하는 플래그
+                # 공정에 따른 데이터 설정
+                processes = []
+                stop_next_processes = False  # 이후 공정으로의 진행 여부를 결정하는 플래그
 
-            for wc_cd, pass_condition in work_centers.items():
-                if wc_cd == 'WSF70':
-                    continue
+                for wc_cd, pass_condition in work_centers.items():
+                    if wc_cd == 'WSF70':
+                        continue
 
-                # 이전 공정에서 불량이 발생했을 경우 이후 공정을 추가하지 않음
-                if stop_next_processes:
-                    break
+                    # 이전 공정에서 불량이 발생했을 경우 이후 공정을 추가하지 않음
+                    if stop_next_processes:
+                        break
 
-                # 현재 공정 데이터 생성
-                result_value = getattr(alpha_record, pass_condition, None)
-                report_type = 'G' if result_value else 'B'
+                    # 현재 공정 데이터 생성
+                    result_value = getattr(alpha_record, pass_condition, None)
+                    report_type = 'G' if result_value else 'B'
 
-                # 불량이면 이후 공정 중단 플래그를 설정
-                if report_type == 'B':
-                    stop_next_processes = True
+                    # 불량이면 이후 공정 중단 플래그를 설정
+                    if report_type == 'B':
+                        stop_next_processes = True
 
-                processes.append((wc_cd, report_type))
+                    processes.append((wc_cd, report_type))
 
-            for wc_cd, report_type in processes:
-                step_number = re.sub(r'\D', '', wc_cd)
-                item = db.session.query(Item).filter(
-                    Item.ALPHA_CODE == alpha_record.product,
-                    Item.SPEC.like(f'%{step_number}Step%')
-                ).first()
+                for wc_cd, report_type in processes:
+                    step_number = re.sub(r'\D', '', wc_cd)
+                    item = db.session.query(Item).filter(
+                        Item.ALPHA_CODE == alpha_record.product,
+                        Item.SPEC.like(f'%{step_number}Step%')
+                    ).first()
 
-                if item:
-                    production_order = db.session.query(Production_Order).filter_by(ITEM_CD=item.ITEM_CD).first()
-                    sl_cd = production_order.SL_CD if production_order else None
+                    if item:
+                        production_order = db.session.query(Production_Order).filter_by(ITEM_CD=item.ITEM_CD).first()
+                        sl_cd = production_order.SL_CD if production_order else None
 
-                    assn_record = {
-                        'barcode': alpha_record.barcode,
-                        'PRODT_ORDER_NO': None,
-                        'OPR_NO': '10',
-                        'REPORT_TYPE': report_type,
-                        'WC_CD': wc_cd,
-                        'ITEM_CD': item.ITEM_CD,
-                        'CREDIT_DEBIT': 'C',
-                        'MOV_TYPE': 'I01',
-                        'TO_SL_CD': sl_cd,
-                        'FROM_SL_CD': sl_cd,
-                        'INSRT_USR': g.user.USR_ID,
-                        'UPDT_USR': g.user.USR_ID
-                    }
-                    new_alpha_records.append(assn_record)
+                        assn_record = {
+                            'barcode': alpha_record.barcode,
+                            'PRODT_ORDER_NO': None,
+                            'OPR_NO': '10',
+                            'REPORT_TYPE': report_type,
+                            'WC_CD': wc_cd,
+                            'ITEM_CD': item.ITEM_CD,
+                            'CREDIT_DEBIT': 'C',
+                            'MOV_TYPE': 'I01',
+                            'TO_SL_CD': sl_cd,
+                            'FROM_SL_CD': sl_cd,
+                            'INSRT_USR': g.user.USR_ID,
+                            'UPDT_USR': g.user.USR_ID
+                        }
+                        new_alpha_records.append(assn_record)
 
-            # alpha 기록 업데이트 준비
-            alpha_record.REPORT_FLAG = 'N'
-            updated_alpha_records.append(alpha_record)
+                # alpha 기록 업데이트 준비
+                alpha_record.REPORT_FLAG = 'N'
+                updated_alpha_records.append(alpha_record)
 
-    # 데이터 일괄 삽입 및 업데이트
-    if new_barcode_records:
-        db.session.bulk_insert_mappings(Production_Barcode, new_barcode_records)
-    if new_alpha_records:
-        db.session.bulk_insert_mappings(Barcode_Flow, new_alpha_records)
-    if updated_alpha_records:
-        db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
+        # 데이터 일괄 삽입 및 업데이트
+        if new_barcode_records:
+            db.session.bulk_insert_mappings(Production_Barcode, new_barcode_records)
+        if new_alpha_records:
+            db.session.bulk_insert_mappings(Barcode_Flow, new_alpha_records)
+        if updated_alpha_records:
+            db.session.bulk_update_mappings(Production_Alpha, [record.__dict__ for record in updated_alpha_records])
 
-    db.session.commit()
-    logging.info("Database commit successful.")
+        db.session.commit()
+        logging.info("Database commit successful.")
 
-    # 후속 처리 함수
-    assign_production_orders()
-    update_barcode_status_from_flow()
-    assign_doc_no_and_material_doc()
+        # 후속 처리 함수
+        assign_production_orders()
+        update_barcode_status_from_flow()
+        assign_doc_no_and_material_doc()
 
-    flash('실적처리 완료.', 'success')
-    logging.info("Redirecting to product_register page.")
-    return redirect(url_for('product.product_register'))
+        logging.info("Redirecting to product_register page.")
+        return jsonify({"status": "success", "message": "실적 처리 완료"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Database error: {str(e)}")
+        return jsonify({"status": "error", "message": "데이터 처리 중 오류가 발생했습니다."}), 500
 
 
 def assign_doc_no_and_material_doc():
@@ -704,7 +709,6 @@ def update_barcode_status_from_flow():
 
     db.session.commit()
     logging.info("Barcode_Status update commit successful.")
-
 
 
 def assign_production_orders():
@@ -956,10 +960,6 @@ def update_barcode_status_after_packing(doc_no):
     logging.info("Barcode_Status update after packing commit successful.")
 
 
-
-
-
-
 @bp.route('/assign-orders', methods=['POST'])
 def assign_orders_route():
     assign_production_orders()
@@ -968,14 +968,8 @@ def assign_orders_route():
 # 제조오더랑 관련 없이 그냥 바로 바코드 스캔하고 그 데이터로 박스번호생성
 @bp.route('/register_result_packing/', methods=['GET', 'POST'])
 def product_register_packing():
-    form_submitted = False
-    m_box_no = ''
-    cs_model = ''
-
-    if request.method == 'POST':
-        form_submitted = True
-        m_box_no = request.form.get('m_box_no', '')
-        cs_model = request.form.get('cs_model', '')
+    m_box_no = request.form.get('m_box_no', '')
+    cs_model = request.form.get('cs_model', '')
 
     # Packing_Cs 모델에서 데이터를 조회
     query = db.session.query(Packing_Cs)
@@ -991,7 +985,6 @@ def product_register_packing():
     return render_template(
         'product/product_register_packing.html',
         packing_cs_data=packing_cs_data,
-        form_submitted=form_submitted,
         m_box_no=m_box_no,
         cs_model=cs_model
     )
@@ -1329,114 +1322,6 @@ def reprint_label(box_no):
         return jsonify({'error': str(e)}), 500
 
 
-# 외주발주조회
-@bp.route('/register_sterilizating_out/', methods=['GET', 'POST'])
-def product_register_sterilizating_out():
-    form_submitted = False
-    PLANT_CD = ''
-    BP_CD = ''  # 외주업체
-    ITEM_CD = ''  # 품목 코드
-    INSRT_DT_START = None
-    INSRT_DT_END = None
-    BARCODE_NO_START = ''
-    BARCODE_NO_END = ''
-    PO_STATUS = 'all'  # 발주 상태
-
-    # 공장 목록, 품목 목록, 외주업체 목록 조회
-    plants = db.session.query(Purchase_Order.PLANT_CD).distinct().all()
-    items = db.session.query(Item.ITEM_CD, Item.ITEM_NM).distinct().all()
-    vendors = db.session.query(Biz_Partner.bp_cd, Biz_Partner.bp_nm).distinct().all()
-
-    if request.method == 'POST':
-        form_submitted = True
-        PLANT_CD = request.form.get('plant_code', '')
-        BP_CD = request.form.get('bp_cd', '')
-        ITEM_CD = request.form.get('item_cd', '')
-        INSRT_DT_START = request.form.get('start_date', '')
-        INSRT_DT_END = request.form.get('end_date', '')
-        BARCODE_NO_START = request.form.get('barcode_no_start', '')
-        BARCODE_NO_END = request.form.get('barcode_no_end', '')
-        PO_STATUS = request.form.get('po_status', 'all')
-
-        # 날짜 값이 있는지 확인하고 변환
-        if INSRT_DT_START:
-            INSRT_DT_START = datetime.strptime(INSRT_DT_START, '%Y-%m-%d')
-        if INSRT_DT_END:
-            INSRT_DT_END = datetime.strptime(INSRT_DT_END, '%Y-%m-%d')
-
-    # 기본 날짜 설정
-    if not INSRT_DT_START:
-        INSRT_DT_START = datetime.today()
-    if not INSRT_DT_END:
-        INSRT_DT_END = datetime.today() + timedelta(days=30)
-
-    # 쿼리 작성
-    query = db.session.query(
-        Purchase_Order.PO_NO,
-        Purchase_Order.PO_SEQ_NO,
-        Purchase_Order.ITEM_CD,
-        Purchase_Order.PO_QTY,
-        Purchase_Order.OUT_QTY,
-        Purchase_Order.IN_QTY,
-        Purchase_Order.PO_UNIT,
-        Purchase_Order.PO_PRC,
-        Purchase_Order.PO_CUR,
-        Purchase_Order.DLVY_DT,
-        Purchase_Order.STATUS,
-        Biz_Partner.bp_cd,
-        Biz_Partner.bp_nm,
-        Item.ITEM_NM,
-        Item.SPEC,
-        Item.BASIC_UNIT,
-        Storage_Location.SL_NM,
-        Storage_Location.SL_CD
-    ).join(
-        Biz_Partner, Purchase_Order.BP_CD == Biz_Partner.bp_cd
-    ).join(
-        Item, Purchase_Order.ITEM_CD == Item.ITEM_CD
-    ).join(
-        Storage_Location, Purchase_Order.SL_CD == Storage_Location.SL_CD
-    )
-
-    # 필터링 조건 적용
-    if PLANT_CD:
-        query = query.filter(Purchase_Order.PLANT_CD == PLANT_CD)
-    if BP_CD:
-        query = query.filter(Purchase_Order.BP_CD == BP_CD)
-    if ITEM_CD:
-        query = query.filter(Purchase_Order.ITEM_CD == ITEM_CD)
-    if INSRT_DT_START:
-        query = query.filter(Purchase_Order.IF_INSRT_DT >= INSRT_DT_START)
-    if INSRT_DT_END:
-        query = query.filter(Purchase_Order.IF_INSRT_DT <= INSRT_DT_END)
-
-    # PO_STATUS에 따른 필터링
-    if PO_STATUS == 'none':  # '미등록' 상태일 경우, None 상태만 필터링
-        query = query.filter(Purchase_Order.STATUS.is_(None))
-    elif PO_STATUS in ['D', 'R']:  # 선택된 특정 상태만 필터링
-        query = query.filter(Purchase_Order.STATUS == PO_STATUS)
-    # '전체' 상태는 필터링을 적용하지 않음
-
-    if BARCODE_NO_START and BARCODE_NO_END:
-        query = query.filter(Purchase_Order.PO_NO.between(BARCODE_NO_START, BARCODE_NO_END))
-
-    # 결과 조회
-    orders_with_hdr = query.all()
-
-    return render_template('product/product_register_sterilizating_out.html',
-                           orders_with_hdr=orders_with_hdr,
-                           plants=plants,
-                           vendors=vendors,
-                           items=items,
-                           form_submitted=form_submitted,
-                           PLANT_CD=PLANT_CD,
-                           BP_CD=BP_CD,
-                           ITEM_CD=ITEM_CD,
-                           INSRT_DT_START=INSRT_DT_START,
-                           INSRT_DT_END=INSRT_DT_END,
-                           PO_STATUS=PO_STATUS)
-
-
 @bp.route('/get_box_details/<box_no>', methods=['GET'])
 def get_box_details(box_no):
     # 박스 번호로 해당 데이터를 DB에서 가져옴 (Packing_Dtl)
@@ -1465,17 +1350,44 @@ def get_box_details(box_no):
     return jsonify({'rows': rows, 'cs_details': cs_details})
 
 
-# 외주실적등록
+# 멸균반제품 반출등록
+@bp.route('/register_sterilizating_out/', methods=['GET', 'POST'])
+def product_register_sterilizating_out():
+    # Barcode_Flow에서 TO_SL_CD가 "SF40"인 데이터들의 BOX_NUM 조회
+    barcode_query = db.session.query(Barcode_Flow.BOX_NUM).filter(Barcode_Flow.TO_SL_CD == 'SF40').distinct()
+    box_numbers = [box_num[0] for box_num in barcode_query.all()]
+
+    # Packing_Cs에서 M_BOX_NO가 box_numbers에 포함된 데이터 조회
+    packing_cs_data = db.session.query(
+        Packing_Cs.cs_model,
+        Packing_Cs.m_box_no,
+        Packing_Cs.cs_qty,
+        Packing_Cs.cs_prod_date,
+    Item.ITEM_NM.label('item_name')  # item_name을 가져옴
+    ).join(
+        Item, Packing_Cs.cs_model == Item.ITEM_CD  # cs_model과 Item의 ITEM_CD 조인
+    ).filter(
+        Packing_Cs.m_box_no.in_(box_numbers)
+    ).all()
+
+    return render_template(
+        'product/product_register_sterilizating_out.html',
+        packing_cs_data=packing_cs_data  # 왼쪽 테이블 데이터 전달
+    )
+
+
+
+# 멸균반제품 반출 결과조회
 @bp.route('/result_sterilizating_out/', methods=['GET', 'POST'])
 def product_result_sterilizating_out():
     return render_template('product/product_result_sterilizating_out.html')
 
-
+# 멸균제품 입고등록
 @bp.route('/register_sterilizating_in/', methods=['GET', 'POST'])
 def product_register_sterilizating_in():
     return render_template('product/product_register_sterilizating_in.html')
 
-
+# 멸균제품 입고 결과조회
 @bp.route('/result_sterilizating_in/', methods=['GET', 'POST'])
 def product_result_sterilizating_in():
     return render_template('product/product_result_sterilizating_in.html')
