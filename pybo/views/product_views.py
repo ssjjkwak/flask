@@ -918,9 +918,9 @@ def update_barcode_status_after_packing(doc_no):
             item_cd = latest_flow.ITEM_CD
             box_num = latest_flow.BOX_NUM
 
-            # BOX_NUM이 존재하면 상태 코드를 'S7'로 설정
+            # BOX_NUM이 존재하면 상태 코드를 'P7'로 설정
             if box_num:
-                status_cd = 'S7'
+                status_cd = 'P7'
             else:
                 # WC_CD에 따라 상태 코드를 설정
                 if latest_flow.WC_CD == 'WSF40':
@@ -1352,26 +1352,69 @@ def get_box_details(box_no):
 # 멸균반제품 반출등록 렌더링
 @bp.route('/register_sterilizating_out/', methods=['GET', 'POST'])
 def product_register_sterilizating_out():
-    # Barcode_Flow에서 TO_SL_CD가 "SF40"인 데이터들의 BOX_NUM 조회
-    barcode_query = db.session.query(Barcode_Flow.BOX_NUM).filter(Barcode_Flow.TO_SL_CD == 'SF40').distinct()
-    box_numbers = [box_num[0] for box_num in barcode_query.all()]
+    # Barcode_Flow에서 TO_SL_CD가 "SF40"인 데이터들의 BOX_NUM 조회 (왼쪽 테이블)
+    left_barcode_query = db.session.query(Barcode_Flow.BOX_NUM).filter(Barcode_Flow.TO_SL_CD == 'SF40').distinct()
+    left_box_numbers = [box_num[0] for box_num in left_barcode_query.all()]
 
-    # Packing_Cs에서 M_BOX_NO가 box_numbers에 포함된 데이터 조회
-    packing_cs_data = db.session.query(
+    # Barcode_Flow에서 FROM_SL_CD가 "SF40"인 데이터들의 BOX_NUM 조회 (오른쪽 테이블)
+    right_barcode_query = db.session.query(
+        Barcode_Flow.BOX_NUM,
+        Barcode_Flow.INSRT_DT  # INSRT_DT를 추가로 가져옴
+    ).filter(
+        Barcode_Flow.FROM_SL_CD == 'SF40'
+    ).distinct()
+    right_box_data = right_barcode_query.all()
+    right_box_numbers = [box_data[0] for box_data in right_box_data]
+
+    # 오른쪽 테이블과 중복되지 않은 박스번호만 필터링 (왼쪽 테이블)
+    unique_left_box_numbers = set(left_box_numbers) - set(right_box_numbers)
+
+    # Packing_Cs에서 M_BOX_NO가 unique_left_box_numbers에 포함된 데이터 조회
+    left_table_data = db.session.query(
         Packing_Cs.cs_model,
         Packing_Cs.m_box_no,
         Packing_Cs.cs_qty,
         Packing_Cs.cs_prod_date,
-    Item.ITEM_NM.label('item_name')  # item_name을 가져옴
+        Item.ITEM_NM.label('item_name')  # Item의 ITEM_NM 가져오기
     ).join(
         Item, Packing_Cs.cs_model == Item.ITEM_CD  # cs_model과 Item의 ITEM_CD 조인
     ).filter(
-        Packing_Cs.m_box_no.in_(box_numbers)
+        Packing_Cs.m_box_no.in_(unique_left_box_numbers)
     ).all()
+
+    # Packing_Cs에서 M_BOX_NO가 right_box_numbers에 포함된 데이터 조회 (오른쪽 테이블)
+    right_table_data = db.session.query(
+        Packing_Cs.cs_model,
+        Packing_Cs.m_box_no,
+        Packing_Cs.cs_qty,
+        Packing_Cs.cs_prod_date,
+        Item.ITEM_NM.label('item_name')  # Item의 ITEM_NM 가져오기
+    ).join(
+        Item, Packing_Cs.cs_model == Item.ITEM_CD  # cs_model과 Item의 ITEM_CD 조인
+    ).filter(
+        Packing_Cs.m_box_no.in_(right_box_numbers)
+    ).all()
+
+    # INSRT_DT 값을 Packing_Cs 데이터와 매핑
+    right_table_with_insrt_dt = [
+        {
+            "cs_model": row.cs_model,
+            "m_box_no": row.m_box_no,
+            "cs_qty": row.cs_qty,
+            "cs_prod_date": row.cs_prod_date,
+            "item_name": row.item_name,
+            "insrt_dt": (
+                box[1].strftime('%Y%m%d') if box[1] else None  # INSRT_DT를 "YYYYMMDD" 형식으로 변환
+            )
+        }
+        for row in right_table_data
+        for box in right_box_data if box[0] == row.m_box_no
+    ]
 
     return render_template(
         'product/product_register_sterilizating_out.html',
-        packing_cs_data=packing_cs_data  # 왼쪽 테이블 데이터 전달
+        packing_cs_data=left_table_data,  # 왼쪽 테이블 데이터 전달
+        right_packing_cs_data=right_table_with_insrt_dt  # 오른쪽 테이블 데이터 전달
     )
 
 
@@ -1417,8 +1460,7 @@ def get_packing_cs_data():
         print(f"Error in get_packing_cs_data: {e}")  # 에러 로그
         return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
 
-
-# BARCODE FLOW에 멸균외주 출하 데이터 넣기
+# BARCODE FLOW에 멸균외주 출하 데이터 넣기 + MATERIAL_DOC 데이터 생성및 DCO_NO 부여
 @bp.route('/register_outsourced_packing/', methods=['POST'])
 def register_outsourced_packing():
     try:
@@ -1461,15 +1503,135 @@ def register_outsourced_packing():
                 )
                 db.session.add(new_barcode_flow)
 
-        # 데이터 저장
+        # 새로운 DOC_NO 생성 및 Material_Doc 추가
+        doc_no = generate_doc_no()
+
+        # Barcode_Flow에서 박스별 그룹화하여 ITEM_CD, PRODT_ORDER_NO 등의 데이터 준비
+        grouped_entries = db.session.query(
+            Barcode_Flow.BOX_NUM,
+            Barcode_Flow.ITEM_CD,
+            Barcode_Flow.PRODT_ORDER_NO,
+            Barcode_Flow.MOV_TYPE,
+            Barcode_Flow.FROM_SL_CD,
+            Barcode_Flow.TO_SL_CD,
+            func.count(Barcode_Flow.barcode).label("total_qty")
+        ).filter(
+            Barcode_Flow.BOX_NUM.in_([row.get('box_no') for row in data['rows']]),
+            Barcode_Flow.DOC_NO == None  # 이미 처리된 데이터는 제외
+        ).group_by(
+            Barcode_Flow.BOX_NUM,  # 박스 번호 기준 추가
+            Barcode_Flow.ITEM_CD,
+            Barcode_Flow.PRODT_ORDER_NO,
+            Barcode_Flow.MOV_TYPE,
+            Barcode_Flow.FROM_SL_CD,
+            Barcode_Flow.TO_SL_CD
+        ).all()
+
+        doc_seq = 10
+        new_material_docs = []
+
+        # 그룹화된 데이터를 기반으로 Material_Doc 생성 및 Barcode_Flow 업데이트
+        for entry in grouped_entries:
+            box_num, item_cd, prodt_order_no, mov_type, from_sl_cd, to_sl_cd, total_qty = entry
+
+            # Material_Doc 데이터 준비
+            material_doc = {
+                'DOC_NO': doc_no,
+                'DOC_SEQ': f"{doc_seq:02}",
+                'ITEM_CD': item_cd,
+                'QTY': total_qty,
+                'CREDIT_DEBIT': 'C',
+                'OPR_NO': None,
+                'REPORT_TYPE': 'G',
+                'PRODT_ORDER_NO': prodt_order_no,
+                'BOX_NUM': box_num,  # 박스 번호 추가
+                'MOV_TYPE': mov_type,
+                'FROM_SL_CD': from_sl_cd,
+                'TO_SL_CD': to_sl_cd,
+                'INSRT_DT': datetime.now(),
+                'INSRT_USR': g.user.USR_ID,
+                'UPDT_DT': datetime.now(),
+                'UPDT_USR': g.user.USR_ID
+            }
+            new_material_docs.append(material_doc)
+
+            # Barcode_Flow DOC_NO 업데이트
+            db.session.query(Barcode_Flow).filter(
+                Barcode_Flow.ITEM_CD == item_cd,
+                Barcode_Flow.PRODT_ORDER_NO == prodt_order_no,
+                Barcode_Flow.MOV_TYPE == mov_type,
+                Barcode_Flow.FROM_SL_CD == from_sl_cd,
+                Barcode_Flow.TO_SL_CD == to_sl_cd,
+                Barcode_Flow.BOX_NUM == box_num,  # 특정 박스 번호만 업데이트
+                Barcode_Flow.DOC_NO == None
+            ).update({'DOC_NO': doc_no, 'DOC_SEQ': doc_seq})
+
+            doc_seq += 10
+
+        # Material_Doc에 데이터 삽입
+        if new_material_docs:
+            db.session.bulk_insert_mappings(Material_Doc, new_material_docs)
+
+        # Barcode_Status 업데이트
+        update_barcode_status_after_sterilizating_out(doc_no)
+
+        # 변경사항 커밋
         db.session.commit()
 
-        return jsonify({"status": "success", "message": "Outsourced packing data registered successfully!"})
+        return jsonify({"status": "success", "message": f"Data registered successfully with DOC_NO: {doc_no}"})
 
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error registering outsourced packing data: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+# BARCODE_STATUS 업데이트 -> 멸균 출하
+def update_barcode_status_after_sterilizating_out(doc_no):
+    try:
+        # DOC_NO에 해당하는 모든 바코드 가져오기
+        barcodes = db.session.query(Barcode_Flow.barcode).filter(
+            Barcode_Flow.DOC_NO == doc_no,
+            Barcode_Flow.FROM_SL_CD == 'SF40'  # FROM_SL_CD가 SF40인 조건 추가
+        ).distinct().all()
+
+        # 바코드 목록 추출
+        barcode_list = [barcode_tuple[0] for barcode_tuple in barcodes]
+
+        if not barcode_list:
+            logging.info(f"No barcodes found with DOC_NO={doc_no} and FROM_SL_CD='SF40'.")
+            return
+
+        # Barcode_Status 업데이트
+        for barcode in barcode_list:
+            # Barcode_Status에서 해당 바코드 조회
+            status_record = db.session.query(Barcode_Status).filter(
+                Barcode_Status.barcode == barcode
+            ).first()
+
+            if status_record:
+                # 기존 레코드가 있으면 상태를 "S9"로 업데이트
+                status_record.STATUS = 'S9'
+                logging.info(f"Updated Barcode_Status for barcode={barcode} to STATUS='S9'.")
+            else:
+                # 레코드가 없으면 새로 생성
+                new_status_record = Barcode_Status(
+                    barcode=barcode,
+                    STATUS='S9'
+                )
+                db.session.add(new_status_record)
+                logging.info(f"Inserted new Barcode_Status for barcode={barcode} with STATUS='S9'.")
+
+        # 변경사항 커밋
+        db.session.commit()
+        logging.info("Barcode_Status successfully updated to 'S9' for all relevant barcodes.")
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating Barcode_Status: {str(e)}")
+        raise
+
 
 
 # BARCODE FLOW에 멸균외주 출하데이터 barcode 데이터 추적
@@ -1500,6 +1662,7 @@ def get_barcodes_by_box():
     except Exception as e:
         logging.error(f"Error fetching barcodes by box: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 
 
