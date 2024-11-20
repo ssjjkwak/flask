@@ -1375,8 +1375,6 @@ def product_register_sterilizating_out():
         packing_cs_data=packing_cs_data  # 왼쪽 테이블 데이터 전달
     )
 
-# 글로벌 변수로 스캔된 QR 코드 추적 (실제 구현에서는 데이터베이스를 사용하는 것이 더 적합)
-scanned_qr_codes = set()
 
 @bp.route('/get_packing_cs_data/', methods=['POST'])
 def get_packing_cs_data():
@@ -1391,9 +1389,6 @@ def get_packing_cs_data():
             print("Invalid QR Code Length or Missing QR Code")  # 에러 로그
             return jsonify({'status': 'error', 'message': 'QR 코드가 유효하지 않습니다. 47자리를 입력하세요.'}), 400
 
-        if udi_qr in scanned_qr_codes:
-            print(f"Duplicate QR Code: {udi_qr}")  # 중복 체크 로그
-            return jsonify({'status': 'error', 'message': '이미 스캔된 QR 코드입니다.'}), 400
 
         packing_cs_data = db.session.query(
             Packing_Cs.m_box_no,
@@ -1407,7 +1402,6 @@ def get_packing_cs_data():
             print(f"No Data Found for QR Code: {udi_qr}")  # 데이터 없음 로그
             return jsonify({'status': 'error', 'message': '해당 QR 코드에 대한 데이터를 찾을 수 없습니다.'}), 404
 
-        scanned_qr_codes.add(udi_qr)
         print(f"QR Code {udi_qr} added to scanned list.")  # 성공 로그
 
         return jsonify({
@@ -1423,12 +1417,6 @@ def get_packing_cs_data():
     except Exception as e:
         print(f"Error in get_packing_cs_data: {e}")  # 에러 로그
         return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
-
-
-
-
-
-
 
 # 멸균반제품 반출 결과조회
 @bp.route('/result_sterilizating_out/', methods=['GET', 'POST'])

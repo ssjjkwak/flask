@@ -264,114 +264,111 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // 외주반출 등록 버튼 클릭 시 모달 열기
-    document.getElementById('openModalButton').addEventListener('click', function () {
-        var modal = new bootstrap.Modal(document.getElementById('registerModal'));
-        modal.show();
-
-        // 모달이 열린 후에 하단 스캔 입력 필드로 포커스 이동
-        setTimeout(function () {
-            var udiInputFooter = document.getElementById('udiInputFooter');
-            if (udiInputFooter) {
-                udiInputFooter.focus();
-            }
-        }, 300); // 0.3초 지연 후 포커스 설정
-    });
-
-
     document.addEventListener('DOMContentLoaded', function () {
-        {% if form_submitted and not orders_with_hdr %}
-        document.getElementById('errorModalBody').innerText = "데이터 없음";
-        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show();
-        {% endif %}
-    });
+        const modalElement = document.getElementById('registerModal');
+        let modalInstance = null;
+        let scannedBoxes = null; // 스캔된 박스 Set
 
+        // 모달 열릴 때 이벤트
+        document.getElementById('openModalButton').addEventListener('click', function () {
+            modalInstance = new bootstrap.Modal(modalElement);
+            modalInstance.show();
 
-    // 이미 스캔된 박스를 저장할 Set 생성
-    const scannedBoxes = new Set();
-    let totalBoxCount = 0; // 스캔된 박스 수량
-    let totalItemCount = 0; // 스캔된 제품 수량
+            // Set 변수 초기화
+            scannedBoxes = new Set();
+            console.log('모달 열림: Set 초기화 완료');
 
-    // QR 코드 데이터를 가져와 테이블 업데이트
-    function fetchPackingCsData(udiQrCode) {
-        if (scannedBoxes.has(udiQrCode)) {
-            alert('이미 스캔된 QR 코드입니다.');
-            return;
-        }
-
-        fetch('/product/get_packing_cs_data/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ udi_qr: udiQrCode }),
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+            // 모달 열림 후 QR 코드 입력 필드에 포커스 이동
+            setTimeout(() => {
+                const udiInputFooter = document.getElementById('udiInputFooter');
+                if (udiInputFooter) {
+                    udiInputFooter.focus();
                 }
-                return response.json();
-            })
-            .then((data) => {
-                if (data.status === 'success' && data.packing_cs) {
-                    addRowToModalTable(data.packing_cs);
-                    scannedBoxes.add(udiQrCode);
-                } else {
-                    alert(data.message || '해당 QR 코드에 대한 데이터를 찾을 수 없습니다.');
-                }
-            })
-            .catch((error) => {
-                console.error('Error fetching Packing_Cs data:', error);
-                alert('데이터를 가져오는 중 오류가 발생했습니다.');
-            });
-    }
+            }, 300);
+        });
 
+        // 모달 닫힐 때 이벤트
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            // Set 변수 초기화
+            scannedBoxes = null;
+            console.log('모달이 닫혔습니다. scannedBoxes 초기화 완료');
 
+            // 모달 테이블 데이터 초기화
+            const modalTableBody = document.getElementById('modalTableBody');
+            modalTableBody.innerHTML = '';
+            console.log('모달 테이블 데이터 초기화 완료');
+        });
 
+        // QR 코드 입력 필드 이벤트
+        document.getElementById('udiInputFooter').addEventListener('input', function () {
+            const udiQrCode = this.value.trim();
 
-
-
-
-    // 모달 테이블에 행 추가
-    function addRowToModalTable(packingCsData) {
-        const modalTableBody = document.getElementById('modalTableBody');
-        const row = document.createElement('tr');
-
-        row.innerHTML = `
-            <td>${packingCsData.m_box_no}</td>
-            <td>${packingCsData.cs_model}</td>
-            <td>${packingCsData.cs_qty}</td>
-            <td>${packingCsData.cs_prod_date}</td>
-        `;
-
-        modalTableBody.appendChild(row);
-    }
-
-    // UDI QR 입력 필드에서 입력 이벤트 처리
-    document.getElementById('udiInputFooter').addEventListener('input', function () {
-        const udiQrCode = this.value.trim(); // UDI QR 코드 가져오기
-
-        // 48자리 입력 시 데이터 처리
-        if (udiQrCode.length === 47) {
-            this.value = ''; // 입력 필드 초기화
-            fetchPackingCsData(udiQrCode); // Packing_Cs 데이터 가져오기
-        }
-    });
-
-
-    // 모달이 열릴 때 UDI QR 필드에 포커스 설정
-    document.getElementById('openModalButton').addEventListener('click', function () {
-        const modal = new bootstrap.Modal(document.getElementById('registerModal'));
-        modal.show();
-
-        setTimeout(() => {
-            const udiInputFooter = document.getElementById('udiInputFooter');
-            if (udiInputFooter) {
-                udiInputFooter.focus(); // 포커스 설정
+            // QR 코드가 47자리일 때 처리
+            if (udiQrCode.length === 47) {
+                this.value = ''; // 입력 필드 초기화
+                fetchPackingCsData(udiQrCode); // 서버에서 데이터 가져오기
             }
-        }, 500);
+        });
+
+        // 서버와 통신하여 데이터 가져오기
+        function fetchPackingCsData(udiQrCode) {
+            if (!scannedBoxes) {
+                console.warn('모달이 닫힌 상태에서는 QR 코드 스캔이 동작하지 않습니다.');
+                return;
+            }
+
+            if (scannedBoxes.has(udiQrCode)) {
+                alert('이미 스캔된 QR 코드입니다.');
+                return;
+            }
+
+            fetch('/product/get_packing_cs_data/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ udi_qr: udiQrCode }),
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    if (data.status === 'success' && data.packing_cs) {
+                        addRowToModalTable(data.packing_cs); // 모달 테이블에 행 추가
+                        scannedBoxes.add(udiQrCode); // 스캔된 QR 코드 저장
+                        console.log(`QR 코드 스캔 성공: ${udiQrCode}`);
+                    } else {
+                        alert(data.message || '해당 QR 코드에 대한 데이터를 찾을 수 없습니다.');
+                    }
+                })
+                .catch((error) => {
+                    console.error('서버 통신 중 오류 발생:', error);
+                    alert('서버와 통신 중 오류가 발생했습니다.');
+                });
+        }
+
+        // 모달 테이블에 행 추가
+        function addRowToModalTable(packingCsData) {
+            const modalTableBody = document.getElementById('modalTableBody');
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td>${packingCsData.m_box_no}</td>
+                <td>${packingCsData.cs_model}</td>
+                <td>${packingCsData.cs_qty}</td>
+                <td>${packingCsData.cs_prod_date}</td>
+            `;
+
+            modalTableBody.appendChild(row);
+
+            // 테이블 추가 후 콘솔 로그
+            console.log('모달 테이블에 데이터 추가 완료:', packingCsData);
+        }
     });
+
 </script>
 
 
