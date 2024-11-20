@@ -1154,7 +1154,6 @@ def save_packing_data():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-
 def assign_doc_no_and_material_doc_packing(master_box_no):
     # 새로운 DOC_NO 생성
     doc_no = generate_doc_no()
@@ -1350,7 +1349,7 @@ def get_box_details(box_no):
     return jsonify({'rows': rows, 'cs_details': cs_details})
 
 
-# 멸균반제품 반출등록
+# 멸균반제품 반출등록 렌더링
 @bp.route('/register_sterilizating_out/', methods=['GET', 'POST'])
 def product_register_sterilizating_out():
     # Barcode_Flow에서 TO_SL_CD가 "SF40"인 데이터들의 BOX_NUM 조회
@@ -1376,6 +1375,7 @@ def product_register_sterilizating_out():
     )
 
 
+# 멸균반제품 반출시 모달에 대한 박스 QR 체크 로직 라우트 함수
 @bp.route('/get_packing_cs_data/', methods=['POST'])
 def get_packing_cs_data():
     try:
@@ -1388,7 +1388,6 @@ def get_packing_cs_data():
         if not udi_qr or len(udi_qr) != 47:
             print("Invalid QR Code Length or Missing QR Code")  # 에러 로그
             return jsonify({'status': 'error', 'message': 'QR 코드가 유효하지 않습니다. 47자리를 입력하세요.'}), 400
-
 
         packing_cs_data = db.session.query(
             Packing_Cs.m_box_no,
@@ -1417,6 +1416,92 @@ def get_packing_cs_data():
     except Exception as e:
         print(f"Error in get_packing_cs_data: {e}")  # 에러 로그
         return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
+
+
+# BARCODE FLOW에 멸균외주 출하 데이터 넣기
+@bp.route('/register_outsourced_packing/', methods=['POST'])
+def register_outsourced_packing():
+    try:
+        data = request.json
+        logging.info(f"Received data for outsourced packing: {data}")
+
+        # 데이터 유효성 검사
+        if not data or 'rows' not in data:
+            return jsonify({"status": "error", "message": "No rows provided for processing"}), 400
+
+        for row in data['rows']:
+            m_box_no = row.get('m_box_no') or row.get('box_no')
+
+            if not m_box_no:
+                logging.warning("Missing m_box_no in the request row.")
+                continue
+
+            # Barcode_Flow에서 m_box_no와 관련된 barcode 조회
+            barcodes = db.session.query(Barcode_Flow).filter_by(BOX_NUM=m_box_no).all()
+
+            if not barcodes:
+                logging.warning(f"No barcodes found for m_box_no: {m_box_no}")
+                continue
+
+            for barcode_entry in barcodes:
+                # Barcode_Flow의 기존 데이터 기반으로 새로운 데이터 생성
+                new_barcode_flow = Barcode_Flow(
+                    barcode=barcode_entry.barcode,
+                    ITEM_CD=barcode_entry.ITEM_CD,
+                    WC_CD=None,
+                    FROM_SL_CD=barcode_entry.TO_SL_CD,
+                    TO_SL_CD='WO00061',  # 외주 창고 코드
+                    MOV_TYPE='T01',
+                    CREDIT_DEBIT='C',
+                    REPORT_TYPE='G',
+                    BOX_NUM=m_box_no,
+                    INSRT_DT=datetime.now(),
+                    INSRT_USR=g.user.USR_ID,
+                    UPDT_USR=g.user.USR_ID
+                )
+                db.session.add(new_barcode_flow)
+
+        # 데이터 저장
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "Outsourced packing data registered successfully!"})
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error registering outsourced packing data: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# BARCODE FLOW에 멸균외주 출하데이터 barcode 데이터 추적
+@bp.route('/get_barcodes_by_box/', methods=['POST'])
+def get_barcodes_by_box():
+    try:
+        # 클라이언트에서 전달받은 데이터
+        data = request.json
+        logging.info(f"Received request for barcodes by box: {data}")
+
+        if not data or 'm_box_no' not in data:  # m_box_no는 Packing_Cs의 필드
+            return jsonify({"status": "error", "message": "Missing 'm_box_no' field"}), 400
+
+        box_num = data['m_box_no']  # m_box_no와 box_num이 동일하므로 변환
+
+        # Barcode_Flow에서 box_num과 관련된 barcode 조회
+        barcodes = db.session.query(Barcode_Flow.barcode).filter_by(BOX_NUM=box_num).all()
+
+        if not barcodes:
+            return jsonify({"status": "error", "message": f"No barcodes found for m_box_no {box_num}"}), 404
+
+        # 바코드 목록을 클라이언트로 반환
+        barcode_list = [b.barcode for b in barcodes]
+        logging.info(f"Barcodes for m_box_no {box_num}: {barcode_list}")
+
+        return jsonify({"status": "success", "barcodes": barcode_list})
+
+    except Exception as e:
+        logging.error(f"Error fetching barcodes by box: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 
 # 멸균반제품 반출 결과조회
 @bp.route('/result_sterilizating_out/', methods=['GET', 'POST'])
