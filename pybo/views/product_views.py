@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import re
 import win32com.client
 from flask import Blueprint, url_for, render_template, request, current_app, jsonify, g, flash, session
-from sqlalchemy import null, func, or_
+from sqlalchemy import null, func, or_, cast, Date
 from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
@@ -1352,6 +1352,9 @@ def get_box_details(box_no):
 # 멸균반제품 반출등록 렌더링
 @bp.route('/register_sterilizating_out/', methods=['GET', 'POST'])
 def product_register_sterilizating_out():
+    # 조회 조건
+    insrt_dt_start = request.form.get('start_date', datetime.now().strftime('%Y-%m-%d'))
+
     # Barcode_Flow에서 TO_SL_CD가 "SF40"인 데이터들의 BOX_NUM 조회 (왼쪽 테이블)
     left_barcode_query = db.session.query(Barcode_Flow.BOX_NUM).filter(Barcode_Flow.TO_SL_CD == 'SF40').distinct()
     left_box_numbers = [box_num[0] for box_num in left_barcode_query.all()]
@@ -1361,13 +1364,20 @@ def product_register_sterilizating_out():
         Barcode_Flow.BOX_NUM,
         Barcode_Flow.INSRT_DT  # INSRT_DT를 추가로 가져옴
     ).filter(
-        Barcode_Flow.FROM_SL_CD == 'SF40'
+        Barcode_Flow.FROM_SL_CD == 'SF40',
+        cast(Barcode_Flow.INSRT_DT, Date) >= insrt_dt_start
     ).distinct()
     right_box_data = right_barcode_query.all()
     right_box_numbers = [box_data[0] for box_data in right_box_data]
 
-    # 오른쪽 테이블과 중복되지 않은 박스번호만 필터링 (왼쪽 테이블)
-    unique_left_box_numbers = set(left_box_numbers) - set(right_box_numbers)
+    # 이미 반출 등록된 박스 번호 조회 (FROM_SL_CD='SF40'인 데이터)
+    already_registered_boxes = db.session.query(Barcode_Flow.BOX_NUM).filter(
+        Barcode_Flow.FROM_SL_CD == 'SF40'
+    ).distinct()
+    already_registered_box_numbers = {box_num[0] for box_num in already_registered_boxes}
+
+    # 오른쪽 테이블과 이미 등록된 박스번호를 제외한 데이터 필터링 (왼쪽 테이블)
+    unique_left_box_numbers = set(left_box_numbers) - set(right_box_numbers) - already_registered_box_numbers
 
     # Packing_Cs에서 M_BOX_NO가 unique_left_box_numbers에 포함된 데이터 조회
     left_table_data = db.session.query(
@@ -1414,8 +1424,11 @@ def product_register_sterilizating_out():
     return render_template(
         'product/product_register_sterilizating_out.html',
         packing_cs_data=left_table_data,  # 왼쪽 테이블 데이터 전달
-        right_packing_cs_data=right_table_with_insrt_dt  # 오른쪽 테이블 데이터 전달
+        right_packing_cs_data=right_table_with_insrt_dt,  # 오른쪽 테이블 데이터 전달
+        INSRT_DT_START=insrt_dt_start  # 기본 조회 날짜 전달
     )
+
+
 
 
 # 멸균반제품 반출시 모달에 대한 박스 QR 체크 로직 라우트 함수
