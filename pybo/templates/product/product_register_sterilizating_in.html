@@ -92,10 +92,10 @@
                         <div class="d-flex">
                             <input type="date" class="form-control form-control-sm me-2" id="start_date"
                                    name="start_date"
-                                   value="{{ INSRT_DT_START.strftime('%Y-%m-%d') if INSRT_DT_START else '' }}">
+                                   value="{{ INSRT_DT_START }}">
                             <span class="mx-2">~</span>
                             <input type="date" class="form-control form-control-sm ms-2" id="end_date" name="end_date"
-                                   value="{{ INSRT_DT_END.strftime('%Y-%m-%d') if INSRT_DT_END else '' }}">
+                                   value="{{ INSRT_DT_END }}">
                         </div>
                     </div>
                 </div>
@@ -117,40 +117,18 @@
                     <th>박스번호</th>
                     <th>수량</th>
                     <th>반출일자</th>
-
                 </tr>
                 </thead>
                 <tbody>
-
-                <tr>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>PO20241114000001</td>
-                    <td style="text-align: right;">1</td>
-                    <td>20241201</td>
-                </tr>
-                <tr>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>PO20241114000001</td>
-                    <td style="text-align: right;">1</td>
-                    <td>20241201</td>
-                </tr>
-                <tr>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>PO20241114000001</td>
-                    <td style="text-align: right;">1</td>
-                    <td>20241201</td>
-                </tr>
-                <tr>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>PO20241114000001</td>
-                    <td style="text-align: right;">1</td>
-                    <td>20241201</td>
-                </tr>
-
+                    {% for row in left_table_data %}
+                    <tr>
+                        <td style="text-align: left;">{{ row.item_cd }}</td>
+                        <td style="text-align: left;">{{ row.item_name }}</td>
+                        <td><span class="badge bg-primary">{{ row.box_num }}</span></td>
+                        <td style="text-align: right;">{{ row.qty }}</td>
+                        <td>{{ row.insrt_dt }}</td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

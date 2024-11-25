@@ -1726,10 +1726,55 @@ def product_result_sterilizating_out():
     )
 
 
-# 멸균제품 입고등록
+# 멸균제품 입고등록 렌더링
 @bp.route('/register_sterilizating_in/', methods=['GET', 'POST'])
 def product_register_sterilizating_in():
-    return render_template('product/product_register_sterilizating_in.html')
+    # 검색 조건 처리
+    plant_code = request.form.get('plant_code', '').strip()
+    start_date = request.form.get('start_date', datetime.now().strftime('%Y-%m-%d'))
+    end_date = request.form.get('end_date', datetime.now().strftime('%Y-%m-%d'))
+
+    # 기본 날짜 변환
+    start_date = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1, seconds=-1)  # 하루 끝까지 포함
+
+    # Barcode_Flow에서 TO_SL_CD가 'WO00061'인 데이터 조회 (왼쪽 테이블)
+    left_table_query = db.session.query(
+        Barcode_Flow.BOX_NUM,
+        Barcode_Flow.ITEM_CD,
+        Item.ITEM_NM.label("item_name"),
+        Packing_Cs.cs_qty.label("qty"),  # Packing_Cs에서 수량 가져오기
+        Barcode_Flow.INSRT_DT
+    ).join(
+        Item, Barcode_Flow.ITEM_CD == Item.ITEM_CD
+    ).join(
+        Packing_Cs, Barcode_Flow.BOX_NUM == Packing_Cs.m_box_no  # Packing_Cs와 연결
+    ).filter(
+        Barcode_Flow.TO_SL_CD == 'WO00061',
+        Barcode_Flow.INSRT_DT.between(start_date, end_date)
+    ).all()
+
+    # 결과 데이터 포맷
+    left_table_data = [
+        {
+            "box_num": row.BOX_NUM,
+            "item_cd": row.ITEM_CD,
+            "item_name": row.item_name,
+            "qty": row.qty,  # Packing_Cs의 수량 사용
+            "insrt_dt": row.INSRT_DT
+        }
+        for row in left_table_query
+    ]
+
+    # 렌더링
+    return render_template(
+        'product/product_register_sterilizating_in.html',
+        left_table_data=left_table_data,  # 왼쪽 테이블에 전달할 데이터
+        INSRT_DT_START=start_date.strftime('%Y-%m-%d'),
+        INSRT_DT_END=end_date.strftime('%Y-%m-%d')
+    )
+
+
 
 # 멸균제품 입고 결과조회
 @bp.route('/result_sterilizating_in/', methods=['GET', 'POST'])
