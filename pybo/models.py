@@ -324,6 +324,7 @@ class Barcode_Flow(db.Model):
     FROM_SL_CD = db.Column(db.NVARCHAR(7), nullable=True)
     DOC_NO = db.Column(db.NVARCHAR(18), nullable=True)
     DOC_SEQ = db.Column(db.SMALLINT, nullable=True)
+    BP_CD = db.Column(db.NVARCHAR(20), nullable=True)
 
 class Barcode_Status(db.Model):
     __tablename__ = 'P_BARCODE_STATUS'

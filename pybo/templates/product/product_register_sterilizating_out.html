@@ -124,7 +124,7 @@
                 <tr>
                     <td style="text-align: left;">{{ packing.cs_model }}</td>
                     <td style="text-align: left;">{{ packing.item_name }}</td>
-                    <td>{{ packing.m_box_no }}</td>
+                    <td><span class="badge bg-primary">{{ packing.m_box_no }}</span></td>
                     <td style="text-align: right;">{{ packing.cs_qty }}</td>
                     <td>{{ packing.cs_prod_date }}</td>
                 </tr>
@@ -152,7 +152,7 @@
                     <tr>
                         <td style="text-align: left;">{{ packing.cs_model }}</td>
                         <td style="text-align: left;">{{ packing.item_name }}</td>
-                        <td>{{ packing.m_box_no }}</td>
+                        <td><span class="badge bg-primary">{{ packing.m_box_no }}</span></td>
                         <td style="text-align: right;">{{ packing.cs_qty }}</td>
                         <td>{{ packing.insrt_dt }}</td>
                     </tr>
@@ -388,7 +388,10 @@
                 })
                 .then((data) => {
                     if (data.status === 'success') {
-                        alert('등록이 완료되었습니다!');
+                        document.getElementById('completeModalBody').innerText = data.message;
+                        var completeModal = new bootstrap.Modal(document.getElementById('completeModal'));
+                        completeModal.show();
+
                         console.log('등록 성공:', data.message);
 
                         // 등록 성공 후 데이터 초기화
@@ -396,6 +399,10 @@
                         const modalTableBody = document.getElementById('modalTableBody');
                         modalTableBody.innerHTML = ''; // 테이블 비우기
                         modalInstance.hide();
+
+                        setTimeout(function() {
+                            window.location.href = "{{ url_for('product.product_result_sterilizating_out') }}";
+                        }, 3000);
                     } else {
                         alert(data.message || '등록 중 오류가 발생했습니다.');
                     }

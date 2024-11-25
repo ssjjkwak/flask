@@ -13,8 +13,8 @@ from pybo.models import Production_Order, Item, Work_Center, Plant, Production_A
     Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Item_Alpha, Biz_Partner, Purchase_Order, \
     Storage_Location, Packing_Cs, Bom_Detail, Storage_Location, Barcode_Status, Material_Doc, Status
 from collections import defaultdict
-from sqlalchemy.orm import load_only
-
+from sqlalchemy.orm import load_only, joinedload
+from sqlalchemy.sql import func
 
 
 bp = Blueprint('product', __name__, url_prefix='/product')
@@ -347,7 +347,6 @@ def product_excel_result():
                            lot=lot)
 
 
-
 # 여기에 조회조건 걸어서 register 화면에 데이터 렌더링
 @bp.route('/register/', methods=['GET', 'POST'])
 def product_register():
@@ -392,7 +391,13 @@ def product_register_result():
     query = db.session.query(
         Barcode_Flow,
         Production_Alpha.LOT,
-        Production_Alpha.product
+        Production_Alpha.product,
+        Barcode_Flow.FROM_SL_CD,  # FROM 창고
+        Barcode_Flow.TO_SL_CD,  # TO 창고
+        Barcode_Flow.INSRT_DT,  # INSRT 날짜
+        Barcode_Flow.UPDT_DT,  # UPDT 날짜
+        Barcode_Flow.BOX_NUM,  # Box 번호
+        Barcode_Flow.DOC_NO  # 전표번호
     ).join(
         Production_Alpha, Barcode_Flow.barcode == Production_Alpha.barcode
     )
@@ -1348,7 +1353,6 @@ def get_box_details(box_no):
 
     return jsonify({'rows': rows, 'cs_details': cs_details})
 
-
 # 멸균반제품 반출등록 렌더링
 @bp.route('/register_sterilizating_out/', methods=['GET', 'POST'])
 def product_register_sterilizating_out():
@@ -1428,9 +1432,6 @@ def product_register_sterilizating_out():
         INSRT_DT_START=insrt_dt_start  # 기본 조회 날짜 전달
     )
 
-
-
-
 # 멸균반제품 반출시 모달에 대한 박스 QR 체크 로직 라우트 함수
 @bp.route('/get_packing_cs_data/', methods=['POST'])
 def get_packing_cs_data():
@@ -1509,6 +1510,7 @@ def register_outsourced_packing():
                     MOV_TYPE='T01',
                     CREDIT_DEBIT='C',
                     REPORT_TYPE='G',
+                    BP_CD='O00061', # 그린피아기술
                     BOX_NUM=m_box_no,
                     INSRT_DT=datetime.now(),
                     INSRT_USR=g.user.USR_ID,
@@ -1526,6 +1528,7 @@ def register_outsourced_packing():
             Barcode_Flow.PRODT_ORDER_NO,
             Barcode_Flow.MOV_TYPE,
             Barcode_Flow.FROM_SL_CD,
+            Barcode_Flow.BP_CD,
             Barcode_Flow.TO_SL_CD,
             func.count(Barcode_Flow.barcode).label("total_qty")
         ).filter(
@@ -1537,6 +1540,7 @@ def register_outsourced_packing():
             Barcode_Flow.PRODT_ORDER_NO,
             Barcode_Flow.MOV_TYPE,
             Barcode_Flow.FROM_SL_CD,
+            Barcode_Flow.BP_CD,
             Barcode_Flow.TO_SL_CD
         ).all()
 
@@ -1545,7 +1549,7 @@ def register_outsourced_packing():
 
         # 그룹화된 데이터를 기반으로 Material_Doc 생성 및 Barcode_Flow 업데이트
         for entry in grouped_entries:
-            box_num, item_cd, prodt_order_no, mov_type, from_sl_cd, to_sl_cd, total_qty = entry
+            box_num, item_cd, prodt_order_no, mov_type, from_sl_cd, bp_cd, to_sl_cd, total_qty = entry
 
             # Material_Doc 데이터 준비
             material_doc = {
@@ -1561,6 +1565,7 @@ def register_outsourced_packing():
                 'MOV_TYPE': mov_type,
                 'FROM_SL_CD': from_sl_cd,
                 'TO_SL_CD': to_sl_cd,
+                'BP_CD': bp_cd,
                 'INSRT_DT': datetime.now(),
                 'INSRT_USR': g.user.USR_ID,
                 'UPDT_DT': datetime.now(),
@@ -1591,14 +1596,12 @@ def register_outsourced_packing():
         # 변경사항 커밋
         db.session.commit()
 
-        return jsonify({"status": "success", "message": f"Data registered successfully with DOC_NO: {doc_no}"})
+        return jsonify({"status": "success", "message": f"멸균외주 출하등록 및 전표생성 완료: {doc_no}"})
 
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error registering outsourced packing data: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
-
 
 # BARCODE_STATUS 업데이트 -> 멸균 출하
 def update_barcode_status_after_sterilizating_out(doc_no):
@@ -1645,8 +1648,6 @@ def update_barcode_status_after_sterilizating_out(doc_no):
         logging.error(f"Error updating Barcode_Status: {str(e)}")
         raise
 
-
-
 # BARCODE FLOW에 멸균외주 출하데이터 barcode 데이터 추적
 @bp.route('/get_barcodes_by_box/', methods=['POST'])
 def get_barcodes_by_box():
@@ -1676,13 +1677,54 @@ def get_barcodes_by_box():
         logging.error(f"Error fetching barcodes by box: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
-
-
-# 멸균반제품 반출 결과조회
+# 멸균반제품 반출 결과 조회 렌더링
 @bp.route('/result_sterilizating_out/', methods=['GET', 'POST'])
 def product_result_sterilizating_out():
-    return render_template('product/product_result_sterilizating_out.html')
+    # 검색 조건 받아오기
+    plant_code = request.form.get('plant_code', '').strip()
+    from_sl_cd = request.form.get('from-sl-cd', 'SF40').strip()
+    to_sl_cd = request.form.get('to-sl-cd', '').strip()
+    start_date = request.form.get('start_date', datetime.now().strftime('%Y-%m-%d')).strip()
+
+    # 기본 쿼리 작성
+    query = (
+        db.session.query(
+            Material_Doc.DOC_NO,
+            Material_Doc.DOC_SEQ,
+            Material_Doc.ITEM_CD,
+            Item.ITEM_NM,
+            Material_Doc.BP_CD,
+            Biz_Partner.bp_nm,
+            Item.BASIC_UNIT,
+            Material_Doc.QTY,
+            Material_Doc.BOX_NUM,
+            Material_Doc.INSRT_DT
+        )
+        .join(Item, Material_Doc.ITEM_CD == Item.ITEM_CD, isouter=True)
+        .join(Biz_Partner, Material_Doc.BP_CD == Biz_Partner.bp_cd, isouter=True)
+    )
+
+    query = query.filter(Material_Doc.FROM_SL_CD == 'SF40')
+
+    # 검색 조건 적용
+    if plant_code:
+        query = query.filter(Material_Doc.PLANT_CD == plant_code)
+    if to_sl_cd:
+        query = query.filter(Material_Doc.TO_SL_CD == to_sl_cd)
+    if start_date:
+        query = query.filter(cast(Material_Doc.INSRT_DT, Date) >= start_date)
+
+    # 결과 조회
+    orders_with_hdr = query.order_by(Material_Doc.DOC_NO, Material_Doc.DOC_SEQ).all()
+
+    # 템플릿 렌더링
+    return render_template(
+        'product/product_result_sterilizating_out.html',
+        orders_with_hdr=orders_with_hdr,
+        INSRT_DT_START=start_date,
+        form_submitted=True
+    )
+
 
 # 멸균제품 입고등록
 @bp.route('/register_sterilizating_in/', methods=['GET', 'POST'])
