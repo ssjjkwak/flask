@@ -1738,42 +1738,75 @@ def product_register_sterilizating_in():
     start_date = datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1, seconds=-1)  # 하루 끝까지 포함
 
-    # Barcode_Flow에서 TO_SL_CD가 'WO00061'인 데이터 조회 (왼쪽 테이블)
+    # Packing_Cs와 Barcode_Flow를 JOIN하여 TO_SL_CD가 'WO00061'인 데이터만 조회 (왼쪽 테이블)
     left_table_query = db.session.query(
-        Barcode_Flow.BOX_NUM,
-        Barcode_Flow.ITEM_CD,
+        Packing_Cs.m_box_no.label("box_num"),  # Packing_Cs의 박스 번호 가져오기
+        Barcode_Flow.ITEM_CD.label("item_cd"),
         Item.ITEM_NM.label("item_name"),
-        Packing_Cs.cs_qty.label("qty"),  # Packing_Cs에서 수량 가져오기
-        Barcode_Flow.INSRT_DT
+        Packing_Cs.cs_qty.label("qty"),  # Packing_Cs의 수량 가져오기
+        Packing_Cs.cs_prod_date.label("prod_date"),  # Packing_Cs의 포장일자 가져오기
+        Barcode_Flow.INSRT_DT.label("insrt_dt")  # Barcode_Flow의 삽입일자
     ).join(
-        Item, Barcode_Flow.ITEM_CD == Item.ITEM_CD
+        Barcode_Flow, Packing_Cs.m_box_no == Barcode_Flow.BOX_NUM  # Packing_Cs와 Barcode_Flow JOIN
     ).join(
-        Packing_Cs, Barcode_Flow.BOX_NUM == Packing_Cs.m_box_no  # Packing_Cs와 연결
+        Item, Barcode_Flow.ITEM_CD == Item.ITEM_CD  # 품목 연결
     ).filter(
-        Barcode_Flow.TO_SL_CD == 'WO00061',
-        Barcode_Flow.INSRT_DT.between(start_date, end_date)
+        Barcode_Flow.TO_SL_CD == 'WO00061',  # TO_SL_CD가 'WO00061'인 데이터만
+        Barcode_Flow.INSRT_DT.between(start_date, end_date)  # 삽입일자 필터링
+    ).distinct(
+        Packing_Cs.m_box_no  # DISTINCT 기준 컬럼 설정
     ).all()
 
-    # 결과 데이터 포맷
+    # 결과 데이터 포맷 (왼쪽 테이블)
     left_table_data = [
         {
-            "box_num": row.BOX_NUM,
-            "item_cd": row.ITEM_CD,
+            "box_num": row.box_num,  # Packing_Cs의 박스 번호 사용
+            "item_cd": row.item_cd,
             "item_name": row.item_name,
             "qty": row.qty,  # Packing_Cs의 수량 사용
-            "insrt_dt": row.INSRT_DT
+            "prod_date": row.prod_date,
+            "insrt_dt": row.insrt_dt.strftime('%Y-%m-%d %H:%M:%S') if row.insrt_dt else None
         }
         for row in left_table_query
+    ]
+
+    # 모든 발주 데이터를 조회 (오른쪽 테이블)
+    right_table_query = db.session.query(
+        Purchase_Order.PO_NO.label("po_no"),
+        Purchase_Order.PO_SEQ_NO.label("po_seq"),
+        Purchase_Order.ITEM_CD.label("item_cd"),
+        Item.ITEM_NM.label("item_name"),
+        Purchase_Order.SL_CD.label("sl_cd"),
+        Purchase_Order.PO_QTY.label("po_qty"),
+        Purchase_Order.OUT_QTY.label("out_qty"),
+        Purchase_Order.IN_QTY.label("in_qty")
+    ).join(
+        Item, Purchase_Order.ITEM_CD == Item.ITEM_CD, isouter=True  # 품목 연결 (OUTER JOIN)
+    ).all()
+
+    # 결과 데이터 포맷 (오른쪽 테이블)
+    right_table_data = [
+        {
+            "po_no": row.po_no,
+            "po_seq": row.po_seq,
+            "item_cd": row.item_cd,
+            "item_name": row.item_name,
+            "sl_cd": row.sl_cd,
+            "po_qty": row.po_qty,
+            "out_qty": row.out_qty,
+            "in_qty": row.in_qty
+        }
+        for row in right_table_query
     ]
 
     # 렌더링
     return render_template(
         'product/product_register_sterilizating_in.html',
         left_table_data=left_table_data,  # 왼쪽 테이블에 전달할 데이터
+        right_table_data=right_table_data,  # 오른쪽 테이블에 전달할 데이터
         INSRT_DT_START=start_date.strftime('%Y-%m-%d'),
         INSRT_DT_END=end_date.strftime('%Y-%m-%d')
     )
-
 
 
 # 멸균제품 입고 결과조회

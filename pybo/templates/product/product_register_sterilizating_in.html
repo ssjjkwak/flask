@@ -151,58 +151,18 @@
                 </tr>
                 </thead>
                 <tbody>
-
+                {% for row in right_table_data %}
                 <tr>
-                    <td>PO20241114000001</td>
-                    <td>10</td>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>SL_CD</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
+                    <td>{{ row.po_no }}</td>
+                    <td>{{ row.po_seq }}</td>
+                    <td>{{ row.item_cd }}</td>
+                    <td>{{ row.item_name }}</td>
+                    <td>{{ row.sl_cd }}</td>
+                    <td style="text-align: right;">{{ (row.po_qty or 0) | int  }}</td>
+                    <td style="text-align: right;">{{ (row.out_qty or 0) | int }}</td>
+                    <td style="text-align: right;">{{ (row.in_qty or 0) | int }}</td>
                 </tr>
-                <tr>
-                    <td>PO20241114000001</td>
-                    <td>10</td>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>SL_CD</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                </tr>
-                <tr>
-                    <td>PO20241114000001</td>
-                    <td>10</td>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>SL_CD</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                </tr>
-                <tr>
-                    <td>PO20241114000001</td>
-                    <td>10</td>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>SL_CD</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                </tr>
-                <tr>
-                    <td>PO20241114000001</td>
-                    <td>10</td>
-                    <td style="text-align: left;">item_cd</td>
-                    <td style="text-align: left;">120H 60Step 반제품_test</td>
-                    <td>SL_CD</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                    <td style="text-align: right;">200</td>
-                </tr>
-
+                {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -215,16 +175,12 @@
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="registerModalLabel">외주반출 등록</h5>
+                <h5 class="modal-title" id="registerModalLabel">외주입고 등록</h5>
             </div>
             <div class="modal-body">
                 <form id="packingForm" method="POST" >
                     <div class="row">
                         <div class="col-md-3">
-                            <div class="mb-3 col-10">
-                                <label for="plant_code">공장</label>
-                                <input type="text" class="form-control" id="plant" disabled>
-                            </div>
                             <div class="mb-3 col-10">
                                 <label for="modalOrderNo">발주번호</label>
                                 <input type="text" class="form-control" id="modalOrderNo" disabled>
@@ -238,15 +194,15 @@
                                 <input type="text" class="form-control" id="modalVendor" disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="modalQty">발주수량</label>
+                                <label for="modalQty">입고일자</label>
                                 <input type="text" class="form-control" id="modalQty" disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan7">반출수량</label>
+                                <label for="barcode_scan7">BOX수량</label>
                                 <input type="text" class="form-control" id="barcode_scan7" disabled>
                             </div>
 							<div class="mb-3 col-10">
-                                <label for="barcode_scan7">누적반출수량</label>
+                                <label for="barcode_scan7">제품수량</label>
                                 <input type="text" class="form-control" id="barcode_scan7123" disabled>
                             </div>
                         </div>
@@ -255,8 +211,10 @@
                                 <thead class="table-sm">
                                 <tr>
                                     <th>박스번호</th>
-                                    <th>Box내 수량</th>
-                                    <th>포장일자</th>
+                                    <th>품목코드</th>
+                                    <th>발주번호</th>
+                                    <th>SEQ</th>
+                                    <th>수량</th>
                                 </tr>
                                 </thead>
                                 <tbody id="modalTableBody"></tbody>
@@ -284,44 +242,35 @@
 <script>
     var selectedOrderNo = '';
 
-    // 행 클릭 시 선택
-    document.querySelectorAll('#dataTable tbody tr').forEach(function (row) {
+    // 오른쪽 테이블의 행 클릭 시 선택
+    document.querySelectorAll('.table-wrapper:nth-child(2) tbody tr').forEach(function (row) {
         row.addEventListener('click', function () {
-
             // 기존 선택된 행 스타일 제거
-            document.querySelectorAll('#dataTable tbody tr').forEach(function (row) {
+            document.querySelectorAll('.table-wrapper:nth-child(2) tbody tr').forEach(function (row) {
                 row.classList.remove('selected-row');
             });
 
             // 선택된 행 스타일 적용
             this.classList.add('selected-row');
 
-            // 선택한 데이터 저장
-            selectedOrderNo = this.getAttribute('data-order-no');
-            var selectedItem = this.getAttribute('data-item');
-            var selectedVendor = this.getAttribute('data-vendor');
-            var selectedPOQty = this.getAttribute('data-POQty')
+            // 선택한 발주번호 저장
+            selectedOrderNo = this.cells[0].innerText.trim(); // 첫 번째 셀의 데이터를 발주번호로 사용
 
-            // 모달에 데이터 반영
+            // 발주번호를 모달에 반영
             document.getElementById('modalOrderNo').value = selectedOrderNo;
-            document.getElementById('modalItem').value = selectedItem;
-            document.getElementById('modalVendor').value = selectedVendor;
-            document.getElementById('modalQty').value = selectedPOQty;
 
-            // 외주반출 등록 버튼 활성화
+            // 입고등록 버튼 활성화
             document.getElementById('openModalButton').disabled = false;
         });
     });
 
-    // 외주반출 등록 버튼 클릭 시 모달 열기
+    // 입고등록 버튼 클릭 시 모달 열기
     document.getElementById('openModalButton').addEventListener('click', function () {
         if (selectedOrderNo) {
             var modal = new bootstrap.Modal(document.getElementById('registerModal'));
             modal.show();
         }
     });
-
-
 
     function adjustTableHeight() {
         var tableWrapper = document.getElementById('tableWrapper');
@@ -343,4 +292,5 @@
         {% endif %}
     });
 </script>
+
 {% endblock %}
