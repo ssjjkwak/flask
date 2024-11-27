@@ -1725,7 +1725,6 @@ def product_result_sterilizating_out():
         form_submitted=True
     )
 
-
 # 멸균제품 입고등록 렌더링
 @bp.route('/register_sterilizating_in/', methods=['GET', 'POST'])
 def product_register_sterilizating_in():
@@ -1765,7 +1764,7 @@ def product_register_sterilizating_in():
             "item_name": row.item_name,
             "qty": row.qty,  # Packing_Cs의 수량 사용
             "prod_date": row.prod_date,
-            "insrt_dt": row.insrt_dt.strftime('%Y-%m-%d %H:%M:%S') if row.insrt_dt else None
+            "insrt_dt": row.insrt_dt.strftime('%Y-%m-%d') if row.insrt_dt else None
         }
         for row in left_table_query
     ]
@@ -1777,6 +1776,7 @@ def product_register_sterilizating_in():
         Purchase_Order.ITEM_CD.label("item_cd"),
         Item.ITEM_NM.label("item_name"),
         Purchase_Order.SL_CD.label("sl_cd"),
+        Purchase_Order.BP_CD.label("bp_cd"),
         Purchase_Order.PO_QTY.label("po_qty"),
         Purchase_Order.OUT_QTY.label("out_qty"),
         Purchase_Order.IN_QTY.label("in_qty")
@@ -1792,6 +1792,7 @@ def product_register_sterilizating_in():
             "item_cd": row.item_cd,
             "item_name": row.item_name,
             "sl_cd": row.sl_cd,
+            "bp_cd": row.bp_cd,
             "po_qty": row.po_qty,
             "out_qty": row.out_qty,
             "in_qty": row.in_qty
@@ -1807,6 +1808,223 @@ def product_register_sterilizating_in():
         INSRT_DT_START=start_date.strftime('%Y-%m-%d'),
         INSRT_DT_END=end_date.strftime('%Y-%m-%d')
     )
+
+# 멸균제품 입고등록 QR 체크 로직 함수
+@bp.route('/get_sterilized_packing_data/', methods=['POST'])
+def get_sterilized_packing_data():
+    try:
+        request_data = request.get_json()
+        logging.info(f"Request Data: {request_data}")
+
+        udi_qr = request_data.get('udi_qr')
+        logging.info(f"Received UDI QR: {udi_qr}")
+
+        if not udi_qr or len(udi_qr) != 47:
+            logging.warning("Invalid QR Code Length or Missing QR Code")
+            return jsonify({'status': 'error', 'message': 'QR 코드가 유효하지 않습니다. 47자리를 입력하세요.'}), 400
+
+        # Packing_Cs 데이터 조회
+        packing_cs_data = db.session.query(
+            Packing_Cs.m_box_no,
+            Packing_Cs.cs_model,
+            Packing_Cs.cs_qty,
+            Packing_Cs.cs_prod_date
+        ).filter(Packing_Cs.cs_udi_qr == udi_qr).first()
+
+        if not packing_cs_data:
+            logging.warning(f"No data found in Packing_Cs for QR Code: {udi_qr}")
+            return jsonify({'status': 'error', 'message': '해당 QR 코드에 대한 데이터를 찾을 수 없습니다.'}), 404
+
+        logging.info(f"QR Code {udi_qr} fetched successfully.")
+
+        return jsonify({
+            'status': 'success',
+            'packing_cs': {
+                'm_box_no': packing_cs_data.m_box_no,
+                'cs_model': packing_cs_data.cs_model,
+                'cs_qty': int(packing_cs_data.cs_qty),
+                'cs_prod_date': packing_cs_data.cs_prod_date,
+                'po_no': request_data.get('po_no'),  # 발주 번호
+                'po_seq_no': request_data.get('po_seq_no')  # 발주 SEQ
+            }
+        })
+
+    except Exception as e:
+        logging.error(f"Error in get_sterilized_packing_data: {e}")
+        return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
+
+# 멸균 입고 데이터 등록 함수
+@bp.route('/register_sterilized_packing/', methods=['POST'])
+def register_sterilized_packing():
+    try:
+        data = request.json
+        logging.info(f"Received data for sterilized packing registration: {data}")
+
+        if not data or 'rows' not in data:
+            return jsonify({"status": "error", "message": "No rows provided for processing"}), 400
+
+        # 새로운 DOC_NO 생성
+        doc_no = generate_doc_no()
+
+        doc_seq = 10
+        new_material_docs = []
+        purchase_order_updates = {}  # PURCHASE_ORDER 업데이트를 위한 dict
+
+        # 처리할 데이터 반복
+        for row in data['rows']:
+            m_box_no = row.get('m_box_no')
+            po_no = row.get('po_no')  # 발주번호
+            po_seq_no = row.get('po_seq_no')  # 발주 SEQ 번호
+
+            if not m_box_no or not po_no or po_seq_no is None:
+                logging.warning("Missing m_box_no, po_no, or po_seq_no in the request row.")
+                continue
+
+            # Barcode_Flow에서 m_box_no와 FROM_SL_CD='WO00061' 조건으로 조회
+            barcodes = db.session.query(Barcode_Flow).filter_by(BOX_NUM=m_box_no, TO_SL_CD='WO00061').all()
+
+            if not barcodes:
+                logging.warning(f"No barcodes found for m_box_no: {m_box_no} with FROM_SL_CD='WO00061'")
+                continue
+
+            # 각 박스에 대해 Barcode_Flow 및 Material_Doc 추가
+            for barcode_entry in barcodes:
+                # Barcode_Flow에 새 데이터 생성
+                new_barcode_flow = Barcode_Flow(
+                    barcode=barcode_entry.barcode,
+                    ITEM_CD=barcode_entry.ITEM_CD,
+                    WC_CD=None,
+                    FROM_SL_CD='WO00061',  # 출발 창고 코드
+                    TO_SL_CD='SF32',  # 입고 창고 코드
+                    MOV_TYPE='T01',  # 입고 타입
+                    CREDIT_DEBIT='C',
+                    REPORT_TYPE='G',
+                    BP_CD='O00061',  # 외주 업체 코드
+                    BOX_NUM=m_box_no,
+                    DOC_NO=doc_no,  # 생성된 DOC_NO 추가
+                    DOC_SEQ=f"{doc_seq:02}",
+                    INSRT_DT=datetime.now(),
+                    INSRT_USR=g.user.USR_ID,
+                    UPDT_USR=g.user.USR_ID
+                )
+                db.session.add(new_barcode_flow)
+
+            # Material_Doc 데이터 생성
+            material_doc = {
+                'DOC_NO': doc_no,
+                'DOC_SEQ': f"{doc_seq:02}",
+                'ITEM_CD': barcode_entry.ITEM_CD,
+                'QTY': len(barcodes),  # 바코드 수량
+                'CREDIT_DEBIT': 'C',
+                'MOV_TYPE': 'T01',
+                'FROM_SL_CD': 'WO00061',
+                'TO_SL_CD': 'SF32',
+                'BOX_NUM': m_box_no,
+                'BP_CD': 'O00061',
+                'INSRT_DT': datetime.now(),
+                'INSRT_USR': g.user.USR_ID,
+                'UPDT_DT': datetime.now(),
+                'UPDT_USR': g.user.USR_ID
+            }
+            new_material_docs.append(material_doc)
+            doc_seq += 10
+
+            # PURCHASE_ORDER 모델의 IN_QTY 업데이트를 위한 데이터 준비
+            if (po_no, po_seq_no) in purchase_order_updates:
+                purchase_order_updates[(po_no, po_seq_no)] += row.get('cs_qty', 0)
+            else:
+                purchase_order_updates[(po_no, po_seq_no)] = row.get('cs_qty', 0)
+
+        # Material_Doc에 데이터 삽입
+        if new_material_docs:
+            db.session.bulk_insert_mappings(Material_Doc, new_material_docs)
+
+        # PURCHASE_ORDER 모델의 IN_QTY 업데이트
+        for (po_no, po_seq_no), in_qty_to_add in purchase_order_updates.items():
+            db.session.query(Purchase_Order).filter_by(PO_NO=po_no, PO_SEQ_NO=po_seq_no).update({
+                Purchase_Order.IN_QTY: Purchase_Order.IN_QTY + in_qty_to_add
+            })
+            logging.info(f"Updated IN_QTY for PO_NO={po_no}, PO_SEQ_NO={po_seq_no} by {in_qty_to_add}.")
+
+        # Barcode_Status 업데이트
+        update_barcode_status_after_sterilizing_in(doc_no)
+
+        # 변경사항 커밋
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": f"멸균 외주 입고 등록 완료: {doc_no}"})
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error registering sterilized packing data: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+# 멸균 입고 후 상태 업데이트
+def update_barcode_status_after_sterilizing_in(doc_no):
+    try:
+        barcodes = db.session.query(Barcode_Flow.barcode).filter(
+            Barcode_Flow.DOC_NO == doc_no,
+            Barcode_Flow.TO_SL_CD == 'SF32'  # 입고된 외주 창고 코드
+        ).distinct().all()
+
+        barcode_list = [barcode_tuple[0] for barcode_tuple in barcodes]
+
+        if not barcode_list:
+            logging.info(f"No barcodes found with DOC_NO={doc_no} and TO_SL_CD='SF32'.")
+            return
+
+        for barcode in barcode_list:
+            status_record = db.session.query(Barcode_Status).filter(
+                Barcode_Status.barcode == barcode
+            ).first()
+
+            if status_record:
+                status_record.STATUS = 'S7'  # 입고 상태
+                logging.info(f"Updated Barcode_Status for barcode={barcode} to STATUS='S7'.")
+            else:
+                new_status_record = Barcode_Status(
+                    barcode=barcode,
+                    STATUS='I9'
+                )
+                db.session.add(new_status_record)
+                logging.info(f"Inserted new Barcode_Status for barcode={barcode} with STATUS='S7'.")
+
+        db.session.commit()
+        logging.info("Barcode_Status successfully updated to 'S7' for all relevant barcodes.")
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating Barcode_Status: {str(e)}")
+        raise
+
+# 박스 번호 기반 바코드 조회
+@bp.route('/get_barcodes_by_sterilized_box/', methods=['POST'])
+def get_barcodes_by_sterilized_box():
+    try:
+        data = request.json
+        logging.info(f"Received request for barcodes by box: {data}")
+
+        if not data or 'm_box_no' not in data:
+            return jsonify({"status": "error", "message": "Missing 'm_box_no' field"}), 400
+
+        box_num = data['m_box_no']
+
+        barcodes = db.session.query(Barcode_Flow.barcode).filter_by(BOX_NUM=box_num).all()
+
+        if not barcodes:
+            return jsonify({"status": "error", "message": f"No barcodes found for m_box_no {box_num}"}), 404
+
+        barcode_list = [b.barcode for b in barcodes]
+        logging.info(f"Barcodes for m_box_no {box_num}: {barcode_list}")
+
+        return jsonify({"status": "success", "barcodes": barcode_list})
+
+    except Exception as e:
+        logging.error(f"Error fetching barcodes by box: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 
 # 멸균제품 입고 결과조회

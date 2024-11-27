@@ -22,9 +22,25 @@
         margin-bottom: 5px;
     }
 
+    .table-title2 {
+        font-weight: bold;
+        text-align: center;
+        background-color: #d7ebc2;
+        padding: 4px;
+        margin-bottom: 5px;
+    }
+
     table {
         width: 100%;
         border-collapse: collapse;
+    }
+
+    .table-wrapper:first-child {
+        flex: 4.3; /* 첫 번째 테이블을 4.5 비율로 설정 */
+    }
+
+    .table-wrapper:last-child {
+        flex: 5.7; /* 두 번째 테이블을 5.5 비율로 설정 */
     }
 
     th, td {
@@ -70,7 +86,7 @@
                     <div class="mb-1 col-8 d-flex align-items-center">
                         <label for="plant_code" class="form-label me-3" style="min-width: 110px;">&emsp;&emsp;&emsp;공장</label>
                         <select class="form-select form-select-sm" id="plant_code" name="plant_code">
-                            <option value="">-</option>
+                            <option value="">p710 혈액여과기기공장</option>
                             {% for plant in plants %}
                             <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
                                 {{ plant.PLANT_CD }}
@@ -79,11 +95,17 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="mb-1 col-8 d-flex align-items-center">
-                        <label for="barcode_no_start" class="form-label me-3" style="min-width: 110px;">외주업체</label>
-                        <input type="text" class="form-control form-control-sm me-2" id="barcode_no_start"
-                               name="barcode_no_start" value="{{ BARCODE_NO_START }}">
+                        <label for="bp_cd" class="form-label me-3" style="min-width: 110px;">외주업체</label>
+                        <select class="form-select form-select-sm" id="bp_cd" name="bp_cd">
+                            <option value="">O00061</option>
+                            {% for plant in plants %}
+                            <option value="{{ plant.PLANT_CD }}" {% if plant.PLANT_CD== PLANT_CD %}selected{% endif %}>
+                                {{ plant.PLANT_CD }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -108,7 +130,7 @@
     <div class="table-container">
         <!-- 첫 번째 테이블 시작 -->
         <div class="table-wrapper">
-            <div class="table-title">외주창고(WO00061)</div>
+            <div class="table-title2">외주창고(WO00061)</div>
             <table class="table table-sm table-hover">
                 <thead>
                 <tr>
@@ -145,24 +167,27 @@
                     <th>품목코드</th>
                     <th>품목명</th>
                     <th>창고</th>
+                    <th>외주업체</TH>
                     <th>발주수량</th>
                     <th>입고수량</th>
                     <th>발주잔량</th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for row in right_table_data %}
-                <tr>
-                    <td>{{ row.po_no }}</td>
-                    <td>{{ row.po_seq }}</td>
-                    <td>{{ row.item_cd }}</td>
-                    <td>{{ row.item_name }}</td>
-                    <td>{{ row.sl_cd }}</td>
-                    <td style="text-align: right;">{{ (row.po_qty or 0) | int  }}</td>
-                    <td style="text-align: right;">{{ (row.out_qty or 0) | int }}</td>
-                    <td style="text-align: right;">{{ (row.in_qty or 0) | int }}</td>
-                </tr>
-                {% endfor %}
+                    {% for row in right_table_data %}
+                    <tr>
+                        <td>{{ row.po_no }}</td>
+                        <td>{{ row.po_seq }}</td>
+                        <td>{{ row.item_cd }}</td>
+                        <td>{{ row.item_name }}</td>
+                        <td>{{ row.sl_cd }}</td>
+                        <td>{{ row.bp_cd }}</td>
+                        <td style="text-align: right;">{{ (row.po_qty or 0) | int  }}</td>
+                        <td style="text-align: right;">{{ (row.in_qty or 0) | int }}</td>
+                        <td style="text-align: right;">{{ ((row.po_qty | int) - (row.in_qty | int)) }}</td>
+
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -194,16 +219,16 @@
                                 <input type="text" class="form-control" id="modalVendor" disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="modalQty">입고일자</label>
-                                <input type="text" class="form-control" id="modalQty" disabled>
+                                <label for="in_time">입고일자</label>
+                                <input type="text" class="form-control" id="in_time" disabled>
                             </div>
                             <div class="mb-3 col-10">
-                                <label for="barcode_scan7">BOX수량</label>
-                                <input type="text" class="form-control" id="barcode_scan7" disabled>
+                                <label for="totalboxnum">Total 박스 수량</label>
+                                <input type="text" class="form-control" id="totalboxnum" disabled>
                             </div>
 							<div class="mb-3 col-10">
-                                <label for="barcode_scan7">제품수량</label>
-                                <input type="text" class="form-control" id="barcode_scan7123" disabled>
+                                <label for="totalitemnum">Total 제품 수량</label>
+                                <input type="text" class="form-control" id="totalitemnum" disabled>
                             </div>
                         </div>
                         <div class="col-md-9">
@@ -225,7 +250,7 @@
             </div>
             <div class="modal-footer d-flex justify-content-between">
                 <div class="d-flex">
-                    <input type="text" id="udiInputFooter" class="form-control" placeholder="바코드 스캔" style="width: 370px; margin-right: 10px; border: none;">
+                    <input type="text" id="udiInputFooter" class="form-control" placeholder="박스 QR 스캔" style="width: 370px; margin-right: 10px; border: none;">
                 </div>
                 <div>
                     <button type="button" class="btn btn-light btn-sm shadow-sm ms-3" data-dismiss="modal">닫기</button>
@@ -240,57 +265,213 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    var selectedOrderNo = '';
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('registerModal');
+        let modalInstance = null;
+        let scannedBoxes = new Set(); // 스캔된 박스를 저장할 Set
+        let totalBoxCount = 0; // 총 박스 수량
+        let totalItemCount = 0; // 총 제품 수량
+        let rowsData = []; // 서버로 전송할 데이터
+        let selectedOrderNo = ''; // 선택된 발주번호
+        let selectedOrderNoSeq = ''; // 선택된 발주번호
+        let selectedItemCd = ''; // 선택된 품목코드
+        let selectedBpCd = ''; // 선택된 업체코드
 
-    // 오른쪽 테이블의 행 클릭 시 선택
-    document.querySelectorAll('.table-wrapper:nth-child(2) tbody tr').forEach(function (row) {
-        row.addEventListener('click', function () {
-            // 기존 선택된 행 스타일 제거
-            document.querySelectorAll('.table-wrapper:nth-child(2) tbody tr').forEach(function (row) {
-                row.classList.remove('selected-row');
+        // **오른쪽 테이블 행 클릭 이벤트**
+        document.querySelectorAll('.table-wrapper:nth-child(2) tbody tr').forEach(function (row) {
+            row.addEventListener('click', function () {
+                // 기존 선택된 행 스타일 제거
+                document.querySelectorAll('.table-wrapper:nth-child(2) tbody tr').forEach(function (row) {
+                    row.classList.remove('selected-row');
+                });
+
+                // 선택된 행 스타일 적용
+                this.classList.add('selected-row');
+
+                // 선택된 데이터 저장
+                selectedOrderNo = this.cells[0].innerText.trim(); // 발주번호
+                selectedOrderNoSeq = this.cells[1].innerText.trim();
+                selectedItemCd = this.cells[2].innerText.trim(); // 품목코드
+                selectedBpCd = this.cells[5].innerText.trim(); // 업체코드
+
+                // 모달에 데이터 반영
+                document.getElementById('modalOrderNo').value = selectedOrderNo;
+                document.getElementById('modalItem').value = selectedItemCd;
+                document.getElementById('modalVendor').value = selectedBpCd;
+
+                // 모달 열기 버튼 활성화
+                document.getElementById('openModalButton').disabled = false;
             });
-
-            // 선택된 행 스타일 적용
-            this.classList.add('selected-row');
-
-            // 선택한 발주번호 저장
-            selectedOrderNo = this.cells[0].innerText.trim(); // 첫 번째 셀의 데이터를 발주번호로 사용
-
-            // 발주번호를 모달에 반영
-            document.getElementById('modalOrderNo').value = selectedOrderNo;
-
-            // 입고등록 버튼 활성화
-            document.getElementById('openModalButton').disabled = false;
         });
-    });
 
-    // 입고등록 버튼 클릭 시 모달 열기
-    document.getElementById('openModalButton').addEventListener('click', function () {
-        if (selectedOrderNo) {
-            var modal = new bootstrap.Modal(document.getElementById('registerModal'));
-            modal.show();
+        // **모달 열릴 때 초기화 및 설정**
+        document.getElementById('openModalButton').addEventListener('click', function () {
+            if (!selectedOrderNo || !selectedItemCd) {
+                alert('발주번호와 품목코드를 선택해주세요.');
+                return;
+            }
+
+            modalInstance = new bootstrap.Modal(modalElement);
+            modalInstance.show();
+
+            // 초기화
+            scannedBoxes.clear();
+            totalBoxCount = 0;
+            totalItemCount = 0;
+            rowsData = [];
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('in_time').value = today; // 오늘 날짜 설정
+            document.getElementById('totalboxnum').value = totalBoxCount;
+            document.getElementById('totalitemnum').value = totalItemCount;
+
+            console.log('모달 열림: 초기화 완료');
+
+            // QR 코드 입력 필드 포커스
+            setTimeout(() => {
+                const qrInputField = document.getElementById('udiInputFooter');
+                if (qrInputField) {
+                    qrInputField.focus();
+                }
+            }, 500);
+        });
+
+        // **모달 닫힐 때 데이터 초기화**
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            scannedBoxes.clear();
+            totalBoxCount = 0;
+            totalItemCount = 0;
+            rowsData = [];
+
+            const modalTableBody = document.getElementById('modalTableBody');
+            modalTableBody.innerHTML = ''; // 테이블 데이터 초기화
+
+            console.log('모달 닫힘: 데이터 초기화 완료');
+        });
+
+        // **QR 코드 입력 이벤트**
+        document.getElementById('udiInputFooter').addEventListener('input', function () {
+            const qrCode = this.value.trim();
+
+            // QR 코드 길이가 47자리인 경우 처리
+            if (qrCode.length === 47) {
+                this.value = ''; // 입력 필드 초기화
+                processQrCode(qrCode); // QR 코드 처리
+            }
+        });
+
+        // **QR 코드 처리**
+        function processQrCode(qrCode) {
+            if (scannedBoxes.has(qrCode)) {
+                alert('이미 스캔된 QR 코드입니다.');
+                return;
+            }
+
+            // 서버로 QR 코드 데이터 요청
+            fetch('/product/get_sterilized_packing_data/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ udi_qr: qrCode }),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success' && data.packing_cs) {
+                        scannedBoxes.add(qrCode); // 스캔된 QR 코드 저장
+                        addRowToModalTable(data.packing_cs); // 테이블에 데이터 추가
+                        totalBoxCount += 1;
+                        totalItemCount += parseInt(data.packing_cs.cs_qty, 10);
+                        updateTotals(); // 총합 업데이트
+                        console.log(`QR 코드 처리 성공: ${qrCode}`);
+                    } else {
+                        alert(data.message || '해당 QR 코드에 대한 데이터를 찾을 수 없습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('QR 코드 처리 중 오류 발생:', error);
+                    alert('서버와 통신 중 오류가 발생했습니다.');
+                });
         }
-    });
 
-    function adjustTableHeight() {
-        var tableWrapper = document.getElementById('tableWrapper');
-        var headerHeight = document.querySelector('header').offsetHeight; // 헤더 높이
-        var footerHeight = document.querySelector('footer').offsetHeight; // 푸터 높이
-        var searchFormHeight = document.getElementById('searchForm').offsetHeight; // 검색 폼 높이
-        var availableHeight = window.innerHeight - headerHeight - footerHeight - searchFormHeight - 40; // 40은 여유 공간
-        tableWrapper.style.height = availableHeight + 'px';
+        // **모달 테이블에 데이터 추가**
+        function addRowToModalTable(data) {
+        const modalTableBody = document.getElementById('modalTableBody');
+        const row = document.createElement('tr');
+
+        // 테이블 행 생성
+        row.innerHTML = `
+            <td>${data.m_box_no}</td>   <!-- 박스 번호 -->
+            <td>${data.cs_model}</td>   <!-- 품목 코드 -->
+            <td>${selectedOrderNo}</td>   <!-- 발주 번호 -->
+            <td>${selectedOrderNoSeq}</td>   <!-- 발주 SEQ -->
+            <td>${data.cs_qty}</td>   <!-- 수량 -->
+        `;
+
+        modalTableBody.appendChild(row);
+
+        // 서버로 전송할 데이터 추가
+        rowsData.push({
+            m_box_no: data.m_box_no,         // 박스 번호
+            cs_model: data.cs_model,        // 품목 코드
+            po_no: selectedOrderNo,      // 발주 번호 (null 허용)
+            po_seq_no: selectedOrderNoSeq, // 발주 SEQ (null 허용)
+            cs_qty: data.cs_qty,            // 수량
+        });
+
+        console.log('테이블에 데이터 추가 완료:', data);
     }
 
-    window.addEventListener('resize', adjustTableHeight);
-    window.addEventListener('load', adjustTableHeight);
 
-    document.addEventListener('DOMContentLoaded', function () {
-        {% if form_submitted and not orders_with_hdr %}
-        document.getElementById('errorModalBody').innerText = "데이터 없음";
-        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show();
-        {% endif %}
+        // **총합 데이터 업데이트**
+        function updateTotals() {
+            document.getElementById('totalboxnum').value = totalBoxCount;
+            document.getElementById('totalitemnum').value = totalItemCount;
+            console.log(`총 박스 수량: ${totalBoxCount}, 총 제품 수량: ${totalItemCount}`);
+        }
+
+        // **저장 버튼 클릭 이벤트**
+        document.getElementById('saveChangesButton').addEventListener('click', function () {
+            if (rowsData.length === 0) {
+                alert('등록할 데이터가 없습니다.');
+                return;
+            }
+
+            // 서버로 데이터 전송
+            fetch('/product/register_sterilized_packing/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ rows: rowsData }),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message || '등록이 완료되었습니다.');
+                        modalInstance.hide(); // 모달 닫기
+                        window.location.reload(); // 페이지 새로고침
+                    } else {
+                        alert(data.message || '등록 중 오류가 발생했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('등록 중 오류 발생:', error);
+                    alert('서버와 통신 중 오류가 발생했습니다.');
+                });
+        });
     });
 </script>
+
 
 {% endblock %}
