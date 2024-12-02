@@ -10,86 +10,64 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode, \
-    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Sales_Order, Biz_Partner
+    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Sales_Order, Biz_Partner, Packing_Cs
 from collections import defaultdict
 
 bp = Blueprint('sales', __name__, url_prefix='/sales')
 
 @bp.route('/sales_order/', methods=['GET', 'POST'])
 def sales_order():
-    form_submitted = False
-    BP_CD = ''
-    SO_NO = ''
-    SO_SEQ = ''
-    PLANT_CD = ''
-    SL_CD = ''
-    ITEM_CD = ''
-    SO_QTY = ''
-    SO_PRICE = ''
-    NET_AMT = ''
-    SO_DT_START = datetime.today().strftime('%Y-%m-%d')  # 오늘 날짜
-    SO_DT_END = (datetime.today() + timedelta(days=30)).strftime('%Y-%m-%d')  # 30일 후 날짜
-    REQ_DLVY_DT_START = datetime.today().strftime('%Y-%m-%d')  # 오늘 날짜
-    REQ_DLVY_DT_END = (datetime.today() + timedelta(days=365)).strftime('%Y-%m-%d')  # 30일 후 날짜
-    CUST_PO_NO = ''
+    start_date = request.form.get('start_date', (datetime.now() - timedelta(days=15)).strftime('%Y-%m-%d')).strip()
+    end_date = request.form.get('end_date', (datetime.now() + timedelta(days=15)).strftime('%Y-%m-%d')).strip()
 
-    # 기본 Sales_Order 쿼리에 Biz_Partner와 Item 조인을 추가
-    sales_order_query = db.session.query(Sales_Order, Biz_Partner.bp_nm, Item.ITEM_NM, Item.SPEC, Item.BASIC_UNIT).\
-        join(Biz_Partner, Sales_Order.BP_CD == Biz_Partner.bp_cd, isouter=True).\
-        join(Item, Sales_Order.ITEM_CD == Item.ITEM_CD, isouter=True)
+    # 날짜 변환
+    start_date_dt = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date_dt = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1, seconds=-1)
 
-    if request.method == 'POST':
-        form_submitted = True
-        BP_CD = request.form.get('bp_cd', '')
-        SO_NO = request.form.get('so_no', '')
-        SO_SEQ = request.form.get('so_seq', '')
-        PLANT_CD = request.form.get('plant_cd', '')
-        SL_CD = request.form.get('sl_cd', '')
-        ITEM_CD = request.form.get('item_cd', '')
-        SO_QTY = request.form.get('so_qty', '')
-        SO_PRICE = request.form.get('so_price', '')
-        NET_AMT = request.form.get('net_amt', '')
-        SO_DT_START = request.form.get('so_dt_start', SO_DT_START)  # POST 시에도 기본값을 유지
-        SO_DT_END = request.form.get('so_dt_end', SO_DT_END)  # POST 시에도 기본값을 유지
-        REQ_DLVY_DT_START = request.form.get('req_dlvy_dt_start', REQ_DLVY_DT_START)  # 기본값 유지
-        REQ_DLVY_DT_END = request.form.get('req_dlvy_dt_end', REQ_DLVY_DT_END)  # 기본값 유지
-        CUST_PO_NO = request.form.get('cust_po_no', '')
+    # 서브쿼리: Barcode_Flow에서 TO_SL_CD가 'SF50'인 박스번호 추출
+    subquery_sf50 = db.session.query(Barcode_Flow.BOX_NUM).filter(
+        Barcode_Flow.TO_SL_CD == 'SF50'
+    ).subquery()
 
-        # 필터링 조건 적용
-        if BP_CD:
-            sales_order_query = sales_order_query.filter(Sales_Order.BP_CD.like(f'%{BP_CD}%'))
-        if SO_NO:
-            sales_order_query = sales_order_query.filter(Sales_Order.SO_NO.like(f'%{SO_NO}%'))
-        if ITEM_CD:
-            sales_order_query = sales_order_query.filter(Sales_Order.ITEM_CD.like(f'%{ITEM_CD}%'))
-        if SO_DT_START and SO_DT_END:
-            sales_order_query = sales_order_query.filter(Sales_Order.SO_DT.between(SO_DT_START, SO_DT_END))
-        if REQ_DLVY_DT_START and REQ_DLVY_DT_END:
-            sales_order_query = sales_order_query.filter(Sales_Order.REQ_DLVY_DT.between(REQ_DLVY_DT_START, REQ_DLVY_DT_END))
-        if CUST_PO_NO:
-            sales_order_query = sales_order_query.filter(Sales_Order.CUST_PO_NO.like(f'%{CUST_PO_NO}%'))
+    # Packing_Cs와 Barcode_Flow를 JOIN하여 데이터 조회 (왼쪽 테이블)
+    left_table_query = db.session.query(
+        Packing_Cs.m_box_no.label("box_num"),  # Packing_Cs의 박스 번호
+        Barcode_Flow.ITEM_CD.label("item_cd"),  # 품목 코드
+        Item.ITEM_NM.label("item_name"),  # 품목명
+        Packing_Cs.cs_qty.label("qty"),  # Packing_Cs의 수량
+        Packing_Cs.cs_prod_date.label("prod_date"),  # 포장일자
+        Barcode_Flow.INSRT_DT.label("insrt_dt")  # 삽입일자
+    ).join(
+        Barcode_Flow, Packing_Cs.m_box_no == Barcode_Flow.BOX_NUM  # Packing_Cs와 Barcode_Flow JOIN
+    ).join(
+        Item, Barcode_Flow.ITEM_CD == Item.ITEM_CD  # 품목 연결
+    ).filter(
+        Barcode_Flow.TO_SL_CD == 'SF50',  # TO_SL_CD가 'SF50'인 데이터만 필터링
+        Barcode_Flow.INSRT_DT.between(start_date_dt, end_date_dt)  # 삽입일자 필터링
+    ).distinct(
+        Packing_Cs.m_box_no  # DISTINCT 기준 컬럼 설정
+    ).all()
 
-    # 쿼리 실행
-    sales_orders = sales_order_query.all()
+    # 결과 데이터 포맷 (왼쪽 테이블)
+    left_table_data = [
+        {
+            "box_num": row.box_num,
+            "item_cd": row.item_cd,
+            "item_name": row.item_name,
+            "qty": row.qty,
+            "prod_date": row.prod_date,
+            "insrt_dt": row.insrt_dt.strftime('%Y-%m-%d') if row.insrt_dt else None
+        }
+        for row in left_table_query
+    ]
 
-
-    return render_template('sales/sales_order.html',
-                           sales_orders=sales_orders,
-                           form_submitted=form_submitted,
-                           BP_CD=BP_CD,
-                           SO_NO=SO_NO,
-                           ITEM_CD=ITEM_CD,
-                           SO_QTY=SO_QTY,
-                           SO_PRICE=SO_PRICE,
-                           NET_AMT=NET_AMT,
-                           SO_SEQ=SO_SEQ,
-                           PLANT_CD=PLANT_CD,
-                           SL_CD=SL_CD,
-                           SO_DT_START=SO_DT_START,
-                           SO_DT_END=SO_DT_END,
-                           REQ_DLVY_DT_START=REQ_DLVY_DT_START,
-                           REQ_DLVY_DT_END=REQ_DLVY_DT_END,
-                           CUST_PO_NO=CUST_PO_NO)
+    # 렌더링
+    return render_template(
+        'sales/sales_order.html',
+        left_table_data=left_table_data,  # 왼쪽 테이블 데이터만 전달
+        INSRT_DT_START=start_date,
+        INSRT_DT_END=end_date
+    )
 
 
 

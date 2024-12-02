@@ -130,7 +130,7 @@
                     <td style="text-align: right;">{{ order.QTY | int }}</td>
                     <td>{{ order.PO_NO }}</td>
                     <td>{{ order.PO_SEQ_NO }}</td>
-                    <td><span class="badge bg-primary">{{ order.BOX_NUM or '' }}</span></td>
+                    <td><span class="badge bg-primary" style="font-size: 0.90rem;">{{ order.BOX_NUM or '' }}</span></td>
                     <td>{{ order.INSRT_DT.strftime('%Y-%m-%d') }}</td>
                 </tr>
                 {% endfor %}

@@ -591,6 +591,7 @@ def register():
         logging.error(f"Database error: {str(e)}")
         return jsonify({"status": "error", "message": "데이터 처리 중 오류가 발생했습니다."}), 500
 
+# doc 번호 생성 및 insert
 def assign_doc_no_and_material_doc():
     doc_no = generate_doc_no()
 
@@ -661,6 +662,7 @@ def assign_doc_no_and_material_doc():
     db.session.commit()
     logging.info("DOC_NO와 Material_Doc 데이터가 성공적으로 할당되었습니다.")
 
+# doc 상태 업데이트
 def update_barcode_status_from_flow():
     # 최신의 REPORT_TYPE을 기반으로 데이터 가져옴
     latest_flows = db.session.query(
@@ -1725,7 +1727,7 @@ def product_register_sterilizating_in():
 
     # 서브쿼리: Barcode_Flow에서 TO_SL_CD가 'SF32'인 박스번호 추출
     subquery_sf32 = db.session.query(Barcode_Flow.BOX_NUM).filter(
-        Barcode_Flow.TO_SL_CD == 'SF32'
+        Barcode_Flow.TO_SL_CD == 'SF50'
     ).subquery()
 
     # Packing_Cs와 Barcode_Flow를 JOIN하여 TO_SL_CD가 'WO00061'인 데이터만 조회 (왼쪽 테이블)
@@ -1897,7 +1899,7 @@ def register_sterilized_packing():
                     ITEM_CD=parent_item_cd,  # BOM 상위 품목
                     WC_CD=None,
                     FROM_SL_CD='WO00061',  # 출발 창고 코드
-                    TO_SL_CD='SF32',  # 입고 창고 코드
+                    TO_SL_CD='SF50',  # 입고 창고 코드
                     MOV_TYPE='T01',  # 입고 타입
                     CREDIT_DEBIT='C',
                     REPORT_TYPE='G',
@@ -1922,7 +1924,7 @@ def register_sterilized_packing():
                     'CREDIT_DEBIT': 'C',
                     'MOV_TYPE': 'T01',
                     'FROM_SL_CD': 'WO00061',
-                    'TO_SL_CD': 'SF32',
+                    'TO_SL_CD': 'SF50',
                     'REPORT_TYPE': 'G',
                     'BOX_NUM': m_box_no,
                     'BP_CD': 'O00061',
@@ -2076,7 +2078,7 @@ def product_result_sterilizating_in():
         .join(Item, Material_Doc.ITEM_CD == Item.ITEM_CD, isouter=True)
         .join(Biz_Partner, Material_Doc.BP_CD == Biz_Partner.bp_cd, isouter=True)
     )
-    query = query.filter(Material_Doc.TO_SL_CD == 'SF32')
+    query = query.filter(Material_Doc.TO_SL_CD == 'SF50')
 
     # 검색 조건 적용
     if plant_code:

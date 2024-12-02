@@ -126,7 +126,7 @@
                 <td>{{ order.BP_CD or '' }}</td>
                 <td>{{ order.bp_nm or '' }}</td>
                 <td>{{ order.BASIC_UNIT }}</td>
-                <td><span class="badge bg-primary">{{ order.BOX_NUM or '' }}</span></td>
+                <td><span class="badge bg-primary" style="font-size: 0.90rem;">{{ order.BOX_NUM or '' }}</span></td>
                 <td style="text-align: right;">{{ order.QTY | int }}</td>
                 <td>{{ order.INSRT_DT.strftime('%Y-%m-%d') }}</td>
             </tr>
