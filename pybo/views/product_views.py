@@ -952,7 +952,6 @@ def update_barcode_status_after_packing(doc_no):
     db.session.commit()
     logging.info("Barcode_Status update after packing commit successful.")
 
-
 @bp.route('/assign-orders', methods=['POST'])
 def assign_orders_route():
     assign_production_orders()
@@ -1210,7 +1209,6 @@ def assign_doc_no_and_material_doc_packing(master_box_no):
     db.session.commit()
     update_barcode_status_after_packing(doc_no)
     logging.info("Packing용 DOC_NO와 Material_Doc 데이터가 성공적으로 할당되었습니다.")
-
 
 # --------------------------------------------------------
 
