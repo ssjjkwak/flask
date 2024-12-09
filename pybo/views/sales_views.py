@@ -75,6 +75,9 @@ def sales_order():
 
     right_table_query = right_table_query.all()
 
+    right_table_bp_cd = right_table_query[0].bp_cd if right_table_query else ""
+    right_table_bp_nm = right_table_query[0].bp_nm if right_table_query else ""
+
     # 결과 데이터 포맷
     left_table_data = [
         {
@@ -111,7 +114,9 @@ def sales_order():
         biz_partners=biz_partners,  # 거래처 목록
         INSRT_DT_START=start_date,
         INSRT_DT_END=end_date,
-        selected_bp_cd=selected_bp_cd
+        selected_bp_cd=selected_bp_cd,
+        right_table_bp_cd=right_table_bp_cd,  # 오른쪽 테이블의 거래처 코드
+        right_table_bp_nm=right_table_bp_nm  # 오른쪽 테이블의 거래처 이름
     )
 
 

@@ -251,7 +251,7 @@
                 </div>
                 <div class="modal-footer d-flex justify-content-between">
                     <div class="d-flex">
-                        <input type="text" id="BoxNumScan" class="form-control" placeholder="Box QR 스캔"
+                        <input type="text" id="udiInputFooter" class="form-control" placeholder="박스 QR 스캔"
                                style="width: 370px; margin-right: 10px; border: none;">
                     </div>
                     <div>
@@ -262,20 +262,29 @@
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const modalElement = document.getElementById('registerModal');
+        const modalElement = document.getElementById('supplyModal');
         let modalInstance = null;
-        let scannedBoxes = new Set(); // 스캔된 박스를 저장할 Set
-        let totalBoxCount = 0; // 총 박스 수량
-        let totalItemCount = 0; // 총 제품 수량
-        let rowsData = []; // 서버로 전송할 데이터
-        let selectedOrderNo = ''; // 선택된 발주번호
-        let selectedOrderNoSeq = ''; // 선택된 발주번호
-        let selectedItemCd = ''; // 선택된 품목코드
-        let selectedBpCd = ''; // 선택된 업체코드
+
+        // 선택된 데이터 저장
+        let selectedRowData = {
+            so_no: '',
+            so_seq: '',
+            item_cd: '',
+            item_name: '',
+            sl_cd: '',
+            so_qty: '',
+            dlvy_qty: ''
+        };
+
+        // 거래처 정보 저장 (서버에서 넘겨준 데이터 사용)
+        const commonBpCd = "{{ right_table_bp_cd }}"; // 서버에서 넘겨준 거래처 코드
+        const commonBpNm = "{{ right_table_bp_nm }}"; // 서버에서 넘겨준 거래처명
+
+        // 초기 박스 수량
+        let totalBoxQty = 0;
 
         // **오른쪽 테이블 행 클릭 이벤트**
         document.querySelectorAll('.table-wrapper:nth-child(2) tbody tr').forEach(function (row) {
@@ -289,45 +298,47 @@
                 this.classList.add('selected-row');
 
                 // 선택된 데이터 저장
-                selectedOrderNo = this.cells[0].innerText.trim(); // 수주번호
-                selectedOrderNoSeq = this.cells[1].innerText.trim();
-                selectedItemCd = this.cells[2].innerText.trim(); // 품목코드
-                selectedBpCd = this.cells[5].innerText.trim(); // 업체코드
+                selectedRowData = {
+                    so_no: this.cells[0].innerText.trim(),
+                    so_seq: this.cells[1].innerText.trim(),
+                    item_cd: this.cells[2].innerText.trim(),
+                    item_name: this.cells[3].innerText.trim(),
+                    sl_cd: this.cells[4].innerText.trim(),
+                    so_qty: this.cells[5].innerText.trim(),
+                    dlvy_qty: this.cells[6].innerText.trim()
+                };
 
-                // 모달에 데이터 반영
-                document.getElementById('modalOrderNo').value = selectedOrderNo;
-                document.getElementById('modalItem').value = selectedItemCd;
-                document.getElementById('modalVendor').value = selectedBpCd;
+                console.log('선택된 데이터:', selectedRowData);
 
                 // 모달 열기 버튼 활성화
                 document.getElementById('openModalButton').disabled = false;
             });
         });
 
-        // **모달 열릴 때 초기화 및 설정**
+        // **출하처리 버튼 클릭 이벤트**
         document.getElementById('openModalButton').addEventListener('click', function () {
-            if (!selectedOrderNo || !selectedItemCd) {
-                alert('발주번호와 품목코드를 선택해주세요.');
+            if (!selectedRowData.so_no) {
+                alert('수주번호를 선택해주세요.');
                 return;
             }
 
+            console.log('모달 열기 - 선택된 데이터:', selectedRowData);
+
+            // 초기 수량 설정
+            totalBoxQty = 0;
+
+            // 모달에 데이터 반영
+            document.getElementById('modal_bp_cd').value = commonBpCd; // 거래처코드
+            document.getElementById('modal_bp_nm').value = commonBpNm; // 거래처명
+            document.getElementById('modal_so_no').value = selectedRowData.so_no; // 수주번호
+            document.getElementById('modal_item_cd').value = selectedRowData.item_cd; // 품목코드
+            document.getElementById('modal_so_qty').value = totalBoxQty; // 초기 수량
+
+            // 모달 열기
             modalInstance = new bootstrap.Modal(modalElement);
             modalInstance.show();
 
-            // 초기화
-            scannedBoxes.clear();
-            totalBoxCount = 0;
-            totalItemCount = 0;
-            rowsData = [];
-
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('in_time').value = today; // 오늘 날짜 설정
-            document.getElementById('totalboxnum').value = totalBoxCount;
-            document.getElementById('totalitemnum').value = totalItemCount;
-
-            console.log('모달 열림: 초기화 완료');
-
-            // QR 코드 입력 필드 포커스
+            // QR 스캔 입력 필드로 포커스 이동
             setTimeout(() => {
                 const qrInputField = document.getElementById('udiInputFooter');
                 if (qrInputField) {
@@ -336,147 +347,39 @@
             }, 500);
         });
 
+        // **박스 QR 스캔 이벤트**
+        document.getElementById('modal_box_qr').addEventListener('input', function () {
+            const scannedBoxQty = parseInt(this.value.trim(), 10);
+
+            if (!isNaN(scannedBoxQty)) {
+                totalBoxQty += scannedBoxQty;
+                document.getElementById('modal_so_qty').value = totalBoxQty;
+                console.log('누적 수량:', totalBoxQty);
+            }
+
+            // 입력 필드 초기화
+            this.value = '';
+        });
+
         // **모달 닫힐 때 데이터 초기화**
         modalElement.addEventListener('hidden.bs.modal', function () {
-            scannedBoxes.clear();
-            totalBoxCount = 0;
-            totalItemCount = 0;
-            rowsData = [];
+            selectedRowData = {
+                so_no: '',
+                so_seq: '',
+                item_cd: '',
+                item_name: '',
+                sl_cd: '',
+                so_qty: '',
+                dlvy_qty: ''
+            };
 
-            const modalTableBody = document.getElementById('modalTableBody');
-            modalTableBody.innerHTML = ''; // 테이블 데이터 초기화
+            totalBoxQty = 0;
 
             console.log('모달 닫힘: 데이터 초기화 완료');
         });
-
-        // **QR 코드 입력 이벤트**
-        document.getElementById('udiInputFooter').addEventListener('input', function () {
-            const qrCode = this.value.trim();
-
-            // QR 코드 길이가 47자리인 경우 처리
-            if (qrCode.length === 47) {
-                this.value = ''; // 입력 필드 초기화
-                processQrCode(qrCode); // QR 코드 처리
-            }
-        });
-
-        // **QR 코드 처리**
-        function processQrCode(qrCode) {
-            if (scannedBoxes.has(qrCode)) {
-                alert('이미 스캔된 QR 코드입니다.');
-                return;
-            }
-
-            // 서버로 QR 코드 데이터 요청
-            fetch('/product/get_sterilized_packing_data/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ udi_qr: qrCode }),
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'success' && data.packing_cs) {
-                        scannedBoxes.add(qrCode); // 스캔된 QR 코드 저장
-                        addRowToModalTable(data.packing_cs); // 테이블에 데이터 추가
-                        totalBoxCount += 1;
-                        totalItemCount += parseInt(data.packing_cs.cs_qty, 10);
-                        updateTotals(); // 총합 업데이트
-                        console.log(`QR 코드 처리 성공: ${qrCode}`);
-                    } else {
-                        alert(data.message || '해당 QR 코드에 대한 데이터를 찾을 수 없습니다.');
-                    }
-                })
-                .catch(error => {
-                    console.error('QR 코드 처리 중 오류 발생:', error);
-                    alert('서버와 통신 중 오류가 발생했습니다.');
-                });
-        }
-
-        // **모달 테이블에 데이터 추가**
-        function addRowToModalTable(data) {
-        const modalTableBody = document.getElementById('modalTableBody');
-        const row = document.createElement('tr');
-
-        // 테이블 행 생성
-        row.innerHTML = `
-            <td>${data.m_box_no}</td>   <!-- 박스 번호 -->
-            <td>${data.cs_model}</td>   <!-- 품목 코드 -->
-            <td>${selectedOrderNo}</td>   <!-- 발주 번호 -->
-            <td>${selectedOrderNoSeq}</td>   <!-- 발주 SEQ -->
-            <td>${data.cs_qty}</td>   <!-- 수량 -->
-        `;
-
-        modalTableBody.appendChild(row);
-
-        // 서버로 전송할 데이터 추가
-        rowsData.push({
-            m_box_no: data.m_box_no,         // 박스 번호
-            cs_model: data.cs_model,        // 품목 코드
-            po_no: selectedOrderNo,      // 발주 번호 (null 허용)
-            po_seq_no: selectedOrderNoSeq, // 발주 SEQ (null 허용)
-            cs_qty: data.cs_qty,            // 수량
-        });
-
-        console.log('테이블에 데이터 추가 완료:', data);
-    }
-
-
-        // **총합 데이터 업데이트**
-        function updateTotals() {
-            document.getElementById('totalboxnum').value = totalBoxCount;
-            document.getElementById('totalitemnum').value = totalItemCount;
-            console.log(`총 박스 수량: ${totalBoxCount}, 총 제품 수량: ${totalItemCount}`);
-        }
-
-        // **저장 버튼 클릭 이벤트**
-        document.getElementById('saveChangesButton').addEventListener('click', function () {
-            if (rowsData.length === 0) {
-                alert('등록할 데이터가 없습니다.');
-                return;
-            }
-
-            // 서버로 데이터 전송
-            fetch('/product/register_sterilized_packing/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ rows: rowsData }),
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'success') {
-                        document.getElementById('completeModalBody').innerText = data.message;
-                        var completeModal = new bootstrap.Modal(document.getElementById('completeModal'));
-                        completeModal.show();
-
-                        console.log('등록 성공:', data.message);
-                        modalInstance.hide(); // 모달 닫기
-
-                        setTimeout(function() {
-                            window.location.href = "{{ url_for('product.product_result_sterilizating_in') }}";
-                        }, 3000);
-                    } else {
-                        alert(data.message || '등록 중 오류가 발생했습니다.');
-                    }
-                })
-                .catch(error => {
-                    console.error('등록 중 오류 발생:', error);
-                    alert('서버와 통신 중 오류가 발생했습니다.');
-                });
-        });
     });
 </script>
+
+
+
 {% endblock %}
