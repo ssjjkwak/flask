@@ -79,17 +79,19 @@ def sales_order():
     right_table_bp_nm = right_table_query[0].bp_nm if right_table_query else ""
 
     # 결과 데이터 포맷
-    left_table_data = [
-        {
-            "box_num": row.box_num,
-            "item_cd": row.item_cd,
-            "item_name": row.item_name,
-            "qty": row.qty,
-            "prod_date": row.prod_date,
-            "insrt_dt": row.insrt_dt.strftime('%Y-%m-%d') if row.insrt_dt else None
-        }
-        for row in left_table_query
-    ]
+    seen_boxes = set()  # 이미 처리된 박스 번호를 저장
+    left_table_data = []
+    for row in left_table_query:
+        if row.box_num not in seen_boxes:
+            seen_boxes.add(row.box_num)
+            left_table_data.append({
+                "box_num": row.box_num,
+                "item_cd": row.item_cd,
+                "item_name": row.item_name,
+                "qty": row.qty,
+                "prod_date": row.prod_date,
+                "insrt_dt": row.insrt_dt.strftime('%Y-%m-%d') if row.insrt_dt else None
+            })
 
     right_table_data = [
         {
@@ -120,9 +122,73 @@ def sales_order():
     )
 
 
+@bp.route('/sales_detail/', methods=['POST'])
+def sales_detail():
+    try:
+        request_data = request.get_json()
+        logging.info(f"요청 데이터: {request_data}")
 
+        udi_qr = request_data.get('udi_qr')
+        logging.info(f"QR 코드: {udi_qr}")
 
+        if not udi_qr or len(udi_qr) != 47:
+            logging.warning("잘못된 QR 코드 입력")
+            return jsonify({'status': 'error', 'message': 'QR 코드가 유효하지 않습니다. 47자리를 입력하세요.'}), 400
 
+        # Packing_Cs에서 데이터 조회
+        logging.info("Packing_Cs 조회 시작")
+        packing_data = db.session.query(
+            Packing_Cs.m_box_no,
+            Packing_Cs.cs_qty
+        ).filter(Packing_Cs.cs_udi_qr == udi_qr).first()
+
+        if not packing_data:
+            logging.warning(f"Packing_Cs에서 데이터 없음. QR 코드: {udi_qr}")
+            return jsonify({'status': 'error', 'message': 'Packing_Cs에서 해당 QR 코드를 찾을 수 없습니다.'}), 404
+
+        BOX_NUM = packing_data.m_box_no
+        cs_qty = packing_data.cs_qty
+        logging.info(f"Packing_Cs 데이터: 박스번호={BOX_NUM}, 수량={cs_qty}")
+
+        # Barcode_Flow에서 데이터 조회
+        logging.info("Barcode_Flow 조회 (SF50)")
+        barcode_data_sf50 = db.session.query(
+            Barcode_Flow.INSRT_DT
+        ).filter(
+            Barcode_Flow.BOX_NUM == BOX_NUM,
+            Barcode_Flow.TO_SL_CD == 'SF50'
+        ).first()
+
+        logging.info("Barcode_Flow 조회 (SF40)")
+        barcode_data_sf40 = db.session.query(
+            Barcode_Flow.INSRT_DT
+        ).filter(
+            Barcode_Flow.BOX_NUM == BOX_NUM,
+            Barcode_Flow.TO_SL_CD == 'SF40'
+        ).first()
+
+        if not barcode_data_sf50:
+            logging.warning(f"Barcode_Flow에서 SF50 데이터 없음. 박스번호: {box_num}")
+            return jsonify({'status': 'error', 'message': f'SF50에 해당하는 데이터가 Barcode_Flow에서 없습니다: {box_num}'}), 404
+
+        sf50_date = barcode_data_sf50.INSRT_DT.strftime('%Y-%m-%d') if barcode_data_sf50 else None
+        sf40_date = barcode_data_sf40.INSRT_DT.strftime('%Y-%m-%d') if barcode_data_sf40 else None
+
+        logging.info(f"Barcode_Flow 데이터: SF50 날짜={sf50_date}, SF40 날짜={sf40_date}")
+
+        return jsonify({
+            'status': 'success',
+            'sales_detail': {
+                'box_num': BOX_NUM,
+                'cs_qty': int(cs_qty),
+                'sf50_date': sf50_date,
+                'sf40_date': sf40_date
+            }
+        })
+
+    except Exception as e:
+        logging.error(f"sales_detail 처리 중 오류: {e}", exc_info=True)
+        return jsonify({'status': 'error', 'message': '서버 내부 오류가 발생했습니다.'}), 500
 
 
 

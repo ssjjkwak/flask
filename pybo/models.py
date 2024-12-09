@@ -447,9 +447,9 @@ class Packing_Dtl(db.Model):
     __tablename__ = 'P_PACKING_DTL'
     __table_args__ = {'schema': 'dbo'}
 
-    m_box_no = db.Column(db.String(18), primary_key=True)
+    m_box_no = db.Column(db.String(18), nullable=True)
     lot_no = db.Column(db.String(18), nullable=True)
-    barcode = db.Column(db.String(20), nullable=True)
+    barcode = db.Column(db.String(20), primary_key=True)
     udi_code = db.Column(db.String(40), nullable=True)
     packing_dt = db.Column(db.DateTime, nullable=True)
     exp_date = db.Column(db.DateTime, nullable=True)
