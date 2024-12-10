@@ -10,7 +10,7 @@ from werkzeug.utils import redirect, secure_filename
 import pandas as pd
 from pybo import db
 from pybo.models import Production_Order, Item, Work_Center, Plant, Production_Alpha, Production_Barcode, \
-    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Sales_Order, Biz_Partner, Packing_Cs
+    Barcode_Flow, Production_Results, kst_now, Packing_Hdr, Packing_Dtl, Sales_Order, Biz_Partner, Packing_Cs, Material_Doc
 from collections import defaultdict
 
 bp = Blueprint('sales', __name__, url_prefix='/sales')
@@ -31,6 +31,11 @@ def sales_order():
     # 거래처 목록 가져오기 (bp_cd, bp_nm)
     biz_partners = db.session.query(Biz_Partner.bp_cd, Biz_Partner.bp_nm).all()
 
+    # TO_SL_CD가 SF60인 박스 번호 가져오기
+    excluded_boxes = db.session.query(Barcode_Flow.BOX_NUM).filter(
+        Barcode_Flow.TO_SL_CD == 'SF60'
+    ).distinct().subquery()
+
     # Packing_Cs와 Barcode_Flow를 JOIN하여 데이터 조회 (왼쪽 테이블)
     left_table_query = db.session.query(
         Packing_Cs.m_box_no.label("box_num"),  # Packing_Cs의 박스 번호
@@ -45,7 +50,8 @@ def sales_order():
         Item, Barcode_Flow.ITEM_CD == Item.ITEM_CD  # 품목 연결
     ).filter(
         Barcode_Flow.TO_SL_CD == 'SF50',  # TO_SL_CD가 'SF50'인 데이터만 필터링
-        Barcode_Flow.INSRT_DT.between(start_date_dt, end_date_dt)  # 삽입일자 필터링
+        Barcode_Flow.INSRT_DT.between(start_date_dt, end_date_dt),  # 삽입일자 필터링
+        ~Packing_Cs.m_box_no.in_(excluded_boxes)  # TO_SL_CD가 SF60인 박스 제외
     ).distinct(
         Packing_Cs.m_box_no  # DISTINCT 기준 컬럼 설정
     ).all()
@@ -121,7 +127,28 @@ def sales_order():
         right_table_bp_nm=right_table_bp_nm  # 오른쪽 테이블의 거래처 이름
     )
 
+# doc 번호 생성
+def generate_doc_no():
+    # 오늘 날짜에 기반한 doc_no 접두사 설정
+    today_prefix = datetime.now().strftime('%Y%m%d')
+    doc_prefix = f"DOC{today_prefix}"
 
+    # 가장 최근 doc_no 조회
+    max_doc_no = db.session.query(func.max(Material_Doc.DOC_NO)).filter(
+        Material_Doc.DOC_NO.like(f"{doc_prefix}%")
+    ).scalar()
+
+    # 새로운 doc_no 생성: 가장 최근 번호에 +1
+    if max_doc_no:
+        last_number = int(max_doc_no[-5:])  # doc_no의 마지막 5자리 숫자를 추출
+        new_number = last_number + 1
+    else:
+        new_number = 1  # 오늘 처음 생성되는 경우 1로 시작
+
+    new_doc_no = f"{doc_prefix}{new_number:05d}"  # 5자리 연속번호로 구성
+    return new_doc_no
+
+# 출하 모달에서 박스 스캔할 때, 박스번호에 대한 검증 로직
 @bp.route('/sales_detail/', methods=['POST'])
 def sales_detail():
     try:
@@ -190,6 +217,123 @@ def sales_detail():
         logging.error(f"sales_detail 처리 중 오류: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': '서버 내부 오류가 발생했습니다.'}), 500
 
+# 출하 모델에서 등록 버튼을 누르면 서버로 넘어가는 로직
+@bp.route('/sales_register/', methods=['POST'])
+def sales_register():
+    try:
+        data = request.json
+        logging.info(f"Received data for sales register: {data}")
+
+        if not data or 'rows' not in data:
+            return jsonify({"status": "error", "message": "No data provided"}), 400
+
+        doc_no = generate_doc_no()
+        doc_seq = 10
+        new_material_docs = []
+
+        for row in data['rows']:
+            box_num = row.get('box_num')
+            so_no = row.get('so_no')  # 클라이언트에서 전달받은 SO_NO
+            so_seq = row.get('so_seq')  # 클라이언트에서 전달받은 SO_SEQ
+            bp_cd = row.get('bp_cd')  # 클라이언트에서 전달받은 BP_CD
+
+            if not box_num or not so_no or not so_seq or not bp_cd:
+                logging.warning(f"Missing box_num, so_no, so_seq, or bp_cd in row: {row}")
+                continue
+
+            # Packing_Cs에서 cs_qty 조회
+            packing_cs_entry = db.session.query(Packing_Cs).filter_by(m_box_no=box_num).first()
+
+            if not packing_cs_entry:
+                logging.warning(f"No Packing_Cs entry found for box_num={box_num}")
+                continue
+
+            # cs_qty를 정수형으로 변환
+            try:
+                cs_qty = int(packing_cs_entry.cs_qty)
+            except ValueError:
+                logging.error(f"Invalid cs_qty value for box_num={box_num}: {packing_cs_entry.cs_qty}")
+                continue
+
+            # Barcode_Flow에서 TO_SL_CD='SF50' 조건으로 데이터 조회
+            barcodes_sf50 = db.session.query(Barcode_Flow).filter(
+                Barcode_Flow.BOX_NUM == box_num,
+                Barcode_Flow.TO_SL_CD == 'SF50'
+            ).all()
+
+            if not barcodes_sf50:
+                logging.warning(f"No Barcode_Flow records found for box_num={box_num} with TO_SL_CD='SF50'.")
+                continue
+
+            # Barcode_Flow 데이터 생성
+            for barcode_entry in barcodes_sf50:
+                logging.info(f"Processing barcode entry: {barcode_entry.barcode}")
+
+                new_barcode_flow = Barcode_Flow(
+                    barcode=barcode_entry.barcode,  # 기존 바코드 유지
+                    ITEM_CD=barcode_entry.ITEM_CD,
+                    FROM_SL_CD='SF50',
+                    TO_SL_CD='SF60',  # 새로운 목적 창고 코드
+                    MOV_TYPE='T01',  # 입고 타입
+                    CREDIT_DEBIT='C',
+                    REPORT_TYPE='G',
+                    SO_NO=so_no,
+                    SO_SEQ=so_seq,
+                    BP_CD=bp_cd,
+                    DOC_NO=doc_no,
+                    DOC_SEQ=f"{doc_seq:02}",
+                    BOX_NUM=box_num,
+                    INSRT_DT=datetime.now(),
+                    INSRT_USR=g.user.USR_ID,
+                    UPDT_USR=g.user.USR_ID
+                )
+                db.session.add(new_barcode_flow)
+
+            # Material_Doc 데이터 생성 (Barcode_Flow 루프 밖에서 한 번만 생성)
+            new_material_docs.append({
+                'DOC_NO': doc_no,
+                'DOC_SEQ': f"{doc_seq:02}",
+                'ITEM_CD': barcodes_sf50[0].ITEM_CD,  # Barcode_Flow에서 첫 번째 항목의 ITEM_CD 사용
+                'CREDIT_DEBIT': 'C',
+                'MOV_TYPE': 'T01',
+                'QTY': cs_qty,  # Packing_Cs의 cs_qty 사용
+                'FROM_SL_CD': 'SF50',
+                'TO_SL_CD': 'SF60',
+                'REPORT_TYPE': 'G',
+                'BOX_NUM': box_num,
+                'SO_NO': so_no,
+                'SO_SEQ': so_seq,
+                'BP_CD': bp_cd,
+                'INSRT_DT': datetime.now(),
+                'INSRT_USR': g.user.USR_ID,
+                'UPDT_DT': datetime.now(),
+                'UPDT_USR': g.user.USR_ID
+            })
+
+            # Sales_Order 모델의 DLVY_QTY 업데이트
+            sales_order_entry = db.session.query(Sales_Order).filter_by(SO_NO=so_no, SO_SEQ=so_seq).first()
+
+            if sales_order_entry:
+                if sales_order_entry.DLVY_QTY is None:
+                    sales_order_entry.DLVY_QTY = 0
+                sales_order_entry.DLVY_QTY += cs_qty
+                logging.info(f"Updated DLVY_QTY for SO_NO={so_no}, SO_SEQ={so_seq} to {sales_order_entry.DLVY_QTY}")
+            else:
+                logging.warning(f"No Sales_Order entry found for SO_NO={so_no}, SO_SEQ={so_seq}")
+
+            doc_seq += 10
+
+        # Material_Doc 데이터 일괄 삽입
+        if new_material_docs:
+            db.session.bulk_insert_mappings(Material_Doc, new_material_docs)
+
+        db.session.commit()
+        return jsonify({"status": "success", "message": f"Sales register completed: {doc_no}"})
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error during sales register: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @bp.route('/supply_details/', methods=['GET'])
