@@ -1,8 +1,167 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container-fluid">
+    <!-- 페이지 제목 -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h5 class="h5 mb-0 text-gray-800">MES 대시보드</h5>
+    </div>
 
+    <!-- 내용 행 -->
+    <div class="row">
 
+        <!-- 총 생산량 카드 -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                총 생산량</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">12,345 개</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-industry fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- 작업 지연 카드 -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                작업 지연</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">5 건</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 재고 현황 카드 -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                재고 현황</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">3,200 개</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 설비 가동률 카드 -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                설비 가동률</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">85%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cogs fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 내용 행 -->
+    <div class="row">
+
+        <!-- 생산량 추이 차트 -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">월별 생산량 추이</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="productionTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 작업 유형 분포 차트 -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">작업 유형 분포</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4">
+                        <canvas id="taskTypeDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Chart.js 스크립트 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const productionTrendCtx = document.getElementById('productionTrendChart').getContext('2d');
+    const taskTypeDistributionCtx = document.getElementById('taskTypeDistributionChart').getContext('2d');
+
+    // 생산량 추이 차트 데이터
+    new Chart(productionTrendCtx, {
+        type: 'line',
+        data: {
+            labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
+            datasets: [{
+                label: '생산량',
+                data: [1200, 1500, 1300, 1700, 1400, 1900],
+                backgroundColor: 'rgba(78, 115, 223, 0.5)',
+                borderColor: 'rgba(78, 115, 223, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+
+    // 작업 유형 분포 차트 데이터
+    new Chart(taskTypeDistributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['40Step', '50Step', '60Step', '포장', '멸균'],
+            datasets: [{
+                data: [20, 18, 18, 20, 16],
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#D6EAF8', '#d7ebc2'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}
