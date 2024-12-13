@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, g, redirect, url_for, request
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
@@ -61,20 +61,21 @@ def create_app():
     app.jinja_env.filters['datetime'] = format_datetime
     app.jinja_env.filters['none_to_dash'] = none_to_dash
 
-    # @app.errorhandler(Exception)
-    # def handle_exception(e):
-    #     # If the exception is related to SQLAlchemy, rollback the session
-    #     if isinstance(e, (
-    #             IntegrityError, PendingRollbackError, OperationalError,
-    #             ProgrammingError, DataError, TimeoutError, DisconnectionError,
-    #             InvalidRequestError, ResourceClosedError, StatementError
-    #     )):
-    #         db.session.rollback()
-    #
-    #     # 전달할 오류 메시지를 설정합니다.
-    #     error_message = str(e)
-    #     # 오류 페이지를 렌더링합니다.
-    #     return render_template('error.html', error_message=error_message), 500
+    @app.before_request
+    def check_login():
+        # 예외 처리할 엔드포인트 추가
+        exempt_endpoints = [
+            'auth.login',  # 로그인 페이지
+            'auth.signup',  # 회원가입 페이지
+            'static'  # 정적 파일 (CSS, JS 등)
+        ]
+        # 현재 요청이 제외된 엔드포인트인지 확인
+        if request.endpoint in exempt_endpoints:
+            return  # 로그인 체크를 건너뜀
+
+        # g.user가 없으면 로그인 페이지로 리다이렉트
+        if not getattr(g, 'user', None):
+            return redirect(url_for('auth.login'))
 
     return app
 

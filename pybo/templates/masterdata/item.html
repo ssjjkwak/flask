@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-
+{% if g.user %}
 <style>
     .selected-row {
         background-color: #D6EAF8 !important;
@@ -393,5 +393,5 @@
     });
 </script>
 
-
+{% endif %}
 {% endblock %}
